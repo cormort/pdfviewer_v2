@@ -131,20 +131,19 @@
         pointer-events: none;
     }
 
-    /* Local Magnifier Glass and Canvas Styles */
     #magnifier-glass {
-        display: none; /* Initially hidden */
+        display: none;
         position: absolute;
         border: 2px solid #333;
-        border-radius: 50%; /* Circular magnifier */
+        border-radius: 50%;
         overflow: hidden;
-        z-index: 2000; /* Ensure it's on top */
-        pointer-events: none; /* Mouse events pass through */
-        background-color: white; /* Fallback background */
+        z-index: 2000;
+        pointer-events: none;
+        background-color: white;
         box-shadow: 0 0 10px rgba(0,0,0,0.3);
     }
     #magnifier-canvas {
-        display: block; /* Remove any extra space inside the div */
+        display: block;
     }
 
 
@@ -251,13 +250,11 @@
         background-color: #f0f0f0; border-right: 1px solid #ccc; display: flex;
         flex-direction: column; align-items: stretch; padding: 50px 15px 20px 15px;
         box-sizing: border-box; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        -webkit-transform: translateX(-100%);
         transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
+        transition: transform 0.3s ease-in-out;
         z-index: 1001; overflow-y: auto; overflow-x: hidden; gap: 15px;
       }
       #toolbar.active {
-        -webkit-transform: translateX(0);
         transform: translateX(0);
       }
       #toolbar-toggle { display: block; }
@@ -284,16 +281,15 @@
     @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
         #toolbar {
             width: 240px; max-width: 70vw;
-            padding: 5px !important; gap: 3px !important;
+            padding: 50px 5px 5px 5px !important; gap: 3px !important;
         }
         #toolbar > * {
             overflow-x: hidden !important; text-overflow: ellipsis !important;
-            padding-left: 0 !important; padding-right: 0 !important;
+            padding-left: 2px !important; padding-right: 2px !important;
             margin-left: 0 !important; margin-right: 0 !important;
         }
         #toolbar h2 {
             font-size: 0.85em !important; margin-bottom: 2px !important;
-            padding-left: 2px !important; padding-right: 2px !important;
         }
         #toolbar input, #toolbar select, #toolbar button {
             padding: 3px !important; font-size: 0.75em !important;
@@ -316,7 +312,6 @@
     <button id="toolbar-toggle">☰</button>
     <div id="toolbar">
       <h2>多PDF檢索器 (虛擬合併)</h2>
-      <!-- *** MODIFICATION 1: Added 'multiple' attribute and changed label *** -->
       <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正則" />
@@ -399,11 +394,10 @@
           return;
       }
 
-      // --- *** MODIFICATION 2: State variables for multi-PDF handling *** ---
-      let pdfDocs = []; // Array to hold multiple PDF documents
-      let pageMap = []; // Maps global page number to {docIndex, localPage, docName}
+      let pdfDocs = [];
+      let pageMap = [];
       let globalTotalPages = 0;
-      let currentPage = 1; // Represents the GLOBAL current page
+      let currentPage = 1;
       let pageRendering = false;
 
       const canvas = document.getElementById('pdf-canvas');
@@ -450,12 +444,6 @@
       let lastX = 0;
       let lastY = 0;
 
-      // --- *** MODIFICATION 3: New helper function to map global page to local page *** ---
-      /**
-       * Gets the document and its local page number from a global page number.
-       * @param {number} globalPage - The global page number (1-based).
-       * @returns {object|null} An object {doc, localPage, docName} or null if not found.
-       */
       function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) {
             return null;
@@ -490,7 +478,6 @@
               if (magnifierGlass) magnifierGlass.style.display = 'none';
               return;
           }
-          // ... (rest of the function is unchanged)
           const pdfContainerRect = pdfContainer.getBoundingClientRect();
           const pointXInContainer = clientX - pdfContainerRect.left;
           const pointYInContainer = clientY - pdfContainerRect.top;
@@ -555,7 +542,6 @@
           magnifierGlass.style.left = `${magnifierLeft + pdfContainer.scrollLeft}px`;
       }
       
-      // --- *** MODIFICATION 4: Update page controls to use global state *** ---
       function updatePageControls() {
           const fabContainer = document.getElementById('floating-action-buttons');
           if (!pageNumDisplay || !goToFirstPageBtn || !prevPageBtn || !nextPageBtn || !pageToGoInput || !goToPageBtn || !pageSlider || !fabContainer || !toggleUnderlineBtn || !toggleHighlighterBtn || !clearHighlighterBtn || !toggleTextSelectionBtn || !sharePageBtn || !exportPageBtn || !toggleLocalMagnifierBtn || !localMagnifierZoomControlsDiv || !localMagnifierZoomSelector) {
@@ -621,7 +607,6 @@
           if (localMagnifierZoomSelector) localMagnifierZoomSelector.disabled = !hasDocs;
       }
 
-
       if(toolbarToggle && toolbar) {
         toolbarToggle.addEventListener('click', () => {
             toolbar.classList.toggle('active');
@@ -635,7 +620,6 @@
         });
       }
 
-      // --- *** MODIFICATION 5: Overhauled file input handler for multiple files *** ---
       document.getElementById('fileInput').addEventListener('change', function(e) {
         const files = e.target.files;
         if (!files || files.length === 0) {
@@ -647,7 +631,6 @@
             return;
         }
         
-        // Reset state
         pdfDocs = [];
         pageMap = [];
         globalTotalPages = 0;
@@ -673,7 +656,7 @@
             return new Promise((resolve, reject) => {
                 if (file.type !== 'application/pdf') {
                     console.warn(`Skipping non-PDF file: ${file.name}`);
-                    resolve(null); // Resolve with null for non-PDFs
+                    resolve(null);
                     return;
                 }
                 const reader = new FileReader();
@@ -702,7 +685,6 @@
                 return;
             }
 
-            let currentGlobalPage = 1;
             loadedPdfs.forEach((result, docIndex) => {
                 pdfDocs.push(result.pdf);
                 for (let i = 1; i <= result.pdf.numPages; i++) {
@@ -714,7 +696,7 @@
                 }
             });
             globalTotalPages = pageMap.length;
-            renderPage(1); // Render the first global page
+            renderPage(1);
         }).catch(error => {
             alert("讀取PDF文件時發生錯誤: " + error);
             pdfDocs = [];
@@ -722,7 +704,6 @@
         });
       });
 
-      // --- *** MODIFICATION 6: `renderPage` now works with global page number *** ---
       function renderPage(globalPageNum, highlightPattern = null) {
         if (pdfDocs.length === 0 || !pdfContainer || !canvas || !ctx || !textLayerDivGlobal || !drawingCanvas || !drawingCtx) {
             return;
@@ -809,7 +790,6 @@
       }
 
       function renderTextLayer(page, viewport, highlightPattern) {
-        // ... (this function is unchanged)
         if (!textLayerDivGlobal || !pdfjsLib || !pdfjsLib.Util) return Promise.resolve();
         return page.getTextContent().then(function(textContent) {
           textLayerDivGlobal.innerHTML = '';
@@ -831,7 +811,6 @@
       }
 
       function getEventPosition(canvasElem, evt) {
-          // ... (this function is unchanged)
           if(!canvasElem) return {x:0, y:0};
           const rect = canvasElem.getBoundingClientRect();
           let clientX, clientY;
@@ -875,83 +854,112 @@
         drawingCanvas.addEventListener('touchcancel', stopDrawing);
       }
 
-      // --- *** MODIFICATION 7: `searchKeyword` now searches across all documents *** ---
       function searchKeyword() {
         if (!searchInputElem || !resultsDropdown) {
             if (pdfDocs.length > 0) renderPage(currentPage, null);
             return;
         }
         const input = searchInputElem.value.trim();
-        resultsDropdown.innerHTML = '<option value="">搜尋結果...</option>';
+        resultsDropdown.innerHTML = '<option value="">搜尋中，請稍候...</option>';
         if (pdfDocs.length === 0 || !input) {
           if (pdfDocs.length > 0) renderPage(currentPage, null);
+          resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
           return;
         }
         let pattern;
-        if (input.startsWith('/') && input.endsWith('/')) {
-          try { const ls = input.lastIndexOf('/'); pattern = new RegExp(input.slice(1,ls), input.slice(ls+1));}
-          catch (e) { alert('正則表達式格式錯誤: ' + e.message); return; }
-        } else {
-          const esc = input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const kw = esc.split(/\s+|\|/).filter(k=>k.length>0); if(kw.length===0) { if(pdfDocs.length > 0) renderPage(currentPage, null); return;}
-          pattern = new RegExp(kw.join('|'), 'gi');
+        try {
+          if (input.startsWith('/') && input.endsWith('/')) {
+            const ls = input.lastIndexOf('/'); 
+            pattern = new RegExp(input.slice(1,ls), input.slice(ls+1));
+          } else {
+            const esc = input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const kw = esc.split(/\s+|\|/).filter(k => k.length > 0); 
+            if(kw.length === 0) { 
+              if(pdfDocs.length > 0) renderPage(currentPage, null); 
+              resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+              return;
+            }
+            pattern = new RegExp(kw.join('|'), 'gi');
+          }
+        } catch (e) {
+          alert('正則表達式格式錯誤: ' + e.message);
+          resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+          return;
         }
-
-        let results = []; 
+        
         let promises = []; 
         resultsDropdown.disabled = true;
-
         let globalPageOffset = 0;
+
         pdfDocs.forEach((doc, docIndex) => {
             const docName = pageMap.find(p => p.docIndex === docIndex)?.docName || `文件 ${docIndex + 1}`;
             for (let i = 1; i <= doc.numPages; i++) {
                 const currentGlobalPageForSearch = globalPageOffset + i;
-                promises.push(doc.getPage(i).then(p => p.getTextContent().then(tc => {
-                    const pt = tc.items.map(it=>it.str).join('');
-                    let fip = false; let fms = ''; pattern.lastIndex = 0;
-                    if (pattern.test(pt)) {
-                        fip = true;
-                        pattern.lastIndex = 0;
-                        const mr = pattern.exec(pt);
-                        if (mr) {
-                            const mt = mr[0]; const mi = mr.index; const cl = 20;
-                            const s = Math.max(0, mi - cl);
-                            const ed = Math.min(pt.length, mi + mt.length + cl);
-                            fms = (s > 0 ? "..." : "") + pt.substring(s, mi).replace(/</g, "&lt;") + '<span class="wavy-underline">' + mt.replace(/</g, "&lt;") + '</span>' + pt.substring(mi + mt.length, ed).replace(/</g, "&lt;") + (ed < pt.length ? "..." : "");
-                        }
-                    }
-                    if (fip) {
-                        results.push({
-                            page: currentGlobalPageForSearch,
-                            summary: fms || '找到匹配',
-                            docName: docName
+                promises.push(
+                    doc.getPage(i).then(p => {
+                        return p.getTextContent().then(tc => {
+                            const pt = tc.items.map(it => it.str).join('');
+                            pattern.lastIndex = 0;
+                            if (pattern.test(pt)) {
+                                pattern.lastIndex = 0;
+                                const mr = pattern.exec(pt);
+                                let fms = '找到匹配';
+                                if (mr) {
+                                    const mt = mr[0]; const mi = mr.index; const cl = 20;
+                                    const s = Math.max(0, mi - cl);
+                                    const ed = Math.min(pt.length, mi + mt.length + cl);
+                                    fms = (s > 0 ? "..." : "") + pt.substring(s, mi).replace(/</g, "<") + '<span class="wavy-underline">' + mt.replace(/</g, "<") + '</span>' + pt.substring(mi + mt.length, ed).replace(/</g, "<") + (ed < pt.length ? "..." : "");
+                                }
+                                return {
+                                    page: currentGlobalPageForSearch,
+                                    summary: fms,
+                                    docName: docName
+                                };
+                            }
+                            return null;
                         });
-                    }
-                })).catch(err => console.warn(`Error processing page for search: Doc ${docIndex}, Page ${i}`, err)));
+                    }).catch(err => {
+                        console.warn(`Error processing page for search: Doc ${docName}, Page ${i}`, err);
+                        return null;
+                    })
+                );
             }
             globalPageOffset += doc.numPages;
         });
 
-        Promise.all(promises).then(() => {
+        Promise.all(promises).then((allPageResults) => {
+          const results = allPageResults.filter(r => r !== null);
           resultsDropdown.disabled = false;
           resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+
           if(results.length === 0){
               const o = document.createElement('option'); o.textContent = '找不到關鍵字'; resultsDropdown.appendChild(o);
               renderPage(currentPage, null);
           } else {
               results.sort((a,b) => a.page - b.page);
+              
               results.forEach(r => {
                   const o = document.createElement('option');
                   o.value = r.page;
-                  o.innerHTML = `第 ${r.page} 頁 (${r.docName}): ${r.summary}`;
+                  // Set the visible text without the filename
+                  o.innerHTML = `第 ${r.page} 頁: ${r.summary}`;
+                  // Add the filename to the title attribute for the hover tooltip
+                  o.title = `檔案: ${r.docName}`;
                   resultsDropdown.appendChild(o);
               });
+
               if(results.length > 0){
                   resultsDropdown.value = results[0].page;
                   goToPage(results[0].page, pattern);
               }
           }
-        }).catch(err => {console.error("Search error:", err); resultsDropdown.disabled = false; alert("搜尋過程錯誤"); renderPage(currentPage, null);});
+        }).catch(err => {
+            console.error("Search process failed unexpectedly:", err);
+            resultsDropdown.disabled = false;
+            resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+            alert("搜尋過程發生未知錯誤，請檢查主控台。");
+            renderPage(currentPage, null);
+        });
       }
 
       if (searchActionButton) {
@@ -961,35 +969,18 @@
       function goToPageDropdown(pageNumStr){
           if(pageNumStr && resultsDropdown) {
               const pageNum = parseInt(pageNumStr);
-              const inputVal = searchInputElem ? searchInputElem.value.trim() : "";
-              let pattern = null;
-               if (inputVal) {
-                  if (inputVal.startsWith('/') && inputVal.endsWith('/')) {
-                      try { const ls = inputVal.lastIndexOf('/'); pattern = new RegExp(inputVal.slice(1,ls), inputVal.slice(ls+1));} catch (e) {}
-                  } else {
-                      const esc = inputVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                      const kw = esc.split(/\s+|\|/).filter(k=>k.length>0);
-                      if(kw.length>0) pattern = new RegExp(kw.join('|'), 'gi');
-                  }
-              }
-              goToPage(pageNum, pattern);
+              goToPage(pageNum, getPatternFromSearchInput());
           }
       }
       if (resultsDropdown) {
           resultsDropdown.addEventListener('change', () => goToPageDropdown(resultsDropdown.value));
       }
-
-      // --- *** MODIFICATION 8: `goToPage` and navigation functions use global page number *** ---
+      
       function goToPage(globalPageNum, highlightPatternForPage = null) {
         if (pdfDocs.length === 0 || isNaN(globalPageNum)) return;
         const n = Math.max(1, Math.min(globalPageNum, globalTotalPages));
 
-        const currentSearchInputVal = searchInputElem ? searchInputElem.value.trim() : "";
-        let currentGlobalPattern = null;
-          if (currentSearchInputVal) {
-              if (currentSearchInputVal.startsWith('/') && currentSearchInputVal.endsWith('/')) { try {const ls = currentSearchInputVal.lastIndexOf('/'); currentGlobalPattern = new RegExp(currentSearchInputVal.slice(1,ls), currentSearchInputVal.slice(ls+1));} catch(e){} }
-              else { const esc = currentSearchInputVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const kw = kw.split(/\s+|\|/).filter(k=>k.length>0); if(kw.length>0) currentGlobalPattern = new RegExp(kw.join('|'), 'gi');}
-          }
+        const currentGlobalPattern = getPatternFromSearchInput();
 
         if(pageRendering && currentPage === n && JSON.stringify(highlightPatternForPage) === JSON.stringify(currentGlobalPattern)) return;
         if(pageRendering && !(currentPage === n && JSON.stringify(highlightPatternForPage) !== JSON.stringify(currentGlobalPattern) )) {
@@ -1005,15 +996,18 @@
       function getPatternFromSearchInput() {
           const i = searchInputElem ? searchInputElem.value.trim() : null;
           if (!i) return null;
-          if (i.startsWith('/') && i.endsWith('/')) {
-              try {
-                  const ls = i.lastIndexOf('/');
-                  return new RegExp(i.slice(1, ls), i.slice(ls + 1));
-              } catch (e) { return null; }
-          } else {
-              const es = i.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              const k = es.split(/\s+|\|/).filter(ky => ky.length > 0);
-              if (k.length > 0) return new RegExp(k.join('|'), 'gi');
+          try {
+            if (i.startsWith('/') && i.endsWith('/')) {
+                const ls = i.lastIndexOf('/');
+                return new RegExp(i.slice(1, ls), i.slice(ls + 1));
+            } else {
+                const es = i.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const k = es.split(/\s+|\|/).filter(ky => ky.length > 0);
+                if (k.length > 0) return new RegExp(k.join('|'), 'gi');
+            }
+          } catch (e) {
+            console.warn("Could not create regex from input", e);
+            return null;
           }
           return null;
       }
