@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>多PDF智能檢索器 (虛擬合併)</title>
+  <title>多PDF智能檢索器 (包夾式結果)</title>
   <style>
     body {
       font-family: sans-serif;
@@ -16,7 +16,6 @@
       overscroll-behavior-y: contain;
     }
 
-    /* ... (其他 CSS 保持不變) ... */
     #app-container {
       display: flex;
       flex-direction: column;
@@ -107,7 +106,7 @@
     #pdf-container {
       position: relative;
       flex-grow: 1;
-      overflow: auto;
+      overflow: auto; /* Important for allowing scroll within container if content overflows */
       background-color: #e9ecef;
       padding: 10px;
       box-sizing: border-box;
@@ -132,19 +131,20 @@
         pointer-events: none;
     }
 
+    /* Local Magnifier Glass and Canvas Styles */
     #magnifier-glass {
-        display: none;
+        display: none; /* Initially hidden */
         position: absolute;
         border: 2px solid #333;
-        border-radius: 50%;
+        border-radius: 50%; /* Circular magnifier */
         overflow: hidden;
-        z-index: 2000;
-        pointer-events: none;
-        background-color: white;
+        z-index: 2000; /* Ensure it's on top */
+        pointer-events: none; /* Mouse events pass through */
+        background-color: white; /* Fallback background */
         box-shadow: 0 0 10px rgba(0,0,0,0.3);
     }
     #magnifier-canvas {
-        display: block;
+        display: block; /* Remove any extra space inside the div */
     }
 
 
@@ -244,41 +244,20 @@
         background-color: rgba(100, 0, 100, 0.7);
     }
 
-    /* --- *** STEP 2: CSS for the Mobile Tooltip *** --- */
-    #mobile-tooltip {
-        position: fixed;
-        z-index: 9999;
-        background-color: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 14px;
-        pointer-events: none;
-        opacity: 0;
-        transform: scale(0.95);
-        transition: opacity 0.15s ease-out, transform 0.15s ease-out;
-        max-width: 80vw;
-        text-align: center;
-        display: none; /* Initially hidden */
-    }
-
-    #mobile-tooltip.visible {
-        display: block;
-        opacity: 1;
-        transform: scale(1);
-    }
-
+    /* Mobile Styles */
     @media (max-width: 768px) {
       #toolbar {
         position: fixed; top: 0; left: 0; width: 280px; max-width: 80vw; height: 100vh;
         background-color: #f0f0f0; border-right: 1px solid #ccc; display: flex;
         flex-direction: column; align-items: stretch; padding: 50px 15px 20px 15px;
         box-sizing: border-box; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        -webkit-transform: translateX(-100%);
         transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
+        transition: transform 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
         z-index: 1001; overflow-y: auto; overflow-x: hidden; gap: 15px;
       }
       #toolbar.active {
+        -webkit-transform: translateX(0);
         transform: translateX(0);
       }
       #toolbar-toggle { display: block; }
@@ -335,7 +314,7 @@
   <div id="app-container">
     <button id="toolbar-toggle">☰</button>
     <div id="toolbar">
-      <h2>多PDF檢索器 (虛擬合併)</h2>
+      <h2>多PDF檢索器 (包夾式結果)</h2>
       <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正則" />
@@ -398,10 +377,7 @@
         <button id="export-page-btn" title="將目前頁面匯出為圖片">📷</button>
         <button id="share-page-btn" title="分享目前頁面">🔗</button>
     </div>
-  </div>
-
-  <!-- --- *** STEP 1: HTML for the Mobile Tooltip *** --- -->
-  <div id="mobile-tooltip"></div>
+    </div>
 
   <script type="module"
           id="pdfjs-lib"
@@ -421,7 +397,6 @@
           return;
       }
 
-      // ... (大部分 JS 變數保持不變) ...
       let pdfDocs = [];
       let pageMap = [];
       let globalTotalPages = 0;
@@ -453,9 +428,6 @@
       const drawingCtx = drawingCanvas ? drawingCanvas.getContext('2d') : null;
       const searchInputElem = document.getElementById('searchInput');
       const searchActionButton = document.getElementById('search-action-button');
-      
-      // --- *** STEP 3: Get reference to the mobile tooltip element *** ---
-      const mobileTooltip = document.getElementById('mobile-tooltip');
 
       const magnifierGlass = document.getElementById('magnifier-glass');
       const magnifierCanvas = document.getElementById('magnifier-canvas');
@@ -475,7 +447,6 @@
       let lastX = 0;
       let lastY = 0;
 
-      // ... (大部分函式保持不變) ...
       function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) {
             return null;
@@ -735,7 +706,7 @@
             updatePageControls();
         });
       });
-
+      
       function renderPage(globalPageNum, highlightPattern = null) {
         if (pdfDocs.length === 0 || !pdfContainer || !canvas || !ctx || !textLayerDivGlobal || !drawingCanvas || !drawingCtx) {
             return;
@@ -886,7 +857,7 @@
         drawingCanvas.addEventListener('touchcancel', stopDrawing);
       }
 
-      // --- *** MODIFIED `searchKeyword` function to handle mobile tooltips *** ---
+      // --- MODIFIED `searchKeyword` function to use file block separators and mouseover ---
       function searchKeyword() {
         if (!searchInputElem || !resultsDropdown) {
             if (pdfDocs.length > 0) renderPage(currentPage, null);
@@ -921,7 +892,6 @@
         }
         
         let promises = []; 
-        resultsDropdown.disabled = true;
         let globalPageOffset = 0;
 
         pdfDocs.forEach((doc, docIndex) => {
@@ -943,11 +913,7 @@
                                     const ed = Math.min(pt.length, mi + mt.length + cl);
                                     fms = (s > 0 ? "..." : "") + pt.substring(s, mi).replace(/</g, "<") + '<span class="wavy-underline">' + mt.replace(/</g, "<") + '</span>' + pt.substring(mi + mt.length, ed).replace(/</g, "<") + (ed < pt.length ? "..." : "");
                                 }
-                                return {
-                                    page: currentGlobalPageForSearch,
-                                    summary: fms,
-                                    docName: docName
-                                };
+                                return { page: currentGlobalPageForSearch, summary: fms, docName: docName };
                             }
                             return null;
                         });
@@ -962,66 +928,59 @@
 
         Promise.all(promises).then((allPageResults) => {
           const results = allPageResults.filter(r => r !== null);
-          resultsDropdown.disabled = false;
-          resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+          resultsDropdown.innerHTML = '';
 
           if(results.length === 0){
-              const o = document.createElement('option'); o.textContent = '找不到關鍵字'; resultsDropdown.appendChild(o);
+              const o = document.createElement('option');
+              o.textContent = '找不到關鍵字';
+              resultsDropdown.appendChild(o);
               renderPage(currentPage, null);
           } else {
               results.sort((a,b) => a.page - b.page);
               
-              let longPressTimer;
-              const longPressDuration = 500; // 500ms for long press
+              let lastDocName = null;
 
-              results.forEach(r => {
+              results.forEach((r, index) => {
+                  // If the file name changes, insert separators
+                  if (r.docName !== lastDocName) {
+                      if (lastDocName !== null) {
+                          const footer = document.createElement('option');
+                          footer.disabled = true;
+                          footer.style.color = '#6c757d';
+                          footer.style.fontStyle = 'italic';
+                          footer.style.backgroundColor = '#f8f9fa';
+                          footer.textContent = `--- 以上來自 ${lastDocName} ---`;
+                          resultsDropdown.appendChild(footer);
+                      }
+                      const header = document.createElement('option');
+                      header.disabled = true;
+                      header.style.color = '#6c757d';
+                      header.style.fontStyle = 'italic';
+                      header.style.backgroundColor = '#f8f9fa';
+                      header.textContent = `--- 以下來自 ${r.docName} ---`;
+                      resultsDropdown.appendChild(header);
+                      lastDocName = r.docName;
+                  }
+
+                  // Create the actual result option
                   const o = document.createElement('option');
                   o.value = r.page;
+                  // Use innerHTML to render the wavy underline span
                   o.innerHTML = `第 ${r.page} 頁: ${r.summary}`;
-                  // For desktop hover
+                  // Add the title attribute for mouseover tooltip
                   o.title = `檔案: ${r.docName}`;
-                  // For mobile long-press, store data in a data attribute
-                  o.dataset.docName = r.docName;
-
-                  const clearLongPress = () => {
-                      clearTimeout(longPressTimer);
-                      document.removeEventListener('touchend', clearLongPress);
-                      document.removeEventListener('touchmove', clearLongPress);
-                  };
-
-                  o.addEventListener('touchstart', (e) => {
-                      // Don't do this for multi-touch gestures
-                      if (e.touches.length > 1) return;
-
-                      clearLongPress(); // Clear any previous timer
-                      
-                      longPressTimer = setTimeout(() => {
-                          e.preventDefault(); // Prevent click/menu from opening
-                          mobileTooltip.textContent = e.target.dataset.docName;
-                          mobileTooltip.classList.add('visible');
-
-                          // Position the tooltip
-                          const touch = e.touches[0];
-                          const x = touch.clientX;
-                          const y = touch.clientY;
-                          
-                          // Position tooltip above the finger, centered
-                          mobileTooltip.style.left = `${x - mobileTooltip.offsetWidth / 2}px`;
-                          mobileTooltip.style.top = `${y - mobileTooltip.offsetHeight - 15}px`; // 15px offset
-
-                          // Adjust if it goes off-screen
-                          const rect = mobileTooltip.getBoundingClientRect();
-                          if(rect.left < 5) mobileTooltip.style.left = '5px';
-                          if(rect.right > window.innerWidth - 5) mobileTooltip.style.left = `${window.innerWidth - rect.width - 5}px`;
-                          if(rect.top < 5) mobileTooltip.style.top = `${y + 25}px`; // Show below if no space on top
-
-                      }, longPressDuration);
-
-                      document.addEventListener('touchend', clearLongPress, { once: true });
-                      document.addEventListener('touchmove', clearLongPress, { once: true });
-                  });
-
                   resultsDropdown.appendChild(o);
+
+                  // If this is the last item in the entire list, add the final footer
+                  if (index === results.length - 1) {
+                       const finalFooter = document.createElement('option');
+                       finalFooter.disabled = true;
+                       finalFooter.style.color = '#6c757d';
+                       finalFooter.style.fontStyle = 'italic';
+                       finalFooter.style.backgroundColor = '#f8f9fa';
+                       finalFooter.textContent = `--- 以上來自 ${r.docName} ---`;
+                       resultsDropdown.appendChild(finalFooter);
+                  }
               });
 
               if(results.length > 0){
@@ -1031,8 +990,7 @@
           }
         }).catch(err => {
             console.error("Search process failed unexpectedly:", err);
-            resultsDropdown.disabled = false;
-            resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+            resultsDropdown.innerHTML = '<option value="">搜尋錯誤</option>';
             alert("搜尋過程發生未知錯誤，請檢查主控台。");
             renderPage(currentPage, null);
         });
@@ -1087,16 +1045,6 @@
           }
           return null;
       }
-
-      // Hide mobile tooltip on any click or touch end
-      const hideMobileTooltip = () => {
-          if (mobileTooltip && mobileTooltip.classList.contains('visible')) {
-              mobileTooltip.classList.remove('visible');
-          }
-      };
-      document.addEventListener('click', hideMobileTooltip);
-      document.addEventListener('touchend', hideMobileTooltip);
-
 
       if(goToFirstPageBtn) goToFirstPageBtn.addEventListener('click', () => { if(pdfDocs.length > 0) goToPage(1, getPatternFromSearchInput()); });
       if(prevPageBtn) prevPageBtn.addEventListener('click', () => { if(currentPage > 1) goToPage(currentPage - 1, getPatternFromSearchInput()); });
