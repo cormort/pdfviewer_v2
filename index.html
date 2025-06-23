@@ -16,6 +16,7 @@
       overscroll-behavior-y: contain;
     }
 
+    /* ... (其他 CSS 保持不變) ... */
     #app-container {
       display: flex;
       flex-direction: column;
@@ -106,7 +107,7 @@
     #pdf-container {
       position: relative;
       flex-grow: 1;
-      overflow: auto; /* Important for allowing scroll within container if content overflows */
+      overflow: auto;
       background-color: #e9ecef;
       padding: 10px;
       box-sizing: border-box;
@@ -243,7 +244,30 @@
         background-color: rgba(100, 0, 100, 0.7);
     }
 
-    /* Mobile Styles */
+    /* --- *** STEP 2: CSS for the Mobile Tooltip *** --- */
+    #mobile-tooltip {
+        position: fixed;
+        z-index: 9999;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        pointer-events: none;
+        opacity: 0;
+        transform: scale(0.95);
+        transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+        max-width: 80vw;
+        text-align: center;
+        display: none; /* Initially hidden */
+    }
+
+    #mobile-tooltip.visible {
+        display: block;
+        opacity: 1;
+        transform: scale(1);
+    }
+
     @media (max-width: 768px) {
       #toolbar {
         position: fixed; top: 0; left: 0; width: 280px; max-width: 80vw; height: 100vh;
@@ -374,7 +398,10 @@
         <button id="export-page-btn" title="將目前頁面匯出為圖片">📷</button>
         <button id="share-page-btn" title="分享目前頁面">🔗</button>
     </div>
-    </div>
+  </div>
+
+  <!-- --- *** STEP 1: HTML for the Mobile Tooltip *** --- -->
+  <div id="mobile-tooltip"></div>
 
   <script type="module"
           id="pdfjs-lib"
@@ -394,6 +421,7 @@
           return;
       }
 
+      // ... (大部分 JS 變數保持不變) ...
       let pdfDocs = [];
       let pageMap = [];
       let globalTotalPages = 0;
@@ -425,6 +453,9 @@
       const drawingCtx = drawingCanvas ? drawingCanvas.getContext('2d') : null;
       const searchInputElem = document.getElementById('searchInput');
       const searchActionButton = document.getElementById('search-action-button');
+      
+      // --- *** STEP 3: Get reference to the mobile tooltip element *** ---
+      const mobileTooltip = document.getElementById('mobile-tooltip');
 
       const magnifierGlass = document.getElementById('magnifier-glass');
       const magnifierCanvas = document.getElementById('magnifier-canvas');
@@ -444,6 +475,7 @@
       let lastX = 0;
       let lastY = 0;
 
+      // ... (大部分函式保持不變) ...
       function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) {
             return null;
@@ -854,6 +886,7 @@
         drawingCanvas.addEventListener('touchcancel', stopDrawing);
       }
 
+      // --- *** MODIFIED `searchKeyword` function to handle mobile tooltips *** ---
       function searchKeyword() {
         if (!searchInputElem || !resultsDropdown) {
             if (pdfDocs.length > 0) renderPage(currentPage, null);
@@ -938,13 +971,56 @@
           } else {
               results.sort((a,b) => a.page - b.page);
               
+              let longPressTimer;
+              const longPressDuration = 500; // 500ms for long press
+
               results.forEach(r => {
                   const o = document.createElement('option');
                   o.value = r.page;
-                  // Set the visible text without the filename
                   o.innerHTML = `第 ${r.page} 頁: ${r.summary}`;
-                  // Add the filename to the title attribute for the hover tooltip
+                  // For desktop hover
                   o.title = `檔案: ${r.docName}`;
+                  // For mobile long-press, store data in a data attribute
+                  o.dataset.docName = r.docName;
+
+                  const clearLongPress = () => {
+                      clearTimeout(longPressTimer);
+                      document.removeEventListener('touchend', clearLongPress);
+                      document.removeEventListener('touchmove', clearLongPress);
+                  };
+
+                  o.addEventListener('touchstart', (e) => {
+                      // Don't do this for multi-touch gestures
+                      if (e.touches.length > 1) return;
+
+                      clearLongPress(); // Clear any previous timer
+                      
+                      longPressTimer = setTimeout(() => {
+                          e.preventDefault(); // Prevent click/menu from opening
+                          mobileTooltip.textContent = e.target.dataset.docName;
+                          mobileTooltip.classList.add('visible');
+
+                          // Position the tooltip
+                          const touch = e.touches[0];
+                          const x = touch.clientX;
+                          const y = touch.clientY;
+                          
+                          // Position tooltip above the finger, centered
+                          mobileTooltip.style.left = `${x - mobileTooltip.offsetWidth / 2}px`;
+                          mobileTooltip.style.top = `${y - mobileTooltip.offsetHeight - 15}px`; // 15px offset
+
+                          // Adjust if it goes off-screen
+                          const rect = mobileTooltip.getBoundingClientRect();
+                          if(rect.left < 5) mobileTooltip.style.left = '5px';
+                          if(rect.right > window.innerWidth - 5) mobileTooltip.style.left = `${window.innerWidth - rect.width - 5}px`;
+                          if(rect.top < 5) mobileTooltip.style.top = `${y + 25}px`; // Show below if no space on top
+
+                      }, longPressDuration);
+
+                      document.addEventListener('touchend', clearLongPress, { once: true });
+                      document.addEventListener('touchmove', clearLongPress, { once: true });
+                  });
+
                   resultsDropdown.appendChild(o);
               });
 
@@ -1011,6 +1087,16 @@
           }
           return null;
       }
+
+      // Hide mobile tooltip on any click or touch end
+      const hideMobileTooltip = () => {
+          if (mobileTooltip && mobileTooltip.classList.contains('visible')) {
+              mobileTooltip.classList.remove('visible');
+          }
+      };
+      document.addEventListener('click', hideMobileTooltip);
+      document.addEventListener('touchend', hideMobileTooltip);
+
 
       if(goToFirstPageBtn) goToFirstPageBtn.addEventListener('click', () => { if(pdfDocs.length > 0) goToPage(1, getPatternFromSearchInput()); });
       if(prevPageBtn) prevPageBtn.addEventListener('click', () => { if(currentPage > 1) goToPage(currentPage - 1, getPatternFromSearchInput()); });
