@@ -920,5 +920,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     initLocalMagnifier();
     updatePageControls();
-
-}); // ** FIX: Added the missing closing brace and parenthesis for DOMContentLoaded **
+});
