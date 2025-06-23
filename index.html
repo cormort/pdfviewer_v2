@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <!-- STEP 1: Update the viewport meta tag by adding viewport-fit=cover -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
   <title>多PDF智能檢索器 (包夾式結果)</title>
   <style>
     body {
@@ -23,10 +24,12 @@
       width: 100%;
     }
 
+    /* STEP 2: Adjust toolbar and toggle button to respect the safe area */
     #toolbar-toggle {
       display: none;
       position: fixed;
-      top: 10px;
+      /* Add safe-area-inset-top to the top position */
+      top: calc(10px + env(safe-area-inset-top, 0px));
       left: 10px;
       z-index: 1003;
       pointer-events: auto;
@@ -246,17 +249,31 @@
     /* Mobile Styles */
     @media (max-width: 768px) {
       #toolbar {
-        position: fixed; top: 0; left: 0; width: 280px; max-width: 80vw; height: 100vh;
-        background-color: #f0f0f0; border-right: 1px solid #ccc; display: flex;
-        flex-direction: column; align-items: stretch; padding: 50px 15px 20px 15px;
-        box-sizing: border-box; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        -webkit-transform: translateX(-100%);
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 280px; 
+        max-width: 80vw;
+        background-color: #f0f0f0; 
+        border-right: 1px solid #ccc; 
+        display: flex;
+        flex-direction: column; 
+        align-items: stretch; 
+        box-sizing: border-box; 
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
         transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
-        z-index: 1001; overflow-y: auto; overflow-x: hidden; gap: 15px;
+        transition: transform 0.3s ease-in-out;
+        z-index: 1001; 
+        overflow-y: auto; 
+        overflow-x: hidden; 
+        gap: 15px;
+
+        /* STEP 2.1: Adjust the toolbar itself for safe areas */
+        top: env(safe-area-inset-top, 0px);
+        height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        padding: 50px 15px 20px 15px;
       }
       #toolbar.active {
-        -webkit-transform: translateX(0);
         transform: translateX(0);
       }
       #toolbar-toggle { display: block; }
@@ -282,16 +299,20 @@
     }
     @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
         #toolbar {
-            width: 240px; max-width: 70vw;
-            padding: 50px 5px 5px 5px !important; gap: 3px !important;
+            width: 240px; 
+            max-width: 70vw;
+            /* In landscape, reduce the top padding as the toggle button is now correctly positioned */
+            padding-top: 10px !important;
+            gap: 3px !important;
         }
         #toolbar > * {
             overflow-x: hidden !important; text-overflow: ellipsis !important;
-            padding-left: 2px !important; padding-right: 2px !important;
+            padding-left: 0 !important; padding-right: 0 !important;
             margin-left: 0 !important; margin-right: 0 !important;
         }
         #toolbar h2 {
             font-size: 0.85em !important; margin-bottom: 2px !important;
+            padding-left: 2px !important; padding-right: 2px !important;
         }
         #toolbar input, #toolbar select, #toolbar button {
             padding: 3px !important; font-size: 0.75em !important;
@@ -378,10 +399,7 @@
     </div>
   </div>
 
-  <!-- ** CHANGE 1: Load pdf.mjs from local path ** -->
   <script type="module" id="pdfjs-lib" src="./lib/pdfjs/pdf.mjs"></script>
-
-  <!-- ** CHANGE 2: Load main script from external file ** -->
   <script type="module" src="./script.js"></script>
 </body>
 </html>
