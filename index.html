@@ -163,8 +163,15 @@
     <!-- 全新的側邊欄結構 -->
     <div id="sidebar">
       <div id="sidebar-content">
-      
-        <label for="fileInput" style="display: block; font-size: 0.9em;">選擇一或多個PDF檔案:</label>
+        <!-- ** MODIFIED PART: Added a link to the instructions.html ** -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h2>PDF 工具</h2>
+          <a href="./instructions.html" title="查看使用說明" target="_blank" style="font-size: 1.2em; color: #6c757d; text-decoration: none;">
+            <i class="fas fa-question-circle"></i>
+          </a>
+        </div>
+        
+        <label for="fileInput" style="display: block; font-size: 0.9em;">選擇一個或多個PDF檔案:</label>
         <input type="file" id="fileInput" accept="application/pdf" multiple />
         
         <input type="text" id="searchInput" placeholder="關鍵字或正則" />
