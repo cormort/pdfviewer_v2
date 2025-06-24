@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ** 設定 worker 的本地路徑 **
     if (typeof pdfjsLib !== 'undefined') {
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
@@ -10,17 +9,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // --- 變數宣告 (大部分不變) ---
     let pdfDocs = [];
     let pageMap = [];
     let globalTotalPages = 0;
     let currentPage = 1;
     let pageRendering = false;
 
+    // --- DOM 元素獲取 (部分修改) ---
+    const sidebar = document.getElementById('sidebar');
+    const sidebarHandle = document.getElementById('sidebar-handle');
+    const pdfContainer = document.getElementById('pdf-container');
+    
     const canvas = document.getElementById('pdf-canvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
-    const toolbar = document.getElementById('toolbar');
-    const toolbarToggle = document.getElementById('toolbar-toggle');
-    const pdfContainer = document.getElementById('pdf-container');
     const textLayerDivGlobal = document.getElementById('text-layer');
     const goToFirstPageBtn = document.getElementById('go-to-first-page');
     const prevPageBtn = document.getElementById('prev-page');
@@ -60,6 +62,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastX = 0;
     let lastY = 0;
 
+    // --- 全新的側邊欄控制邏輯 ---
+    if (sidebar && sidebarHandle) {
+        sidebarHandle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+    }
+
+    // 當點擊 PDF 區域時，如果側邊欄是開的，就把它關起來
+    if (pdfContainer && sidebar) {
+        pdfContainer.addEventListener('click', () => {
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+        });
+    }
+    
+    // --- 其他函式保持不變 ---
     function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) {
             return null;
@@ -76,6 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // ... (所有其他函式，如 initLocalMagnifier, updatePageControls, renderPage, searchKeyword 等，都與前一版完全相同)
+    
     function initLocalMagnifier() {
         if (magnifierCanvas && magnifierGlass) {
             magnifierGlass.style.width = `${LOCAL_MAGNIFIER_SIZE}px`;
@@ -202,19 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (localMagnifierZoomControlsDiv) localMagnifierZoomControlsDiv.style.display = (hasDocs && localMagnifierEnabled) ? 'flex' : 'none';
         if (localMagnifierZoomSelector) localMagnifierZoomSelector.disabled = !hasDocs;
-    }
-
-    if (toolbarToggle && toolbar) {
-        toolbarToggle.addEventListener('click', () => {
-            toolbar.classList.toggle('active');
-        });
-    }
-    if (pdfContainer && toolbar) {
-        pdfContainer.addEventListener('click', (e) => {
-            if (e.target === pdfContainer && window.innerWidth <= 768 && toolbar.classList.contains('active')) {
-                toolbar.classList.remove('active');
-            }
-        });
     }
 
     document.getElementById('fileInput').addEventListener('change', function(e) {
