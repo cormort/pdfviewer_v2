@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多PDF智能檢索器 - 使用說明</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 25px 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        h1, h2 {
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 10px;
+            color: #007bff;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+        }
+        h2 {
+            font-size: 1.8em;
+            margin-top: 40px;
+        }
+        h3 {
+            font-size: 1.4em;
+            color: #17a2b8;
+            margin-top: 30px;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        code {
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "Courier New", Courier, monospace;
+            color: #c7254e;
+        }
+        .key {
+            display: inline-block;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            padding: 3px 8px;
+            border-radius: 4px;
+            box-shadow: 1px 1px 1px #ccc;
+            font-weight: bold;
+            margin: 0 3px;
+        }
+        .note {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 40px;
+            font-size: 1.2em;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>多PDF智能檢索器 - 使用說明</h1>
+
+        <h2>🚀 核心功能</h2>
+        <p>本工具是一個完全在您的瀏覽器中運行的 PDF 檢視與搜尋工具。它讓您可以同時載入多個 PDF 檔案，並將它們視為一個連續的文件進行全域搜尋和導覽。所有操作都在本地完成，您的檔案不會被上傳到任何伺服器。</p>
+
+        <h2>🛠️ 介面與操作</h2>
+        
+        <h3>Q1: 如何開始使用？</h3>
+        <p>點擊左上角的 <span class="key">選擇一個或多個PDF檔案</span> 按鈕，在您的電腦或手機上選擇您想要檢視的 PDF 檔案。您可以一次按住 <span class="key">Ctrl</span> (Windows) 或 <span class="key">Command ⌘</span> (Mac) 來選擇多個檔案。</p>
+        
+        <h3>Q2: 如何在手機上打開/關閉功能選單？</h3>
+        <p>在手機或平板上，左側會有一個橘色的箭頭把手 <i class="fas fa-chevron-right" style="color: #ff9a15;"></i>。點擊這個把手可以滑出或收合功能選單。您也可以點擊右側的 PDF 區域來收合選單。</p>
+
+        <h3>Q3: 如何在多個 PDF 檔案中搜尋？</h3>
+        <ol>
+            <li>在「關鍵字或正則」輸入框中，輸入您想找的關鍵字。您可以用空格或 `|` 來分隔多個關鍵字，例如 <code>公司 報告</code> 或 <code>規格|型號</code>。</li>
+            <li>點擊 <span class="key">搜尋</span> 按鈕。</li>
+            <li>下方的「搜尋結果」下拉選單會顯示所有包含關鍵字的頁面。</li>
+            <li>選單中的結果會以檔案為單位進行分組，並用「--- 以下來自 [檔名] ---」這樣的標題來區分。</li>
+        </ol>
+        <div class="note">
+            <strong>進階搜尋技巧：</strong> 您可以使用正規表示法進行更強大的搜尋。只需將您的正規表示式用斜線包起來，例如 <code>/Chapter \d+/</code> 可以搜尋 "Chapter" 後面跟著數字的標題。
+        </div>
+        
+        <h3>Q4: 如何在電腦上看到搜尋結果來自哪個檔案？</h3>
+        <p>將滑鼠指標懸停在搜尋結果下拉選單的某個選項上，就會出現一個提示框，顯示該結果所在的原始檔案名稱。</p>
+        
+        <h3>Q5: 如何翻頁和跳頁？</h3>
+        <ul>
+            <li>使用 <span class="key">上一頁</span> / <span class="key">下一頁</span> 按鈕進行逐頁翻閱。</li>
+            <li>直接拖動下方的**滑桿**可以快速跳轉。</li>
+            <li>在頁碼輸入框中輸入頁碼，然後點擊 <span class="key">跳</span> 按鈕，可以直接跳到指定的全域頁碼。</li>
+        </ul>
+        
+        <h2>🎨 標記與檢視功能 (右下角浮動按鈕)</h2>
+        
+        <h3>Q6: 右下角那排按鈕是做什麼的？</h3>
+        <p>這是一組快速操作按鈕，讓您在閱讀時可以方便地使用各種工具。</p>
+        <ul>
+            <li><span class="key">S</span>: **切換搜尋底線**。當您覺得搜尋結果的波浪底線很干擾時，可以點擊此按鈕暫時隱藏它們，再次點擊可恢復。</li>
+            <li><span class="key">TS</span>: **啟用文字選取**。預設情況下，為了讓手勢縮放更順暢，文字是無法選取的。點擊此按鈕後，PDF 內容會變得可選取，方便您複製文字。再次點擊可關閉。</li>
+            <li><span class="key">🖌️</span>: **啟用螢光筆**。點擊後，您可以在 PDF 頁面上自由畫記，就像用螢光筆一樣。</li>
+            <li><span class="key">🗑️</span>: **清除螢光筆**。清除目前頁面上所有的螢光筆標記。</li>
+            <li><span class="key">🔍</span>: **切換放大鏡**。啟用後，在電腦上移動滑鼠或在手機上滑動手指，即可看到一個即時放大的檢視區域。</li>
+            <li><span class="key">📷</span>: **匯出圖片**。將目前檢視的頁面（包含您的螢光筆標記）匯出為一張 PNG 圖片並下載。</li>
+            <li><span class="key">🔗</span>: **分享頁面**。如果您的瀏覽器支援，可以將目前頁面（包含標記）以圖片形式分享到其他應用程式。</li>
+        </ul>
+
+        <h2>⚙️ 其他設定</h2>
+        
+        <h3>Q7: 如何調整顯示畫質？</h3>
+        <p>在功能選單中，您可以選擇「標準」、「高」、「最高」三種畫質。畫質越高，文字和圖片越清晰，但渲染速度可能會稍慢，也更消耗裝置資源。預設為「高」，在大部分裝置上都能取得很好的平衡。</p>
+        
+        <h3>Q8: 如何調整放大鏡的倍率？</h3>
+        <p>當放大鏡功能 <span class="key">🔍</span> 啟用時，功能選單中會出現「放大鏡倍率」的選項，您可以從 1.5x 到 3.5x 之間進行選擇。</p>
+
+        <a href="./index.html" class="back-link">返回 PDF 檢索器</a>
+    </div>
+</body>
+</html>
