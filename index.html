@@ -354,32 +354,32 @@
       }
 
       #toolbar {
-        position: fixed; /* 保持 fixed 定位來滑入滑出 */
+        position: fixed;
         top: 0;
-        left: 0;
-        width: 280px; /* 還原為 280px 寬度 */
+        /* 使用 left 屬性來控制位置，而不是 transform */
+        left: -280px; /* 根據 width 來設定移出畫面的距離 */
+        width: 280px;
         max-width: 80vw;
         height: 100vh;
-        background-color: #f0f0f0; /* 還原為淺色背景 */
-        border-right: 1px solid #ccc; /* 還原為灰色邊框 */
-        padding: 50px 15px 20px 15px; /* 還原為原始內邊距 */
+        background-color: #f0f0f0;
+        border-right: 1px solid #ccc;
+        padding: 50px 15px 20px 15px;
         box-sizing: border-box;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 還原為原始陰影 */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         display: flex;
         flex-direction: column;
-        align-items: stretch; /* 還原為頂部對齊 */
-        justify-content: flex-start; /* 還原為頂部對齊 */
-        -webkit-transform: translateX(-100%); /* 預設向左移出畫面外 */
-        transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out; /* 還原為 0.3s 過渡 */
+        align-items: stretch;
+        justify-content: flex-start;
+        /* 將 transition 目標改為 left */
+        transition: left 0.3s ease-in-out; 
         z-index: 1001;
         overflow-y: auto;
-        overflow-x: hidden;
+        overflow-x: hidden; /* 保持 hidden 以防止內部內容意外溢出 */
         gap: 15px;
       }
       #app-container.menu-active #toolbar {
-        -webkit-transform: translateX(0);
-        transform: translateX(0); /* 滑入畫面 */
+        /* 當 menu-active 時，將 left 設為 0 使其滑入畫面 */
+        left: 0; 
       }
       #toolbar > * {
         flex-shrink: 0;
