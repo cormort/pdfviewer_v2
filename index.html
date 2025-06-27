@@ -23,7 +23,7 @@
       width: 100%;
     }
 
-    /* toolbar-toggle is deprecated, using toolbar-toggle-tab instead */
+    /* toolbar-toggle is deprecated, but keep for compatibility if used elsewhere */
     #toolbar-toggle {
       display: none;
       position: fixed;
@@ -41,19 +41,19 @@
 
     #toolbar {
       padding: 10px;
-      background-color: #f8f9fa;
+      background-color: #f8f9fa; /* 還原為淺色背景 */
       border-bottom: 1px solid #dee2e6;
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      align-items: center;
+      align-items: center; /* 保持內容頂部對齊 */
       flex-shrink: 0;
     }
     #toolbar h2 {
       margin: 0 10px 0 0;
       font-size: 1.2em;
       white-space: nowrap;
-      color: white; /* 讓標題在深色背景下可見 */
+      color: initial; /* 還原為預設文字顏色 */
     }
 
     #toolbar input[type="file"],
@@ -66,35 +66,34 @@
       border-radius: 4px;
       font-size: 1em;
       box-sizing: border-box;
-      color: #ccc; /* 淺灰色文字 */
+      color: initial; /* 還原為預設文字顏色 */
     }
     #toolbar input[type="text"] {
       width: 150px;
-      background-color: #5a5a5a; /* 更深的背景色 */
-      border-color: #666; /* 邊框顏色 */
-      color: white; /* 確保輸入內容是白色 */
+      background-color: initial; /* 還原為預設背景色 */
+      border-color: initial; /* 還原為預設邊框顏色 */
+      color: initial; /* 還原為預設輸入內容顏色 */
     }
     #toolbar input[type="number"] {
       width: 60px;
       text-align: center;
-      background-color: #5a5a5a; /* 更深的背景色 */
-      border-color: #666; /* 邊框顏色 */
-      color: white; /* 確保輸入內容是白色 */
+      background-color: initial; /* 還原為預設背景色 */
+      border-color: initial; /* 還原為預設邊框顏色 */
+      color: initial; /* 還原為預設輸入內容顏色 */
     }
     #toolbar select {
-      background-color: #5a5a5a; /* 更深的背景色 */
-      border-color: #666; /* 邊框顏色 */
-      color: white; /* 確保輸入內容是白色 */
+      background-color: initial; /* 還原為預設背景色 */
+      border-color: initial; /* 還原為預設邊框顏色 */
+      color: initial; /* 還原為預設輸入內容顏色 */
     }
     #toolbar button {
-      background-color: #ff9a15; /* 按鈕也變成橘色 */
-      color: white;
-      border-color: #ff9a15;
+      background-color: initial; /* 還原為預設按鈕顏色 */
+      color: initial;
+      border-color: initial;
     }
     #toolbar button:hover {
-      background-color: #e68a00; /* 橘色懸停效果 */
+      background-color: initial; /* 還原為預設按鈕懸停效果 */
     }
-
 
     #quality-control,
     #local-magnifier-zoom-controls {
@@ -125,14 +124,14 @@
       font-size: 0.9em;
       white-space: nowrap;
       padding: 0 3px;
-      color: white; /* 頁碼顯示文字顏色 */
+      color: initial; /* 還原為預設文字顏色 */
     }
     #page-slider {
       flex-grow: 1;
       min-width: 80px;
       margin: 0;
       height: 20px;
-      background-color: #666; /* 滑塊背景色 */
+      background-color: initial; /* 還原為預設背景色 */
     }
 
     #pdf-container {
@@ -328,10 +327,8 @@
         position: absolute; /* 相對於父元素 #toolbar 定位 */
         top: 50%; /* 將元素的頂部移到容器的垂直中心 */
         transform: translateY(-50%); /* 向上移動元素自身高度的一半，實現精確置中 */
-        transition: transform 0.3s ease-in-out; /* 僅保留 icon 的 transform 過渡 */
-        right: -60px; /* 移到 #toolbar 的外部，但緊貼著 */
-        /* 45px = 頁籤寬度 (約 8px padding-left + 12px padding-right + 寬度約 25px) */
-        /* 您可能需要根據實際內容調整此值 */
+        transition: transform 0.3s ease-in-out; /* 僅保留 transform 的過渡效果 */
+        right: -45px; /* 移到 #toolbar 的外部，但緊貼著。根據頁籤實際寬度調整 */
         z-index: 1003; /* 確保在最上層 */
         pointer-events: auto;
         background-color: #ff9a15; /* 橘色 */
@@ -344,7 +341,7 @@
         height: 40px;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 5px hsla(240, 40%, 15%, 0.6);
+        box-shadow: 0 0 5px rgba(0,0,0,0.3); /* 輕微陰影 */
       }
       #toolbar-toggle-tab .icon {
         transition: transform 0.3s ease-in-out;
@@ -360,21 +357,21 @@
         position: fixed; /* 保持 fixed 定位來滑入滑出 */
         top: 0;
         left: 0;
-        width: 300px;
+        width: 280px; /* 還原為 280px 寬度 */
         max-width: 80vw;
         height: 100vh;
-        background-color: #474747; /* 來自 .asideMenu */
-        border-right: 5px solid #ff9a15; /* 來自 .asideMenu */
-        padding: 20px; /* 來自 .asideMenu */
+        background-color: #f0f0f0; /* 還原為淺色背景 */
+        border-right: 1px solid #ccc; /* 還原為灰色邊框 */
+        padding: 50px 15px 20px 15px; /* 還原為原始內邊距 */
         box-sizing: border-box;
-        box-shadow: 0 0 5px hsla(240, 40%, 15%, 0.6); /* 來自 .asideMenu */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 還原為原始陰影 */
         display: flex;
         flex-direction: column;
-        align-items: stretch;
-        justify-content: center; /* 讓內容垂直置中 */
+        align-items: stretch; /* 還原為頂部對齊 */
+        justify-content: flex-start; /* 還原為頂部對齊 */
         -webkit-transform: translateX(-100%); /* 預設向左移出畫面外 */
         transform: translateX(-100%);
-        transition: transform 0.5s ease-in-out; /* 工具列的滑動速度 */
+        transition: transform 0.3s ease-in-out; /* 還原為 0.3s 過渡 */
         z-index: 1001;
         overflow-y: auto;
         overflow-x: hidden;
@@ -456,9 +453,6 @@
         max-width: 70vw;
         padding: 50px 5px 5px 5px !important;
         gap: 3px !important;
-      }
-      #app-container.menu-active #toolbar-toggle-tab {
-        /* left: 240px; /* Adjust for smaller toolbar width - Not needed with new positioning */ */
       }
       #toolbar-toggle-tab {
         height: 35px;
