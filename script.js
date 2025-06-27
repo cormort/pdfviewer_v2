@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const goToPageBtn = document.getElementById('go-to-page-btn');
     const pageSlider = document.getElementById('page-slider');
     const resultsDropdown = document.getElementById('resultsDropdown');
-    // Removed: const prevResultBtn = document.getElementById('prev-result-btn');
-    // Removed: const nextResultBtn = document.getElementById('next-result-btn');
+    // Removed: const prevResultBtn = document.getElementById('prev-result-btn'); // 這些按鈕已從 HTML 移除
+    // Removed: const nextResultBtn = document.getElementById('next-result-btn'); // 這些按鈕已從 HTML 移除
     const qualitySelector = document.getElementById('quality-selector');
     const exportPageBtn = document.getElementById('export-page-btn');
     const sharePageBtn = document.getElementById('share-page-btn');
@@ -253,10 +253,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (pdfContainer && appContainer) {
         // Close toolbar if clicking outside on mobile
+        // Now that toolbarToggleTab is inside toolbar, we only need to check if click is outside toolbar.
         pdfContainer.addEventListener('click', (e) => {
             if (window.innerWidth <= 768 && appContainer.classList.contains('menu-active')) {
-                // Check if the click was outside the toolbar AND not on the toggle button itself
-                if (!toolbar.contains(e.target) && e.target !== toolbarToggleTab && !toolbarToggleTab.contains(e.target)) {
+                // Check if the click was outside the toolbar (which now includes the tab)
+                if (!toolbar.contains(e.target)) {
                     appContainer.classList.remove('menu-active');
                 }
             }
@@ -528,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawingCanvas.addEventListener('touchcancel', stopDrawing);
     }
 
-function searchKeyword() {
+    function searchKeyword() {
         if (!searchInputElem || !resultsDropdown) {
             // 如果搜尋輸入框或結果下拉選單不存在，則不執行搜尋
             if (pdfDocs.length > 0) renderPage(currentPage, null);
@@ -709,10 +710,9 @@ function searchKeyword() {
 
         if (hasResults) {
             body.classList.add('results-bar-visible');
-            // No need to update disabled state for prev/next buttons as they are removed
         } else {
             body.classList.remove('results-bar-visible');
-            // No need to update disabled state for prev/next buttons as they are removed
+            // 已移除 prevResultBtn 和 nextResultBtn，所以不再需要禁用它們的邏輯
         }
     }
 
@@ -748,7 +748,7 @@ function searchKeyword() {
         renderPage(currentPage, finalHighlightPattern);
         if (pageToGoInput) pageToGoInput.value = currentPage;
         if (pageSlider) pageSlider.value = currentPage;
-        updateResultsNav(); // Ensure navigation buttons are updated after page change
+        updateResultsNav(); // Ensure navigation is updated after page change
     }
 
     function getPatternFromSearchInput() {
