@@ -373,6 +373,13 @@
           font-size: 0.9em;
       }
     }
+      #bottom-results-bar select#resultsDropdown { /* 更具體地選擇下拉選單 */
+        max-width: calc(100% - 100px); /* 留一些空間給左右按鈕，根據實際按鈕寬度調整 */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        /* display: block; /* 確保它不會被壓縮到太小 */
+    }
     @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
         #toolbar {
             width: 240px; max-width: 70vw;
