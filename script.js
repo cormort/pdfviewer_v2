@@ -29,8 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const goToPageBtn = document.getElementById('go-to-page-btn');
     const pageSlider = document.getElementById('page-slider');
     const resultsDropdown = document.getElementById('resultsDropdown');
-    const prevResultBtn = document.getElementById('prev-result-btn'); // New
-    const nextResultBtn = document.getElementById('next-result-btn'); // New
     const qualitySelector = document.getElementById('quality-selector');
     const exportPageBtn = document.getElementById('export-page-btn');
     const sharePageBtn = document.getElementById('share-page-btn');
@@ -682,9 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hasResults) {
             body.classList.add('results-bar-visible');
             // Find the index of the current page in the sorted searchResults array
-            const currentIndex = searchResults.findIndex(r => r.page === currentPage);
-            prevResultBtn.disabled = currentIndex <= 0;
-            nextResultBtn.disabled = currentIndex >= searchResults.length - 1;
+            const currentIndex = searchResults.findIndex(r => r.page === currentPage);            
         } else {
             body.classList.remove('results-bar-visible');
             prevResultBtn.disabled = true;
