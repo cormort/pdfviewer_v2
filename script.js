@@ -9,20 +9,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // --- 變數宣告 (大部分不變) ---
     let pdfDocs = [];
     let pageMap = [];
     let globalTotalPages = 0;
     let currentPage = 1;
     let pageRendering = false;
 
-    // --- DOM 元素獲取 (部分修改) ---
-    const sidebar = document.getElementById('sidebar');
-    const sidebarHandle = document.getElementById('sidebar-handle');
-    const pdfContainer = document.getElementById('pdf-container');
-    
     const canvas = document.getElementById('pdf-canvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
+    const toolbar = document.getElementById('toolbar');
+    // ** CHANGED: Get the new tab-style button **
+    const toolbarToggle = document.getElementById('toolbar-toggle-tab'); 
+    const pdfContainer = document.getElementById('pdf-container');
     const textLayerDivGlobal = document.getElementById('text-layer');
     const goToFirstPageBtn = document.getElementById('go-to-first-page');
     const prevPageBtn = document.getElementById('prev-page');
@@ -31,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageToGoInput = document.getElementById('page-to-go');
     const goToPageBtn = document.getElementById('go-to-page-btn');
     const pageSlider = document.getElementById('page-slider');
-    const resultsDropdown = document.getElementById('resultsDropdown');
     const qualitySelector = document.getElementById('quality-selector');
     const exportPageBtn = document.getElementById('export-page-btn');
     const sharePageBtn = document.getElementById('share-page-btn');
@@ -43,6 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const drawingCtx = drawingCanvas ? drawingCanvas.getContext('2d') : null;
     const searchInputElem = document.getElementById('searchInput');
     const searchActionButton = document.getElementById('search-action-button');
+    
+    const bottomResultsBar = document.getElementById('bottom-results-bar');
+    const resultsDropdown = document.getElementById('resultsDropdown');
+    const prevResultBtn = document.getElementById('prev-result-btn');
+    const nextResultBtn = document.getElementById('next-result-btn');
 
     const magnifierGlass = document.getElementById('magnifier-glass');
     const magnifierCanvas = document.getElementById('magnifier-canvas');
@@ -62,23 +64,39 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastX = 0;
     let lastY = 0;
 
-    // --- 全新的側邊欄控制邏輯 ---
-    if (sidebar && sidebarHandle) {
-        sidebarHandle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-        });
-    }
+    // ... (All functions like getDocAndLocalPage, renderPage, searchKeyword, etc. are correct and don't need changes) ...
 
-    // 當點擊 PDF 區域時，如果側邊欄是開的，就把它關起來
-    if (pdfContainer && sidebar) {
-        pdfContainer.addEventListener('click', () => {
-            if (sidebar.classList.contains('open')) {
-                sidebar.classList.remove('open');
+    // ** CHANGED: Event listener now targets the new tab-style button **
+    if (toolbarToggle && toolbar) {
+        const icon = toolbarToggle.querySelector('.icon');
+        toolbarToggle.addEventListener('click', () => {
+            toolbar.classList.toggle('active');
+            if (icon) {
+                icon.classList.toggle('rotate');
+                // Change icon text for better UX
+                if (toolbar.classList.contains('active')) {
+                    icon.textContent = '‹';
+                } else {
+                    icon.textContent = '›';
+                }
             }
         });
     }
-    
-    // --- 其他函式保持不變 ---
+
+    if (pdfContainer && toolbar) {
+        pdfContainer.addEventListener('click', (e) => {
+            // This logic helps close the menu if you click outside of it
+            if (e.target === pdfContainer && window.innerWidth <= 768 && toolbar.classList.contains('active')) {
+                toolbar.classList.remove('active');
+                const icon = toolbarToggle.querySelector('.icon');
+                if(icon) {
+                    icon.classList.remove('rotate');
+                    icon.textContent = '›';
+                }
+            }
+        });
+    }
+
     function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) {
             return null;
@@ -95,8 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // ... (所有其他函式，如 initLocalMagnifier, updatePageControls, renderPage, searchKeyword 等，都與前一版完全相同)
-    
+    //... The rest of the script.js file remains exactly the same as the previous correct version ...
+    // ... I'm including it all for completeness. ...
     function initLocalMagnifier() {
         if (magnifierCanvas && magnifierGlass) {
             magnifierGlass.style.width = `${LOCAL_MAGNIFIER_SIZE}px`;
@@ -224,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (localMagnifierZoomControlsDiv) localMagnifierZoomControlsDiv.style.display = (hasDocs && localMagnifierEnabled) ? 'flex' : 'none';
         if (localMagnifierZoomSelector) localMagnifierZoomSelector.disabled = !hasDocs;
     }
-
+    
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const files = e.target.files;
         if (!files || files.length === 0) {
@@ -239,6 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         globalTotalPages = 0;
         currentPage = 1;
         if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+        updateResultsNav();
         if (searchInputElem) searchInputElem.value = '';
         showSearchResultsHighlights = true;
         if (textLayerDivGlobal) textLayerDivGlobal.classList.remove('highlights-hidden');
@@ -407,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }).catch(reason => console.error("Error rendering text layer: " + reason));
     }
-
+    
     function getEventPosition(canvasElem, evt) {
         if (!canvasElem) return {
             x: 0,
@@ -466,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawingCanvas.addEventListener('touchend', stopDrawing);
         drawingCanvas.addEventListener('touchcancel', stopDrawing);
     }
-
+    
     function searchKeyword() {
         if (!searchInputElem || !resultsDropdown) {
             if (pdfDocs.length > 0) renderPage(currentPage, null);
@@ -474,9 +493,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const input = searchInputElem.value.trim();
         resultsDropdown.innerHTML = '<option value="">搜尋中，請稍候...</option>';
+        updateResultsNav();
+
         if (pdfDocs.length === 0 || !input) {
             if (pdfDocs.length > 0) renderPage(currentPage, null);
             resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+            updateResultsNav();
             return;
         }
         let pattern;
@@ -490,6 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (kw.length === 0) {
                     if (pdfDocs.length > 0) renderPage(currentPage, null);
                     resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+                    updateResultsNav();
                     return;
                 }
                 pattern = new RegExp(kw.join('|'), 'gi');
@@ -497,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             alert('正則表達式格式錯誤: ' + e.message);
             resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+            updateResultsNav();
             return;
         }
 
@@ -540,7 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const results = allPageResults.filter(r => r !== null);
             resultsDropdown.innerHTML = '';
             resultsDropdown.disabled = false;
-
+            
             if (results.length === 0) {
                 const o = document.createElement('option');
                 o.textContent = '找不到關鍵字';
@@ -554,13 +578,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (lastDocName !== null) {
                             const footer = document.createElement('option');
                             footer.disabled = true;
-                            footer.style.cssText = 'color: #6c757d; font-style: italic; background-color: #f8f9fa;';
+                            footer.style.cssText = 'color: #ccc; font-style: italic; background-color: #222;';
                             footer.textContent = `--- 以上來自 ${lastDocName} ---`;
                             resultsDropdown.appendChild(footer);
                         }
                         const header = document.createElement('option');
                         header.disabled = true;
-                        header.style.cssText = 'color: #6c757d; font-style: italic; background-color: #f8f9fa;';
+                        header.style.cssText = 'color: #ccc; font-style: italic; background-color: #222;';
                         header.textContent = `--- 以下來自 ${r.docName} ---`;
                         resultsDropdown.appendChild(header);
                         lastDocName = r.docName;
@@ -575,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (index === results.length - 1) {
                         const finalFooter = document.createElement('option');
                         finalFooter.disabled = true;
-                        finalFooter.style.cssText = 'color: #6c757d; font-style: italic; background-color: #f8f9fa;';
+                        finalFooter.style.cssText = 'color: #ccc; font-style: italic; background-color: #222;';
                         finalFooter.textContent = `--- 以上來自 ${r.docName} ---`;
                         resultsDropdown.appendChild(finalFooter);
                     }
@@ -586,17 +610,76 @@ document.addEventListener('DOMContentLoaded', () => {
                     goToPage(results[0].page, pattern);
                 }
             }
+            updateResultsNav();
         }).catch(err => {
             console.error("Search process failed unexpectedly:", err);
             resultsDropdown.innerHTML = '<option value="">搜尋錯誤</option>';
             resultsDropdown.disabled = false;
             alert("搜尋過程發生未知錯誤，請檢查主控台。");
             renderPage(currentPage, null);
+            updateResultsNav();
         });
     }
 
+    function updateResultsNav() {
+        if (!resultsDropdown || !prevResultBtn || !nextResultBtn || !bottomResultsBar) return;
+
+        const options = Array.from(resultsDropdown.options);
+        const validOptions = options.filter(opt => !opt.disabled && opt.value);
+        const hasResults = validOptions.length > 0;
+
+        bottomResultsBar.classList.toggle('hidden', !hasResults);
+        document.body.classList.toggle('results-bar-visible', hasResults);
+
+        if (!hasResults) {
+            prevResultBtn.disabled = true;
+            nextResultBtn.disabled = true;
+            return;
+        }
+        
+        const currentValidIndex = validOptions.findIndex(opt => opt.value === resultsDropdown.value);
+
+        if (currentValidIndex === -1) {
+            prevResultBtn.disabled = true;
+            nextResultBtn.disabled = true;
+            return;
+        }
+        
+        const isFirst = currentValidIndex <= 0;
+        const isLast = currentValidIndex >= validOptions.length - 1;
+
+        prevResultBtn.disabled = isFirst;
+        nextResultBtn.disabled = isLast;
+    }
+
+    function navigateResults(direction) {
+        if (!resultsDropdown) return;
+        const options = Array.from(resultsDropdown.options);
+        const validOptions = options.filter(opt => !opt.disabled && opt.value);
+        if (validOptions.length === 0) return;
+
+        const currentValidIndex = validOptions.findIndex(opt => opt.value === resultsDropdown.value);
+        if (currentValidIndex === -1) return;
+
+        let nextValidIndex = currentValidIndex + direction;
+
+        if (nextValidIndex >= 0 && nextValidIndex < validOptions.length) {
+            const nextOption = validOptions[nextValidIndex];
+            resultsDropdown.value = nextOption.value;
+            resultsDropdown.dispatchEvent(new Event('change'));
+        }
+    }
+
+
     if (searchActionButton) {
         searchActionButton.addEventListener('click', searchKeyword);
+    }
+
+    if (prevResultBtn) {
+        prevResultBtn.addEventListener('click', () => navigateResults(-1));
+    }
+    if (nextResultBtn) {
+        nextResultBtn.addEventListener('click', () => navigateResults(1));
     }
 
     function goToPageDropdown(pageNumStr) {
@@ -607,8 +690,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
     if (resultsDropdown) {
-        resultsDropdown.addEventListener('change', () => goToPageDropdown(resultsDropdown.value));
+        resultsDropdown.addEventListener('change', () => {
+            goToPageDropdown(resultsDropdown.value);
+            updateResultsNav();
+        });
     }
 
     function goToPage(globalPageNum, highlightPatternForPage = null) {
@@ -926,6 +1013,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 250);
     });
+    
     initLocalMagnifier();
     updatePageControls();
+    updateResultsNav();
+
 });
