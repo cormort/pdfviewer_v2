@@ -1090,64 +1090,107 @@ if (sharePageBtn) {
     updatePageControls();
 // --- START: 滑動換頁功能 (改良版) ---
 
-    // 將變數移至更高層級，確保它們在事件監聽器中可用
-    let touchStartX = 0;
-    let touchStartY = 0;
-    const MIN_SWIPE_DISTANCE_X = 50; // 水平滑動的最小距離閾值
-    const MAX_SWIPE_DISTANCE_Y = 60; // 垂直滑動的最大容忍距離
+// 將變數移至更高層級，確保它們在事件監聽器中可用
+let touchStartX = 0;
+let touchStartY = 0;
+let isSwiping = false; // 新增一個旗標來追蹤是否正在進行潛在的滑動
+const MIN_SWIPE_DISTANCE_X = 50; // 水平滑動的最小距離閾值
+const MAX_SWIPE_DISTANCE_Y = 60; // 垂直滑動的最大容忍距離
 
-    // 確保在 DOM 完全載入後再附加事件監聽器
-    if (pdfContainer) {
-        pdfContainer.addEventListener('touchstart', (e) => {
-            // 如果任何工具啟用中，或者不是單指觸控，則忽略此次觸摸開始事件
-            if (highlighterEnabled || textSelectionModeActive || localMagnifierEnabled || e.touches.length !== 1) {
-                touchStartX = 0; // 重置起始點，防止後續誤判
-                return;
-            }
-            // 記錄單指觸控的起始點
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            console.log(`Touch Start: X=${touchStartX}, Y=${touchStartY}`); // 偵錯日誌
-        }, { passive: true });
+// 確保在 DOM 完全載入後再附加事件監聽器
+if (pdfContainer) {
+    pdfContainer.addEventListener('touchstart', (e) => {
+        // 如果任何工具啟用中，或者不是單指觸控，則忽略此次觸摸開始事件
+        if (highlighterEnabled || textSelectionModeActive || localMagnifierEnabled || e.touches.length !== 1) {
+            touchStartX = 0; // 重置起始點，防止後續誤判
+            isSwiping = false; // 確保重置滑動狀態
+            return;
+        }
 
-        pdfContainer.addEventListener('touchend', (e) => {
-            // 如果起始點未被記錄（例如因為多指或工具啟用），則直接返回
-            if (touchStartX === 0 || e.changedTouches.length !== 1) {
-                return;
-            }
+        // 記錄單指觸控的起始點
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        isSwiping = true; // 標記為可能正在滑動
+        console.log(`[SWIPE] Touch Start: X=${touchStartX}, Y=${touchStartY}`); // 偵錯日誌
+    }, { passive: false }); // 將 touchstart 設置為 passive: false
 
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
-            console.log(`Touch End: X=${touchEndX}, Y=${touchEndY}`); // 偵錯日誌
+    pdfContainer.addEventListener('touchmove', (e) => {
+        // 如果不在滑動狀態，或者多指觸控，則忽略
+        if (!isSwiping || e.touches.length !== 1) {
+            return;
+        }
 
-            const diffX = touchEndX - touchStartX;
-            const diffY = touchEndY - touchStartY;
-            
-            console.log(`Swipe Diff: dX=${diffX}, dY=${diffY}`); // 偵錯日誌
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const diffX = currentX - touchStartX;
+        const diffY = currentY - touchStartY;
 
-            // 條件判斷：
-            // 1. 水平滑動距離必須大於閾值
-            // 2. 垂直滑動距離必須小於容忍值 (這是為了區分滾動和滑動)
-            if (Math.abs(diffX) > MIN_SWIPE_DISTANCE_X && Math.abs(diffY) < MAX_SWIPE_DISTANCE_Y) {
-                if (diffX < 0) {
-                    // 向左滑動 -> 下一頁
-                    console.log("Action: Triggering Next Page"); // 偵錯日誌
-                    nextPageBtn.click(); // 直接使用按鈕的 click 事件
-                } else {
-                    // 向右滑動 -> 上一頁
-                    console.log("Action: Triggering Previous Page"); // 偵錯日誌
-                    prevPageBtn.click(); // 直接使用按鈕的 click 事件
-                }
-            } else {
-                console.log("Swipe gesture did not meet criteria."); // 偵錯日誌
-            }
+        // 如果水平移動距離開始顯著大於垂直移動距離，則判斷為水平滑動意圖
+        // 在這個階段阻止預設行為，以防止頁面滾動
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) { // 設置一個較小的閾值，提前判斷
+            e.preventDefault(); // 阻止瀏覽器預設的滾動行為
+            console.log(`[SWIPE] Touch Move (Prevented Default): dX=${diffX}, dY=${diffY}`); // 偵錯日誌
+        } else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) {
+            // 如果垂直移動距離顯著大於水平移動，則可能是滾動，不阻止預設行為
+            // 並取消滑動意圖，讓瀏覽器處理滾動
+            isSwiping = false;
+            touchStartX = 0; // 重置起始點，避免 touchend 誤觸
+            console.log(`[SWIPE] Touch Move (Likely Scroll, Not Preventing Default): dX=${diffX}, dY=${diffY}`); // 偵錯日誌
+            return;
+        }
+    }, { passive: false }); // 將 touchmove 設置為 passive: false
 
-            // 重置起始點，為下一次滑動做準備
+    pdfContainer.addEventListener('touchend', (e) => {
+        // 如果不在滑動狀態，或者不是單指觸控結束，則直接返回
+        if (!isSwiping || e.changedTouches.length !== 1) {
+            isSwiping = false; // 確保重置
             touchStartX = 0;
             touchStartY = 0;
-        });
-    } else {
-        console.error("PDF Container not found for swipe gesture attachment.");
-    }
-    // --- END: 滑動換頁功能 (改良版) ---
+            return;
+        }
+
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+        console.log(`[SWIPE] Touch End: X=${touchEndX}, Y=${touchEndY}`); // 偵錯日誌
+
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+
+        console.log(`[SWIPE] Swipe Diff: dX=${diffX}, dY=${diffY}`); // 偵錯日誌
+
+        // 最終判斷滑動條件：
+        // 1. 水平滑動距離必須大於閾值
+        // 2. 垂直滑動距離必須小於容忍值 (這是為了區分滾動和滑動)
+        if (Math.abs(diffX) > MIN_SWIPE_DISTANCE_X && Math.abs(diffY) < MAX_SWIPE_DISTANCE_Y) {
+            if (diffX < 0) {
+                // 向左滑動 -> 下一頁
+                console.log("[SWIPE] Action: Triggering Next Page"); // 偵錯日誌
+                nextPageBtn.click(); // 直接使用按鈕的 click 事件
+            } else {
+                // 向右滑動 -> 上一頁
+                console.log("[SWIPE] Action: Triggering Previous Page"); // 偵錯日誌
+                prevPageBtn.click(); // 直接使用按鈕的 click 事件
+            }
+        } else {
+            console.log("[SWIPE] Swipe gesture did not meet final criteria."); // 偵錯日誌
+        }
+
+        // 重置起始點和滑動狀態，為下一次滑動做準備
+        touchStartX = 0;
+        touchStartY = 0;
+        isSwiping = false;
+    });
+
+    // 處理 touchcancel 事件，以防用戶在滑動中途取消
+    pdfContainer.addEventListener('touchcancel', () => {
+        console.log("[SWIPE] Touch Cancelled.");
+        touchStartX = 0;
+        touchStartY = 0;
+        isSwiping = false;
+    });
+
+} else {
+    console.error("PDF Container not found for swipe gesture attachment.");
+}
+// --- END: 滑動換頁功能 (改良版) ---
 });
