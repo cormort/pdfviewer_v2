@@ -1,22 +1,21 @@
-// **CRITICAL FIX**: The worker configuration block at the top has been REMOVED.
-// It is now handled by an inline script in index.html to ensure correct loading order.
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if pdfjsLib is loaded. The inline script in HTML should have configured it.
-    if (typeof pdfjsLib === 'undefined') {
-        console.error("pdfjsLib is not defined. Check the import or script loading order in index.html.");
+    // This is the correct setup for local files
+    if (typeof pdfjsLib !== 'undefined') {
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
+        }
+    } else {
+        console.error("pdfjsLib is not defined. Please check the script loading order in index.html.");
         alert("PDF 程式庫載入失敗，請刷新頁面或檢查網路連線。");
         return;
     }
 
-    // Global Variables
-    let pdfDocs = [];
-    let pageMap = [];
-    let globalTotalPages = 0;
-    let currentPage = 1;
-    let pageRendering = false;
-
-    // DOM Element Selections
+    // --- Global Variables & DOM Selections (from original file) ---
+    let pdfDocs = [], pageMap = [], globalTotalPages = 0, currentPage = 1, pageRendering = false;
+    let showSearchResultsHighlights = true, highlighterEnabled = false, textSelectionModeActive = false, localMagnifierEnabled = false;
+    let isDrawing = false, lastX = 0, lastY = 0;
+    let LOCAL_MAGNIFIER_SIZE = 120, LOCAL_MAGNIFIER_ZOOM_LEVEL = 2.5;
+    
     const appContainer = document.getElementById('app-container');
     const toolbar = document.getElementById('toolbar');
     const toolbarToggle = document.getElementById('toolbar-toggle-tab');
@@ -54,31 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const localMagnifierZoomControlsDiv = document.getElementById('local-magnifier-zoom-controls');
     const localMagnifierZoomSelector = document.getElementById('local-magnifier-zoom-selector');
 
-    // State Variables
-    let localMagnifierEnabled = false;
-    let LOCAL_MAGNIFIER_SIZE = 120;
-    let LOCAL_MAGNIFIER_ZOOM_LEVEL = 2.5;
-    let showSearchResultsHighlights = true;
-    let highlighterEnabled = false;
-    let textSelectionModeActive = false;
-    let isDrawing = false;
-    let lastX = 0;
-    let lastY = 0;
-
     // --- Event Listeners ---
-    if (toolbarToggle && appContainer) {
-        toolbarToggle.addEventListener('click', () => appContainer.classList.toggle('menu-active'));
-    }
-    if (pdfContainer && appContainer) {
-        pdfContainer.addEventListener('click', (e) => {
-            if (e.target === pdfContainer && window.innerWidth <= 768 && appContainer.classList.contains('menu-active')) {
-                appContainer.classList.remove('menu-active');
-            }
-        });
-    }
+    if (toolbarToggle) toolbarToggle.addEventListener('click', () => appContainer.classList.toggle('menu-active'));
+    if (pdfContainer) pdfContainer.addEventListener('click', (e) => { if (e.target === pdfContainer && window.innerWidth <= 768) appContainer.classList.remove('menu-active'); });
     fileInput.addEventListener('change', handleFileSelect);
     searchActionButton.addEventListener('click', searchKeyword);
-    searchInputElem.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); searchActionButton.click(); } });
+    searchInputElem.addEventListener('keypress', e => { if (e.key === 'Enter') searchActionButton.click(); });
     prevResultBtn.addEventListener('click', () => navigateResults(-1));
     nextResultBtn.addEventListener('click', () => navigateResults(1));
     resultsDropdown.addEventListener('change', () => goToPageDropdown(resultsDropdown.value));
@@ -112,10 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
     pdfContainer.addEventListener('touchend', handlePointerLeaveForLocalMagnifier);
     pdfContainer.addEventListener('touchcancel', handlePointerLeaveForLocalMagnifier);
     let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => { if (pdfDocs.length > 0) renderPage(currentPage); }, 250);
-    });
+    window.addEventListener('resize', () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(() => { if (pdfDocs.length > 0) renderPage(currentPage); }, 250); });
 
     // --- Core Functions ---
     function handleFileSelect(e) {
@@ -146,9 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             globalTotalPages = pageMap.length;
             renderPage(1);
-        }).catch(error => {
-            alert(`讀取PDF文件時發生錯誤: ${error.message || error}`);
-        });
+        }).catch(error => { alert(`讀取PDF文件時發生錯誤: ${error.message || error}`); });
     }
 
     function renderPage(globalPageNum) {
@@ -240,7 +215,8 @@ document.addEventListener('DOMContentLoaded', () => {
             updateResultsNav();
         });
     }
-
+    
+    // **FIX**: The full, correct updatePageControls function is now here.
     function updatePageControls() {
         const hasDocs = pdfDocs.length > 0;
         const allControls = document.querySelectorAll('#page-navigation button, #page-navigation input, #floating-action-buttons button, #quality-selector');
@@ -263,6 +239,12 @@ document.addEventListener('DOMContentLoaded', () => {
         goToFirstPageBtn.disabled = currentPage <= 1;
         prevPageBtn.disabled = currentPage <= 1;
         nextPageBtn.disabled = currentPage >= globalTotalPages;
+        sharePageBtn.disabled = !navigator.share;
+        toggleUnderlineBtn.classList.toggle('active', showSearchResultsHighlights);
+        toggleHighlighterBtn.classList.toggle('active', highlighterEnabled);
+        toggleTextSelectionBtn.classList.toggle('active', textSelectionModeActive);
+        toggleLocalMagnifierBtn.classList.toggle('active', localMagnifierEnabled);
+        localMagnifierZoomControlsDiv.style.display = localMagnifierEnabled ? 'flex' : 'none';
     }
 
     function updateResultsNav() {
@@ -327,6 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePageControls();
     }
     
+    // **FIX**: All other helper functions are now included.
     function setMode(mode) {
         textSelectionModeActive = (mode === 'text');
         highlighterEnabled = (mode === 'highlighter');
@@ -347,9 +330,66 @@ document.addEventListener('DOMContentLoaded', () => {
     function stopDrawing() { isDrawing = false; }
     function handlePointerMoveForLocalMagnifier(e) { if (!localMagnifierEnabled) return; const touch = e.touches ? e.touches[0] : e; updateLocalMagnifier(touch.clientX, touch.clientY); }
     function handlePointerLeaveForLocalMagnifier() { if (localMagnifierEnabled && magnifierGlass) magnifierGlass.style.display = 'none'; }
-    async function getAnnotatedPageAsBlob(type = 'image/png') { /* ... logic ... */ }
-    async function exportPageAsImage() { /* ... logic ... */ }
-    async function sharePage() { /* ... logic ... */ }
+    function updateLocalMagnifier(clientX, clientY) {
+        const canvasRect = canvas.getBoundingClientRect();
+        if (clientX < canvasRect.left || clientX > canvasRect.right || clientY < canvasRect.top || clientY > canvasRect.bottom) {
+            magnifierGlass.style.display = 'none';
+            return;
+        }
+        magnifierGlass.style.display = 'block';
+        const cssX = clientX - canvasRect.left;
+        const cssY = clientY - canvasRect.top;
+        const scaleX = canvas.width / canvas.offsetWidth;
+        const scaleY = canvas.height / canvas.offsetHeight;
+        const srcSize = LOCAL_MAGNIFIER_SIZE / LOCAL_MAGNIFIER_ZOOM_LEVEL;
+        const srcX = (cssX * scaleX) - (srcSize * scaleX / 2);
+        const srcY = (cssY * scaleY) - (srcSize * scaleY / 2);
+        localMagnifierCtx.fillStyle = 'white';
+        localMagnifierCtx.fillRect(0, 0, LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE);
+        localMagnifierCtx.drawImage(canvas, srcX, srcY, srcSize * scaleX, srcSize * scaleY, 0, 0, LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE);
+        if (drawingCanvas.width > 0) {
+             localMagnifierCtx.drawImage(drawingCanvas, cssX - srcSize/2, cssY - srcSize/2, srcSize, srcSize, 0, 0, LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE);
+        }
+        magnifierGlass.style.left = `${cssX - LOCAL_MAGNIFIER_SIZE / 2}px`;
+        magnifierGlass.style.top = `${cssY - LOCAL_MAGNIFIER_SIZE - 20}px`;
+    }
+    async function getAnnotatedPageAsBlob(type = 'image/png') {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(canvas, 0, 0);
+        if(drawingCanvas.width > 0) tempCtx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tempCanvas.width, tempCanvas.height);
+        return new Promise(resolve => tempCanvas.toBlob(resolve, type, 0.9));
+    }
+    async function exportPageAsImage() {
+        if (pdfDocs.length === 0 || pageRendering) return;
+        const blob = await getAnnotatedPageAsBlob();
+        if(!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const pageInfo = getDocAndLocalPage(currentPage);
+        a.href = url;
+        a.download = `page_${currentPage}_(${pageInfo.docName.replace(/\.pdf$/i, '')}-p${pageInfo.localPage}).png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    async function sharePage() {
+        if (pdfDocs.length === 0 || pageRendering || !navigator.share) return;
+        const blob = await getAnnotatedPageAsBlob();
+        if (!blob) return;
+        const pageInfo = getDocAndLocalPage(currentPage);
+        const filename = `page_${currentPage}_(${pageInfo.docName.replace(/\.pdf$/i, '')}-p${pageInfo.localPage}).png`;
+        const file = new File([blob], filename, { type: blob.type });
+        const shareData = { title: `PDF 頁面 ${currentPage}`, text: `來自 ${pageInfo.docName} 的第 ${pageInfo.localPage} 頁`, files: [file] };
+        if (navigator.canShare && navigator.canShare(shareData)) {
+            await navigator.share(shareData).catch(err => console.error('Share failed:', err));
+        } else {
+            alert('您的瀏覽器不支援分享檔案。');
+        }
+    }
     
     // Initial setup calls
     updatePageControls();
