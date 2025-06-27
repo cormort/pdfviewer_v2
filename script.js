@@ -917,82 +917,88 @@ document.addEventListener('DOMContentLoaded', () => {
         drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     });
     
-    // [修正] 替換為修正後的分享按鈕邏輯
-    if (sharePageBtn) {
-        sharePageBtn.addEventListener('click', async () => {
-            if (pdfDocs.length === 0 || !canvas) {
-                alert('請先載入PDF檔案');
-                return;
-            }
-            if (pageRendering) {
-                alert('頁面仍在渲染中，請稍候');
-                return;
-            }
-            const wasCanvasHidden = canvas.style.visibility === 'hidden';
-            if (wasCanvasHidden) canvas.style.visibility = 'visible';
+// --- 請貼上這段修正後的程式碼 ---
+if (sharePageBtn) {
+    sharePageBtn.addEventListener('click', async () => {
+        if (pdfDocs.length === 0 || !canvas) {
+            alert('請先載入PDF檔案');
+            return;
+        }
+        if (pageRendering) {
+            alert('頁面仍在渲染中，請稍候');
+            return;
+        }
+        const wasCanvasHidden = canvas.style.visibility === 'hidden';
+        if (wasCanvasHidden) canvas.style.visibility = 'visible';
 
-            if (!navigator.share) {
-                alert('您的瀏覽器不支援Web Share API');
+        if (!navigator.share) {
+            alert('您的瀏覽器不支援Web Share API');
+            if (wasCanvasHidden) canvas.style.visibility = 'hidden';
+            return;
+        }
+
+        // try...catch...finally 區塊現在完整且正確地包在函式內部
+        try {
+            const tc = document.createElement('canvas');
+            tc.width = canvas.width;
+            tc.height = canvas.height;
+            const tctx = tc.getContext('2d');
+            if (!tctx) {
+                alert('無法獲取分享畫布的上下文');
                 if (wasCanvasHidden) canvas.style.visibility = 'hidden';
                 return;
             }
+            tctx.drawImage(canvas, 0, 0);
+            if (drawingCanvas && drawingCtx) {
+                tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height);
+            }
+            
+            // 修正：將 canvas 轉換為 Blob 物件
+            const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/png'));
 
-            try {
-                const tc = document.createElement('canvas');
-                tc.width = canvas.width;
-                tc.height = canvas.height;
-                const tctx = tc.getContext('2d');
-                if (!tctx) {
-                    alert('無法獲取分享畫布的上下文');
-                    if (wasCanvasHidden) canvas.style.visibility = 'hidden';
-                    return;
-                }
-                tctx.drawImage(canvas, 0, 0);
-                if (drawingCanvas && drawingCtx) {
-                    tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height);
-                }
-                
-                const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/png'));
+            if (!blob) {
+                throw new Error('無法從畫布建立圖片資料。');
+            }
 
-                if (!blob) {
-                    throw new Error('無法從畫布建立圖片資料。');
-                }
+            const pageInfo = getDocAndLocalPage(currentPage);
+            const docNamePart = pageInfo ? pageInfo.docName.replace(/\.pdf$/i, '') : 'document';
+            const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated.png`;
+            
+            // 修正：使用上面產生的 blob 來建立檔案
+            const f = new File([blob], fn, { type: 'image/png' });
 
-                const pageInfo = getDocAndLocalPage(currentPage);
-                const docNamePart = pageInfo ? pageInfo.docName.replace(/\.pdf$/i, '') : 'document';
-                const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated.png`;
-                
-                const f = new File([blob], fn, { type: 'image/png' });
+            const sd = {
+                title: `PDF全域頁面 ${currentPage}`,
+                text: `來自 ${docNamePart} 的第 ${pageInfo.localPage} 頁 (PDF工具)`,
+                files: [f]
+            };
 
-                const sd = {
-                    title: `PDF全域頁面 ${currentPage}`,
-                    text: `來自 ${docNamePart} 的第 ${pageInfo.localPage} 頁 (PDF工具)`,
-                    files: [f]
-                };
-
-                if (navigator.canShare && navigator.canShare({ files: [f] })) {
-                    await navigator.share(sd);
+            if (navigator.canShare && navigator.canShare({ files: [f] })) {
+                await navigator.share(sd);
+            } else {
+                console.warn('不支援分享檔案，將嘗試只分享文字');
+                const fsd = { title: sd.title, text: sd.text };
+                if (fsd.text && navigator.canShare && navigator.canShare(fsd)) {
+                    await navigator.share(fsd);
                 } else {
-                    console.warn('不支援分享檔案，將嘗試只分享文字');
-                    const fsd = { title: sd.title, text: sd.text };
-                    if (fsd.text && navigator.canShare && navigator.canShare(fsd)) {
-                        await navigator.share(fsd);
-                    } else {
-                        alert('您的瀏覽器不支援分享檔案或文字。');
-                    }
-                }
-            } catch (er) {
-                console.error("Share err:", er);
-                if (er.name !== 'AbortError') {
-                    alert("分享失敗: " + er.message);
-                }
-            } finally {
-                if (wasCanvasHidden) {
-                    canvas.style.visibility = 'hidden';
+                    alert('您的瀏覽器不支援分享檔案或文字。');
                 }
             }
-        });
-    }
+        } catch (er) {
+            console.error("Share err:", er);
+            // 如果使用者只是取消分享，不要跳出錯誤訊息
+            if (er.name !== 'AbortError') {
+                alert("分享失敗: " + er.message);
+            }
+        } finally {
+            // 無論成功或失敗，都確保恢復 canvas 的可見性
+            if (wasCanvasHidden) {
+                canvas.style.visibility = 'hidden';
+            }
+        }
+    });
+}
+// --- 修正程式碼到此結束 ---
 
 
     if (toggleLocalMagnifierBtn) {
