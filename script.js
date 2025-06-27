@@ -528,150 +528,178 @@ document.addEventListener('DOMContentLoaded', () => {
         drawingCanvas.addEventListener('touchcancel', stopDrawing);
     }
 
-    function searchKeyword() {
+function searchKeyword() {
         if (!searchInputElem || !resultsDropdown) {
+            // 如果搜尋輸入框或結果下拉選單不存在，則不執行搜尋
             if (pdfDocs.length > 0) renderPage(currentPage, null);
-            updateResultsNav(); // Update nav even if no search input
+            updateResultsNav(); // 更新底部導航狀態
             return;
         }
+
         const input = searchInputElem.value.trim();
         resultsDropdown.innerHTML = '<option value="">搜尋中，請稍候...</option>';
-        searchResults = []; // Clear previous search results
+        searchResults = []; // 清空之前的搜尋結果
 
         if (pdfDocs.length === 0 || !input) {
+            // 如果沒有載入 PDF 文件或搜尋輸入為空，則重置顯示
             if (pdfDocs.length > 0) renderPage(currentPage, null);
             resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-            updateResultsNav(); // Update nav if no input
+            updateResultsNav(); // 更新底部導航狀態
             return;
         }
+
         let pattern;
         try {
+            // 判斷是否為正則表達式（以 / 開頭和結尾）
             if (input.startsWith('/') && input.endsWith('/')) {
-                const ls = input.lastIndexOf('/');
-                pattern = new RegExp(input.slice(1, ls), input.slice(ls + 1));
+                const lastSlashIndex = input.lastIndexOf('/');
+                pattern = new RegExp(input.slice(1, lastSlashIndex), input.slice(lastSlashIndex + 1));
             } else {
-                const esc = input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const kw = esc.split(/\s+|\|/).filter(k => k.length > 0);
-                if (kw.length === 0) {
+                // 將特殊字符轉義，並用空格或 | 分割關鍵字，然後組合成正則表達式
+                const escapedInput = input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const keywords = escapedInput.split(/\s+|\|/).filter(k => k.length > 0);
+                if (keywords.length === 0) {
                     if (pdfDocs.length > 0) renderPage(currentPage, null);
                     resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-                    updateResultsNav(); // Update nav if keywords are empty
+                    updateResultsNav(); // 更新底部導航狀態
                     return;
                 }
-                pattern = new RegExp(kw.join('|'), 'gi');
+                pattern = new RegExp(keywords.join('|'), 'gi'); // 全局不區分大小寫搜尋
             }
         } catch (e) {
             alert('正則表達式格式錯誤: ' + e.message);
+            console.error('正則表達式錯誤:', e);
             resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-            updateResultsNav(); // Update nav on error
+            updateResultsNav(); // 更新底部導航狀態
             return;
         }
 
         let promises = [];
         let globalPageOffset = 0;
 
+        // 遍歷所有載入的 PDF 文件和其頁面進行搜尋
         pdfDocs.forEach((doc, docIndex) => {
             const docName = pageMap.find(p => p.docIndex === docIndex)?.docName || `文件 ${docIndex + 1}`;
             for (let i = 1; i <= doc.numPages; i++) {
                 const currentGlobalPageForSearch = globalPageOffset + i;
                 promises.push(
                     doc.getPage(i).then(p => {
-                        return p.getTextContent().then(tc => {
-                            const pt = tc.items.map(it => it.str).join('');
-                            pattern.lastIndex = 0;
-                            if (pattern.test(pt)) {
-                                pattern.lastIndex = 0;
-                                const mr = pattern.exec(pt);
-                                let fms = '找到匹配';
-                                if (mr) {
-                                    const mt = mr[0];
-                                    const mi = mr.index;
-                                    const cl = 20;
-                                    const s = Math.max(0, mi - cl);
-                                    const ed = Math.min(pt.length, mi + mt.length + cl);
-                                    fms = (s > 0 ? "..." : "") + pt.substring(s, mi).replace(/</g, "&lt;") + '<span class="wavy-underline">' + mt.replace(/</g, "&lt;") + '</span>' + pt.substring(mi + mt.length, ed).replace(/</g, "&lt;") + (ed < pt.length ? "..." : "");
+                        return p.getTextContent().then(textContent => {
+                            const pageText = textContent.items.map(item => item.str).join('');
+                            pattern.lastIndex = 0; // 重置正則表達式的 lastIndex
+                            if (pattern.test(pageText)) {
+                                pattern.lastIndex = 0; // 再次重置以便正確執行 exec
+                                const matchResult = pattern.exec(pageText);
+                                let foundMatchSummary = '找到匹配';
+
+                                if (matchResult) {
+                                    const matchedText = matchResult[0];
+                                    const matchIndex = matchResult.index;
+                                    const contextLength = 20; // 截取上下文的長度
+                                    const startIndex = Math.max(0, matchIndex - contextLength);
+                                    const endIndex = Math.min(pageText.length, matchIndex + matchedText.length + contextLength);
+
+                                    // 構造帶有高亮效果的摘要，並對 HTML 特殊字符進行轉義
+                                    const preMatch = pageText.substring(startIndex, matchIndex).replace(/</g, "&lt;");
+                                    const highlightedMatch = matchedText.replace(/</g, "&lt;");
+                                    const postMatch = pageText.substring(matchIndex + matchedText.length, endIndex).replace(/</g, "&lt;");
+
+                                    foundMatchSummary =
+                                        (startIndex > 0 ? "..." : "") +
+                                        preMatch +
+                                        `<span class="wavy-underline">${highlightedMatch}</span>` +
+                                        postMatch +
+                                        (endIndex < pageText.length ? "..." : "");
                                 }
                                 return {
                                     page: currentGlobalPageForSearch,
-                                    summary: fms,
+                                    summary: foundMatchSummary,
                                     docName: docName
                                 };
                             }
-                            return null;
+                            return null; // 該頁面沒有找到匹配
                         });
                     }).catch(err => {
                         console.warn(`Error processing page for search: Doc ${docName}, Page ${i}`, err);
-                        return null;
+                        return null; // 頁面處理失敗
                     })
                 );
             }
             globalPageOffset += doc.numPages;
         });
 
+        // 等待所有頁面搜尋完成
         Promise.all(promises).then((allPageResults) => {
-            searchResults = allPageResults.filter(r => r !== null); // Store filtered results
-            resultsDropdown.innerHTML = '';
+            searchResults = allPageResults.filter(r => r !== null); // 過濾掉沒有結果的頁面
+            resultsDropdown.innerHTML = ''; // 清空下拉選單內容
 
             if (searchResults.length === 0) {
-                const o = document.createElement('option');
-                o.textContent = '找不到關鍵字';
-                resultsDropdown.appendChild(o);
-                renderPage(currentPage, null);
+                const option = document.createElement('option');
+                option.textContent = '找不到關鍵字';
+                resultsDropdown.appendChild(option);
+                renderPage(currentPage, null); // 顯示當前頁面，但不高亮
             } else {
-                searchResults.sort((a, b) => a.page - b.page);
+                searchResults.sort((a, b) => a.page - b.page); // 根據頁碼排序結果
 
-                let lastDocName = null;
+                let lastDocumentName = null;
 
-                searchResults.forEach((r, index) => {
-                    if (r.docName !== lastDocName) {
-                        if (lastDocName !== null) {
-                            const footer = document.createElement('option');
-                            footer.disabled = true;
-                            footer.style.color = '#6c757d';
-                            footer.style.fontStyle = 'italic';
-                            footer.style.backgroundColor = '#f8f9fa';
-                            footer.textContent = `--- 以上來自 ${lastDocName} ---`;
-                            resultsDropdown.appendChild(footer);
+                // 將搜尋結果分組顯示，並加入文件分隔符
+                searchResults.forEach((result, index) => {
+                    if (result.docName !== lastDocumentName) {
+                        if (lastDocumentName !== null) {
+                            const footerOption = document.createElement('option');
+                            footerOption.disabled = true;
+                            footerOption.style.color = '#6c757d';
+                            footerOption.style.fontStyle = 'italic';
+                            footerOption.style.backgroundColor = '#f8f9fa';
+                            footerOption.textContent = `--- 以上來自 ${lastDocumentName} ---`;
+                            resultsDropdown.appendChild(footerOption);
                         }
-                        const header = document.createElement('option');
-                        header.disabled = true;
-                        header.style.color = '#6c757d';
-                        header.style.fontStyle = 'italic';
-                        header.style.backgroundColor = '#f8f9fa';
-                        header.textContent = `--- 以下來自 ${r.docName} ---`;
-                        resultsDropdown.appendChild(header);
-                        lastDocName = r.docName;
+                        const headerOption = document.createElement('option');
+                        headerOption.disabled = true;
+                        headerOption.style.color = '#6c757d';
+                        headerOption.style.fontStyle = 'italic';
+                        headerOption.style.backgroundColor = '#f8f9fa';
+                        headerOption.textContent = `--- 以下來自 ${result.docName} ---`;
+                        resultsDropdown.appendChild(headerOption);
+                        lastDocumentName = result.docName;
                     }
 
-                    const o = document.createElement('option');
-                    o.value = r.page;
-                    o.innerHTML = `第 ${r.page} 頁: ${r.summary}`;
-                    o.title = `檔案: ${r.docName}`;
-                    resultsDropdown.appendChild(o);
+                    const resultOption = document.createElement('option');
+                    resultOption.value = result.page;
+                    resultOption.innerHTML = `第 ${result.page} 頁: ${result.summary}`;
+                    resultOption.title = `檔案: ${result.docName}`; // 鼠標懸停提示
+                    resultsDropdown.appendChild(resultOption);
 
                     if (index === searchResults.length - 1) {
-                        const finalFooter = document.createElement('option');
-                        finalFooter.disabled = true;
-                        finalFooter.style.color = '#6c757d';
-                        finalFooter.style.fontStyle = 'italic';
-                        finalFooter.style.backgroundColor = '#f8f9fa';
-                        finalFooter.textContent = `--- 以上來自 ${r.docName} ---`;
-                        resultsDropdown.appendChild(finalFooter);
+                        const finalFooterOption = document.createElement('option');
+                        finalFooterOption.disabled = true;
+                        finalFooterOption.style.color = '#6c757d';
+                        finalFooterOption.style.fontStyle = 'italic';
+                        finalFooterOption.style.backgroundColor = '#f8f9fa';
+                        finalFooterOption.textContent = `--- 以上來自 ${result.docName} ---`;
+                        resultsDropdown.appendChild(finalFooterOption);
                     }
                 });
 
                 if (searchResults.length > 0) {
-                    resultsDropdown.value = searchResults[0].page;
-                    goToPage(searchResults[0].page, pattern);
+                    resultsDropdown.value = searchResults[0].page; // 預設選擇第一個結果
+                    goToPage(searchResults[0].page, pattern); // 跳轉到第一個結果頁面
                 }
             }
-            updateResultsNav(); // Update navigation buttons after search
+            updateResultsNav(); // 更新底部結果導航的顯示狀態
+
+            // 在手機模式下，如果左側工具列是開啟的，則自動收起它
+            if (window.innerWidth <= 768 && appContainer.classList.contains('menu-active')) {
+                appContainer.classList.remove('menu-active');
+            }
+
         }).catch(err => {
-            console.error("Search process failed unexpectedly:", err);
+            console.error("搜尋過程發生意外失敗:", err); // 更具體的錯誤日誌
             resultsDropdown.innerHTML = '<option value="">搜尋錯誤</option>';
             alert("搜尋過程發生未知錯誤，請檢查主控台。");
-            renderPage(currentPage, null);
-            updateResultsNav(); // Update navigation buttons on error
+            renderPage(currentPage, null); // 顯示當前頁面，但不高亮
+            updateResultsNav(); // 更新底部導航狀態
         });
     }
 
