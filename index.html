@@ -21,6 +21,8 @@
       flex-direction: column;
       height: 100%;
       width: 100%;
+      /* [修正] 新增 position: relative，這是讓手機版頁籤正確定位的關鍵 */
+      position: relative; 
     }
 
     /* toolbar-toggle is deprecated, but keep for compatibility if used elsewhere */
@@ -38,22 +40,27 @@
       font-size: 1.2em;
       border-radius: 4px;
     }
+    
+    /* [修正] 預設隱藏手機版頁籤，只在手機模式下顯示 */
+    #toolbar-toggle-tab {
+        display: none;
+    }
 
     #toolbar {
       padding: 10px;
-      background-color: #f8f9fa; /* 還原為淺色背景 */
+      background-color: #f8f9fa;
       border-bottom: 1px solid #dee2e6;
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      align-items: center; /* 保持內容頂部對齊 */
+      align-items: center;
       flex-shrink: 0;
     }
     #toolbar h2 {
       margin: 0 10px 0 0;
       font-size: 1.2em;
       white-space: nowrap;
-      color: initial; /* 還原為預設文字顏色 */
+      color: initial;
     }
 
     #toolbar input[type="file"],
@@ -66,33 +73,33 @@
       border-radius: 4px;
       font-size: 1em;
       box-sizing: border-box;
-      color: initial; /* 還原為預設文字顏色 */
+      color: initial;
     }
     #toolbar input[type="text"] {
       width: 150px;
-      background-color: initial; /* 還原為預設背景色 */
-      border-color: initial; /* 還原為預設邊框顏色 */
-      color: initial; /* 還原為預設輸入內容顏色 */
+      background-color: initial;
+      border-color: initial;
+      color: initial;
     }
     #toolbar input[type="number"] {
       width: 60px;
       text-align: center;
-      background-color: initial; /* 還原為預設背景色 */
-      border-color: initial; /* 還原為預設邊框顏色 */
-      color: initial; /* 還原為預設輸入內容顏色 */
+      background-color: initial;
+      border-color: initial;
+      color: initial;
     }
     #toolbar select {
-      background-color: initial; /* 還原為預設背景色 */
-      border-color: initial; /* 還原為預設邊框顏色 */
-      color: initial; /* 還原為預設輸入內容顏色 */
+      background-color: initial;
+      border-color: initial;
+      color: initial;
     }
     #toolbar button {
-      background-color: initial; /* 還原為預設按鈕顏色 */
+      background-color: initial;
       color: initial;
       border-color: initial;
     }
     #toolbar button:hover {
-      background-color: initial; /* 還原為預設按鈕懸停效果 */
+      background-color: initial;
     }
 
     #quality-control,
@@ -124,25 +131,25 @@
       font-size: 0.9em;
       white-space: nowrap;
       padding: 0 3px;
-      color: initial; /* 還原為預設文字顏色 */
+      color: initial;
     }
     #page-slider {
       flex-grow: 1;
       min-width: 80px;
       margin: 0;
       height: 20px;
-      background-color: initial; /* 還原為預設背景色 */
+      background-color: initial;
     }
 
     #pdf-container {
       position: relative;
       flex-grow: 1;
-      overflow: auto; /* Important for allowing scroll within container if content overflows */
+      overflow: auto;
       background-color: #e9ecef;
       padding: 10px;
       box-sizing: border-box;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: 60px; /* Add padding for the bottom bar */
+      padding-bottom: 60px;
     }
 
     #pdf-canvas {
@@ -163,20 +170,19 @@
       pointer-events: none;
     }
 
-    /* Local Magnifier Glass and Canvas Styles */
     #magnifier-glass {
-      display: none; /* Initially hidden */
+      display: none;
       position: absolute;
       border: 2px solid #333;
-      border-radius: 50%; /* Circular magnifier */
+      border-radius: 50%;
       overflow: hidden;
-      z-index: 2000; /* Ensure it's on top */
-      pointer-events: none; /* Mouse events pass through */
-      background-color: white; /* Fallback background */
+      z-index: 2000;
+      pointer-events: none;
+      background-color: white;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     }
     #magnifier-canvas {
-      display: block; /* Remove any extra space inside the div */
+      display: block;
     }
 
     #text-layer > div {
@@ -274,7 +280,6 @@
       background-color: rgba(100, 0, 100, 0.7);
     }
 
-    /* Bottom Results Bar Styles */
     #bottom-results-bar {
       position: fixed;
       bottom: 0;
@@ -284,10 +289,10 @@
       border-top: 1px solid #dee2e6;
       padding: 5px 10px;
       box-sizing: border-box;
-      display: none; /* Initially hidden */
+      display: none;
       justify-content: center;
       align-items: center;
-      gap: 0; /* No buttons, so no gap needed here */
+      gap: 0;
       box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
       z-index: 1002;
     }
@@ -295,69 +300,72 @@
       display: flex;
     }
     #bottom-results-bar #result-nav-wrapper {
-      display: flex; /* Keep flex for the select to grow */
+      display: flex;
       align-items: center;
-      gap: 0; /* No buttons, no gap */
+      gap: 0;
       flex-grow: 1;
-      max-width: 600px; /* Limit width on larger screens */
+      max-width: 600px;
     }
 
     #bottom-results-bar select {
-      flex-grow: 1; /* Allow select to take up all available space */
-      flex-shrink: 1; /* Allow select to shrink */
-      min-width: 0; /* Allow content to shrink below its intrinsic width */
-
+      flex-grow: 1;
+      flex-shrink: 1;
+      min-width: 0;
       padding: 8px;
       border: 1px solid #ced4da;
       border-radius: 4px;
       font-size: 1em;
       box-sizing: border-box;
       background-color: white;
-
-      /* Text truncation for long options */
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-      max-width: 100%; /* Ensure it doesn't exceed wrapper width */
+      max-width: 100%;
     }
 
     /* Mobile Styles */
     @media (max-width: 768px) {
+      /* [修正] 顯示頁籤並設定其基本樣式 */
       #toolbar-toggle-tab {
-        position: absolute; /* 相對於父元素 #toolbar 定位 */
-        top: 50%; /* 將元素的頂部移到容器的垂直中心 */
-        transform: translateY(-50%); /* 向上移動元素自身高度的一半，實現精確置中 */
-        transition: transform 0.3s ease-in-out; /* 僅保留 transform 的過渡效果 */
-        right: -45px; /* 移到 #toolbar 的外部，但緊貼著。根據頁籤實際寬度調整 */
-        z-index: 1003; /* 確保在最上層 */
+        display: flex; /* 改為flex以方便內容置中 */
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        left: 0; 
+        transition: left 0.3s ease-in-out; 
+        z-index: 1003;
         pointer-events: auto;
-        background-color: #ff9a15; /* 橘色 */
-        border: 1px solid #ff9a15; /* 與背景色相同 */
-        border-left: none; /* 讓頁籤左側無邊框 */
-        border-radius: 0 4px 4px 0; /* 圓角在右側 */
+        background-color: #ff9a15;
+        border: 1px solid #ff9a15;
+        border-left: none;
+        border-radius: 0 4px 4px 0;
         padding: 8px 12px;
         cursor: pointer;
         font-size: 1.2em;
         height: 40px;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 5px rgba(0,0,0,0.3); /* 輕微陰影 */
+        box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        color: white;
       }
       #toolbar-toggle-tab .icon {
         transition: transform 0.3s ease-in-out;
         transform: rotate(0deg);
-        color: white; /* 頁籤圖標顏色 */
       }
       /* 當菜單開啟時，旋轉圖標 */
       #app-container.menu-active #toolbar-toggle-tab .icon {
         transform: rotate(180deg);
       }
+      /* [修正] 當菜單開啟時，移動頁籤 */
+      #app-container.menu-active #toolbar-toggle-tab {
+        left: 280px; /* 這個值必須和 #toolbar 的 width 一致 */
+      }
 
+      /* [修正] 修改 toolbar 的隱藏/顯示方式 */
       #toolbar {
         position: fixed;
         top: 0;
-        /* 使用 left 屬性來控制位置，而不是 transform */
-        left: -280px; /* 根據 width 來設定移出畫面的距離 */
+        left: -280px; /* 使用 left 定位來隱藏 */
         width: 280px;
         max-width: 80vw;
         height: 100vh;
@@ -370,16 +378,14 @@
         flex-direction: column;
         align-items: stretch;
         justify-content: flex-start;
-        /* 將 transition 目標改為 left */
-        transition: left 0.3s ease-in-out; 
+        transition: left 0.3s ease-in-out; /* 動畫 left 屬性 */
         z-index: 1001;
         overflow-y: auto;
-        overflow-x: hidden; /* 保持 hidden 以防止內部內容意外溢出 */
+        overflow-x: hidden;
         gap: 15px;
       }
       #app-container.menu-active #toolbar {
-        /* 當 menu-active 時，將 left 設為 0 使其滑入畫面 */
-        left: 0; 
+        left: 0; /* 滑入畫面 */
       }
       #toolbar > * {
         flex-shrink: 0;
@@ -422,13 +428,13 @@
       }
       #pdf-container {
         padding: 5px;
-        padding-bottom: 60px; /* Ensure padding for bottom bar */
+        padding-bottom: 60px;
       }
       #floating-action-buttons {
         bottom: 70px;
         right: 15px;
         gap: 8px;
-      } /* Adjusted position due to bottom bar */
+      }
       #floating-action-buttons button {
         width: 45px;
         height: 45px;
@@ -440,7 +446,7 @@
 
       #bottom-results-bar {
         padding: 8px;
-        gap: 0; /* Now only select, no need for gap */
+        gap: 0;
       }
       #bottom-results-bar select {
         padding: 6px;
@@ -448,9 +454,14 @@
       }
     }
     @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
+      /* [修正] 當菜單開啟時，頁籤移動的距離需要適應 toolbar 的新寬度 */
+      #app-container.menu-active #toolbar-toggle-tab {
+        left: 240px;
+      }
       #toolbar {
         width: 240px;
         max-width: 70vw;
+        left: -240px; /* 匹配新的寬度 */
         padding: 50px 5px 5px 5px !important;
         gap: 3px !important;
       }
@@ -525,11 +536,13 @@
 </head>
 <body>
   <div id="app-container">
-    <div id="toolbar">
-      <div id="toolbar-toggle-tab">
-          <span class="icon">›</span>
-      </div>
+    <!-- [修正] 頁籤現在是 toolbar 的兄弟元素，位於其上方 -->
+    <div id="toolbar-toggle-tab">
+        <span class="icon">›</span>
+    </div>
 
+    <div id="toolbar">
+      <!-- 頁籤已從此處移除 -->
       <h2>PDF關鍵字查詢平台</h2>
       <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
