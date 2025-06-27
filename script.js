@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ** 設定 worker 的本地路徑 **
     if (typeof pdfjsLib !== 'undefined') {
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
+            pdfjsLib.GlobalWorker-Options.workerSrc = './lib/pdfjs/pdf.worker.mjs';
         }
     } else {
         console.error("pdfjsLib is not defined. Check the import or script loading order.");
