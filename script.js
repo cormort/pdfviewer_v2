@@ -683,8 +683,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentIndex = searchResults.findIndex(r => r.page === currentPage);            
         } else {
             body.classList.remove('results-bar-visible');
-            prevResultBtn.disabled = true;
-            nextResultBtn.disabled = true;
         }
     }
 
