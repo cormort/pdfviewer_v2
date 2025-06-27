@@ -1088,4 +1088,67 @@ if (sharePageBtn) {
 
     initLocalMagnifier();
     updatePageControls();
+    // --- START: 滑動換頁功能 ---
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    const MIN_SWIPE_DISTANCE = 75; // 最小滑動距離，單位為像素
+
+    if (pdfContainer) {
+        pdfContainer.addEventListener('touchstart', (e) => {
+            // 只處理單指觸控
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true }); // 使用 passive: true 提升滾動性能
+
+        pdfContainer.addEventListener('touchend', (e) => {
+            // 只處理單指觸控結束
+            if (e.changedTouches.length === 1) {
+                touchEndX = e.changedTouches[0].clientX;
+                touchEndY = e.changedTouches[0].clientY;
+                handleSwipeGesture();
+            }
+        });
+    }
+
+    function handleSwipeGesture() {
+        // 如果任何工具（螢光筆、文字選取、放大鏡）正在使用，則不觸發滑動換頁
+        if (highlighterEnabled || textSelectionModeActive || localMagnifierEnabled) {
+            return;
+        }
+
+        // 如果沒有載入文件，也不執行
+        if (pdfDocs.length === 0) {
+            return;
+        }
+
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+
+        // 確保是水平滑動，而不是垂直滾動
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            // 檢查滑動距離是否足夠
+            if (Math.abs(diffX) > MIN_SWIPE_DISTANCE) {
+                if (diffX < 0) {
+                    // 向左滑動 -> 下一頁
+                    console.log("Swipe Left Detected - Next Page");
+                    if (nextPageBtn && !nextPageBtn.disabled) {
+                        nextPageBtn.click();
+                    }
+                } else {
+                    // 向右滑動 -> 上一頁
+                    console.log("Swipe Right Detected - Previous Page");
+                    if (prevPageBtn && !prevPageBtn.disabled) {
+                        prevPageBtn.click();
+                    }
+                }
+            }
+        }
+    }
+
+    // --- END: 滑動換頁功能 ---
 });
