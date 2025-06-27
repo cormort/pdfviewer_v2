@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const goToPageBtn = document.getElementById('go-to-page-btn');
     const pageSlider = document.getElementById('page-slider');
     const resultsDropdown = document.getElementById('resultsDropdown');
+    // Removed: const prevResultBtn = document.getElementById('prev-result-btn');
+    // Removed: const nextResultBtn = document.getElementById('next-result-btn');
     const qualitySelector = document.getElementById('quality-selector');
     const exportPageBtn = document.getElementById('export-page-btn');
     const sharePageBtn = document.getElementById('share-page-btn');
@@ -679,43 +681,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (hasResults) {
             body.classList.add('results-bar-visible');
-            // Find the index of the current page in the sorted searchResults array
-            const currentIndex = searchResults.findIndex(r => r.page === currentPage);            
+            // No need to update disabled state for prev/next buttons as they are removed
         } else {
             body.classList.remove('results-bar-visible');
+            // No need to update disabled state for prev/next buttons as they are removed
         }
     }
 
-    function navigateResults(direction) {
-        if (searchResults.length === 0) return;
-
-        let currentIndex = searchResults.findIndex(r => r.page === currentPage);
-        let newIndex = currentIndex + direction;
-
-        // Loop to find the next valid (non-disabled separator) option
-        let attempts = 0; // Prevent infinite loops in case of logic error
-        while (newIndex >= 0 && newIndex < resultsDropdown.options.length && attempts < searchResults.length * 2) {
-            const option = resultsDropdown.options[newIndex];
-            if (option.disabled) { // Skip separator options
-                newIndex += direction;
-                attempts++;
-            } else {
-                break; // Found a valid result option
-            }
-        }
-
-        if (newIndex >= 0 && newIndex < resultsDropdown.options.length) {
-            const targetGlobalPage = parseInt(resultsDropdown.options[newIndex].value);
-            // Ensure the selected option corresponds to a valid search result
-            const targetResult = searchResults.find(r => r.page === targetGlobalPage);
-
-            if (targetResult) {
-                resultsDropdown.value = targetResult.page;
-                goToPageDropdown(String(targetResult.page));
-                // updateResultsNav will be called by goToPageDropdown -> goToPage
-            }
-        }
-    }
+    // Removed the navigateResults function entirely as there are no longer buttons to trigger it.
 
     if (searchActionButton) {
         searchActionButton.addEventListener('click', searchKeyword);
@@ -943,133 +916,131 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             tctx.drawImage(canvas, 0, 0);
             if (drawingCanvas && drawingCtx) tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height);
-            tc.toBlob(async b => {
-                if (!b) {
-                    alert('無法生成Blob進行分享');
-                    if (wasCanvasHidden) canvas.style.visibility = 'hidden';
-                    return;
-                }
-                const pageInfo = getDocAndLocalPage(currentPage);
-                const docNamePart = pageInfo ? pageInfo.docName.replace(/\.pdf$/i, '') : 'document';
-                const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated.png`;
-                const f = new File([b], fn, {
-                    type: 'image/png'
-                });
-                const sd = {
-                    title: `PDF全域頁面 ${currentPage}`,
-                    text: `來自 ${docNamePart} 的第 ${pageInfo.localPage} 頁 (PDF工具)`,
+
+            const idu = tc.toDataURL('image/png');
+            const l = document.createElement('a');
+            l.href = idu;
+            const pageInfo = getDocAndLocalPage(currentPage);
+            const docNamePart = pageInfo ? pageInfo.docName.replace(/\.pdf$/i, '') : 'document';
+            const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated.png`;
+            const f = new File([b], fn, {
+                type: 'image/png'
+            });
+            const sd = {
+                title: `PDF全域頁面 ${currentPage}`,
+                text: `來自 ${docNamePart} 的第 ${pageInfo.localPage} 頁 (PDF工具)`,
+                files: [f]
+            };
+            if (navigator.canShare && navigator.canShare({
                     files: [f]
-                };
-                if (navigator.canShare && navigator.canShare({
-                        files: [f]
-                    })) {
-                    await navigator.share(sd);
-                } else {
-                    console.warn('不支援分享檔案，將嘗試只分享文字');
-                    const fsd = {
-                        title: sd.title,
-                        text: sd.text
-                    };
-                    if (fsd.text && navigator.canShare && navigator.canShare(fsd)) {
-                        await navigator.share(fsd);
-                    } else {
-                        alert('您的瀏覽器不支援分享檔案或文字。');
-                    }
-                }
-                if (wasCanvasHidden) canvas.style.visibility = 'hidden';
-            }, 'image/png');
-        } catch (er) {
-            console.error("Share err:", er);
-            alert("分享失敗: " + er.message);
-            if (wasCanvasHidden) canvas.style.visibility = 'hidden';
-        }
-    });
-
-    if (toggleLocalMagnifierBtn) {
-        toggleLocalMagnifierBtn.addEventListener('click', () => {
-            if (pdfDocs.length === 0) return;
-            localMagnifierEnabled = !localMagnifierEnabled;
-
-            if (localMagnifierEnabled) {
-                if (textSelectionModeActive) {
-                    textSelectionModeActive = false;
-                    if (textLayerDivGlobal) {
-                        textLayerDivGlobal.style.pointerEvents = 'none';
-                        textLayerDivGlobal.classList.remove('text-selection-active');
-                    }
-                    if (canvas) canvas.style.visibility = 'visible';
-                }
-                if (highlighterEnabled) {
-                    highlighterEnabled = false;
-                    if (drawingCanvas) drawingCanvas.style.pointerEvents = 'none';
-                }
-                if (drawingCanvas) drawingCanvas.style.pointerEvents = 'none';
-                if (textLayerDivGlobal) textLayerDivGlobal.style.pointerEvents = 'none';
-                if (canvas) canvas.style.visibility = 'visible';
+                })) {
+                await navigator.share(sd);
             } else {
-                if (magnifierGlass) magnifierGlass.style.display = 'none';
-                if (highlighterEnabled && drawingCanvas) {
-                    drawingCanvas.style.pointerEvents = 'auto';
-                } else if (textSelectionModeActive && textLayerDivGlobal) {
-                    textLayerDivGlobal.style.pointerEvents = 'auto';
+                console.warn('不支援分享檔案，將嘗試只分享文字');
+                const fsd = {
+                    title: sd.title,
+                    text: sd.text
+                };
+                if (fsd.text && navigator.canShare && navigator.canShare(fsd)) {
+                    await navigator.share(fsd);
+                } else {
+                    alert('您的瀏覽器不支援分享檔案或文字。');
                 }
             }
-            updatePageControls();
-        });
+            if (wasCanvasHidden) canvas.style.visibility = 'hidden';
+        }, 'image/png');
+    } catch (er) {
+        console.error("Share err:", er);
+        alert("分享失敗: " + er.message);
+        if (wasCanvasHidden) canvas.style.visibility = 'hidden';
     }
+});
 
-    if (localMagnifierZoomSelector) {
-        localMagnifierZoomSelector.addEventListener('change', (e) => {
-            LOCAL_MAGNIFIER_ZOOM_LEVEL = parseFloat(e.target.value);
-        });
-    }
+if (toggleLocalMagnifierBtn) {
+    toggleLocalMagnifierBtn.addEventListener('click', () => {
+        if (pdfDocs.length === 0) return;
+        localMagnifierEnabled = !localMagnifierEnabled;
 
-    function handlePointerMoveForLocalMagnifier(e) {
-        if (!localMagnifierEnabled || pdfDocs.length === 0) return;
-        if (e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
-
-        let clientX, clientY;
-        if (e.touches && e.touches.length > 0) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else if (e.clientX !== undefined) {
-            clientX = e.clientX;
-            clientY = e.clientY;
-        } else {
-            return;
-        }
-        updateLocalMagnifier(clientX, clientY);
-    }
-
-    function handlePointerLeaveForLocalMagnifier() {
-        if (localMagnifierEnabled && magnifierGlass) {
-            magnifierGlass.style.display = 'none';
-        }
-    }
-
-    if (pdfContainer) {
-        pdfContainer.addEventListener('mousemove', handlePointerMoveForLocalMagnifier);
-        pdfContainer.addEventListener('mouseleave', handlePointerLeaveForLocalMagnifier);
-        pdfContainer.addEventListener('touchstart', handlePointerMoveForLocalMagnifier, {
-            passive: false
-        });
-        pdfContainer.addEventListener('touchmove', handlePointerMoveForLocalMagnifier, {
-            passive: false
-        });
-        pdfContainer.addEventListener('touchend', handlePointerLeaveForLocalMagnifier);
-        pdfContainer.addEventListener('touchcancel', handlePointerLeaveForLocalMagnifier);
-    }
-
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            if (pdfDocs.length > 0) {
-                renderPage(currentPage, getPatternFromSearchInput());
+        if (localMagnifierEnabled) {
+            if (textSelectionModeActive) {
+                textSelectionModeActive = false;
+                if (textLayerDivGlobal) {
+                    textLayerDivGlobal.style.pointerEvents = 'none';
+                    textLayerDivGlobal.classList.remove('text-selection-active');
+                }
+                if (canvas) canvas.style.visibility = 'visible';
             }
-        }, 250);
+            if (highlighterEnabled) {
+                highlighterEnabled = false;
+                if (drawingCanvas) drawingCanvas.style.pointerEvents = 'none';
+            }
+            if (drawingCanvas) drawingCanvas.style.pointerEvents = 'none';
+            if (textLayerDivGlobal) textLayerDivGlobal.style.pointerEvents = 'none';
+            if (canvas) canvas.style.visibility = 'visible';
+        } else {
+            if (magnifierGlass) magnifierGlass.style.display = 'none';
+            if (highlighterEnabled && drawingCanvas) {
+                drawingCanvas.style.pointerEvents = 'auto';
+            } else if (textSelectionModeActive && textLayerDivGlobal) {
+                textLayerDivGlobal.style.pointerEvents = 'auto';
+            }
+        }
+        updatePageControls();
     });
+}
 
-    initLocalMagnifier();
-    updatePageControls();
+if (localMagnifierZoomSelector) {
+    localMagnifierZoomSelector.addEventListener('change', (e) => {
+        LOCAL_MAGNIFIER_ZOOM_LEVEL = parseFloat(e.target.value);
+    });
+}
+
+function handlePointerMoveForLocalMagnifier(e) {
+    if (!localMagnifierEnabled || pdfDocs.length === 0) return;
+    if (e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+
+    let clientX, clientY;
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else if (e.clientX !== undefined) {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    } else {
+        return;
+    }
+    updateLocalMagnifier(clientX, clientY);
+}
+
+function handlePointerLeaveForLocalMagnifier() {
+    if (localMagnifierEnabled && magnifierGlass) {
+        magnifierGlass.style.display = 'none';
+    }
+}
+
+if (pdfContainer) {
+    pdfContainer.addEventListener('mousemove', handlePointerMoveForLocalMagnifier);
+    pdfContainer.addEventListener('mouseleave', handlePointerLeaveForLocalMagnifier);
+    pdfContainer.addEventListener('touchstart', handlePointerMoveForLocalMagnifier, {
+        passive: false
+    });
+    pdfContainer.addEventListener('touchmove', handlePointerMoveForLocalMagnifier, {
+        passive: false
+    });
+    pdfContainer.addEventListener('touchend', handlePointerLeaveForLocalMagnifier);
+    pdfContainer.addEventListener('touchcancel', handlePointerLeaveForLocalMagnifier);
+}
+
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        if (pdfDocs.length > 0) {
+            renderPage(currentPage, getPatternFromSearchInput());
+        }
+    }, 250);
+});
+
+initLocalMagnifier();
+updatePageControls();
 });
