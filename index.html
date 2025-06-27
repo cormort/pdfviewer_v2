@@ -6,414 +6,513 @@
   <title>PDF關鍵字查詢平台</title>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-      overscroll-behavior-y: contain;
-    }
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  overscroll-behavior-y: contain;
+}
 
-    #app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-    }
+#app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
 
-    #toolbar-toggle {
-      display: none;
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 1003;
-      pointer-events: auto;
-      background-color: #f0f0f0;
-      border: 1px solid #ccc;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 1.2em;
-      border-radius: 4px;
-    }
+/* toolbar-toggle is deprecated, using toolbar-toggle-tab instead */
+#toolbar-toggle {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1003;
+  pointer-events: auto;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 1.2em;
+  border-radius: 4px;
+}
 
-    #toolbar {
-      padding: 10px;
-      background-color: #f8f9fa;
-      border-bottom: 1px solid #dee2e6;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      flex-shrink: 0;
-    }
-    #toolbar h2 {
-      margin: 0 10px 0 0;
-      font-size: 1.2em;
-      white-space: nowrap;
-    }
+#toolbar {
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+#toolbar h2 {
+  margin: 0 10px 0 0;
+  font-size: 1.2em;
+  white-space: nowrap;
+}
 
-    #toolbar input[type="file"],
-    #toolbar input[type="text"],
-    #toolbar input[type="number"],
-    #toolbar select,
-    #toolbar button {
-      padding: 8px;
-      border: 1px solid #ced4da;
-      border-radius: 4px;
-      font-size: 1em;
-      box-sizing: border-box;
-    }
-    #toolbar input[type="text"] { width: 150px; }
-    #toolbar input[type="number"] { width: 60px; text-align: center;}
+#toolbar input[type="file"],
+#toolbar input[type="text"],
+#toolbar input[type="number"],
+#toolbar select,
+#toolbar button {
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1em;
+  box-sizing: border-box;
+}
+#toolbar input[type="text"] {
+  width: 150px;
+}
+#toolbar input[type="number"] {
+  width: 60px;
+  text-align: center;
+}
 
-    #quality-control, #local-magnifier-zoom-controls {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-     #quality-control label, #local-magnifier-zoom-controls label {
-        white-space: nowrap;
-        font-size: 0.9em;
-     }
-     #quality-control select, #local-magnifier-zoom-controls select {
-        padding: 6px;
-     }
+#quality-control,
+#local-magnifier-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+#quality-control label,
+#local-magnifier-zoom-controls label {
+  white-space: nowrap;
+  font-size: 0.9em;
+}
+#quality-control select,
+#local-magnifier-zoom-controls select {
+  padding: 6px;
+}
 
-    #page-navigation {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        margin-left: auto;
-    }
-    #page-navigation button {
-        padding: 6px 8px;
-    }
-    #page-num-display {
-        font-size: 0.9em;
-        white-space: nowrap;
-        padding: 0 3px;
-    }
-    #page-slider {
-        flex-grow: 1;
-        min-width: 80px;
-        margin: 0;
-        height: 20px;
-    }
+#page-navigation {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+}
+#page-navigation button {
+  padding: 6px 8px;
+}
+#page-num-display {
+  font-size: 0.9em;
+  white-space: nowrap;
+  padding: 0 3px;
+}
+#page-slider {
+  flex-grow: 1;
+  min-width: 80px;
+  margin: 0;
+  height: 20px;
+}
 
+#pdf-container {
+  position: relative;
+  flex-grow: 1;
+  overflow: auto; /* Important for allowing scroll within container if content overflows */
+  background-color: #e9ecef;
+  padding: 10px;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 60px; /* Add padding for the bottom bar */
+}
 
-    #pdf-container {
-      position: relative;
-      flex-grow: 1;
-      overflow: auto; /* Important for allowing scroll within container if content overflows */
-      background-color: #e9ecef;
-      padding: 10px;
-      box-sizing: border-box;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 60px; /* Add padding for the bottom bar */
-    }
+#pdf-canvas {
+  border: 1px solid #000;
+  display: block;
+  margin: 0 auto;
+}
 
-    #pdf-canvas {
-      border: 1px solid #000;
-      display: block;
-      margin: 0 auto;
-    }
+#text-layer {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+}
+#drawing-canvas {
+  position: absolute;
+  z-index: 10;
+  touch-action: none;
+  pointer-events: none;
+}
 
-    #text-layer {
-      position: absolute;
-      z-index: 5;
-      pointer-events: none;
-    }
-    #drawing-canvas {
-        position: absolute;
-        z-index: 10;
-        touch-action: none;
-        pointer-events: none;
-    }
+/* Local Magnifier Glass and Canvas Styles */
+#magnifier-glass {
+  display: none; /* Initially hidden */
+  position: absolute;
+  border: 2px solid #333;
+  border-radius: 50%; /* Circular magnifier */
+  overflow: hidden;
+  z-index: 2000; /* Ensure it's on top */
+  pointer-events: none; /* Mouse events pass through */
+  background-color: white; /* Fallback background */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+#magnifier-canvas {
+  display: block; /* Remove any extra space inside the div */
+}
 
-    /* Local Magnifier Glass and Canvas Styles */
-    #magnifier-glass {
-        display: none; /* Initially hidden */
-        position: absolute;
-        border: 2px solid #333;
-        border-radius: 50%; /* Circular magnifier */
-        overflow: hidden;
-        z-index: 2000; /* Ensure it's on top */
-        pointer-events: none; /* Mouse events pass through */
-        background-color: white; /* Fallback background */
-        box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    }
-    #magnifier-canvas {
-        display: block; /* Remove any extra space inside the div */
-    }
+#text-layer > div {
+  color: transparent;
+  position: absolute;
+  line-height: 1;
+  white-space: pre;
+  user-select: none;
+}
 
+#text-layer.text-selection-active > div {
+  color: initial !important;
+  user-select: text !important;
+}
+#text-layer.text-selection-active > div.wavy-underline {
+  color: initial !important;
+}
 
-    #text-layer > div {
-      color: transparent;
-      position: absolute;
-      line-height: 1;
-      white-space: pre;
-      user-select: none;
-    }
+.wavy-underline {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: sandybrown;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+.highlights-hidden .wavy-underline {
+  text-decoration: none !important;
+}
+#resultsDropdown .wavy-underline {
+  text-decoration-line: underline !important;
+  text-decoration-style: wavy !important;
+  text-decoration-color: sandybrown !important;
+}
 
-    #text-layer.text-selection-active > div {
-      color: initial !important;
-      user-select: text !important;
-    }
-    #text-layer.text-selection-active > div.wavy-underline {
-        color: initial !important;
-    }
+#floating-action-buttons {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1003;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+.fab-button-group {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
 
+#floating-action-buttons button {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#floating-action-buttons button:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+#floating-action-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: rgba(0, 0, 0, 0.3);
+}
 
-    .wavy-underline {
-      text-decoration-line: underline;
-      text-decoration-style: wavy;
-      text-decoration-color: sandybrown;
-      text-decoration-thickness: 2px;
-      text-underline-offset: 0.2em;
-    }
-    .highlights-hidden .wavy-underline {
-      text-decoration: none !important;
-    }
-    #resultsDropdown .wavy-underline {
-        text-decoration-line: underline !important;
-        text-decoration-style: wavy !important;
-        text-decoration-color: sandybrown !important;
-    }
+.toggle-underline-icon {
+  font-size: 1.1em;
+  font-weight: bold;
+  display: inline-block;
+}
+#toggle-underline-btn.active .toggle-underline-icon {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: sandybrown;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.15em;
+}
+#toggle-highlighter-btn.active {
+  background-color: rgba(0, 100, 0, 0.7);
+}
+#toggle-text-selection-btn.active {
+  background-color: rgba(0, 0, 100, 0.7);
+}
+#toggle-local-magnifier-btn.active {
+  background-color: rgba(100, 0, 100, 0.7);
+}
 
-    #floating-action-buttons {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1003;
-        display: flex;
+/* Bottom Results Bar Styles */
+#bottom-results-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(248, 249, 250, 0.95);
+  border-top: 1px solid #dee2e6;
+  padding: 5px 10px;
+  box-sizing: border-box;
+  display: none; /* Initially hidden */
+  justify-content: center;
+  align-items: center;
+  gap: 0; /* No buttons, so no gap needed here */
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1002;
+}
+body.results-bar-visible #bottom-results-bar {
+  display: flex;
+}
+#bottom-results-bar #result-nav-wrapper {
+  display: flex; /* Keep flex for the select to grow */
+  align-items: center;
+  gap: 0; /* No buttons, no gap */
+  flex-grow: 1;
+  max-width: 600px; /* Limit width on larger screens */
+}
+/* Removed styles for #bottom-results-bar button as buttons are removed */
+
+#bottom-results-bar select {
+  flex-grow: 1; /* Allow select to take up all available space */
+  flex-shrink: 1; /* Allow select to shrink */
+  min-width: 0; /* Allow content to shrink below its intrinsic width */
+
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1em;
+  box-sizing: border-box;
+  background-color: white;
+
+  /* Text truncation for long options */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%; /* Ensure it doesn't exceed wrapper width */
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  #toolbar-toggle-tab {
+    display: flex;
+    position: fixed;
+    top: 10px;
+    left: 0; /* Changed to 0 for the tab */
+    z-index: 1003;
+    pointer-events: auto;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-left: none; /* No left border for the tab */
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 1.2em;
+    border-radius: 0 4px 4px 0; /* Rounded on the right */
+    transition: left 0.3s ease-in-out;
+    height: 40px; /* Adjust height to match toolbar elements */
+    align-items: center;
+    justify-content: center;
+  }
+  #toolbar-toggle-tab .icon {
+    transition: transform 0.3s ease-in-out;
+    transform: rotate(0deg); /* Initial state for the icon */
+  }
+  #app-container.menu-active #toolbar-toggle-tab {
+    left: 280px; /* Moves with the toolbar */
+  }
+  #app-container.menu-active #toolbar-toggle-tab .icon {
+    transform: rotate(180deg); /* Rotate icon when active */
+  }
+
+  #toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    max-width: 80vw;
+    height: 100vh;
+    background-color: #f0f0f0;
+    border-right: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 50px 15px 20px 15px;
+    box-sizing: border-box;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    -webkit-transform: translateX(-100%);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
+    z-index: 1001;
+    overflow-y: auto;
+    overflow-x: hidden;
+    gap: 15px;
+  }
+  #app-container.menu-active #toolbar {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+  #toolbar > * {
+    flex-shrink: 0;
+  }
+  #toolbar input[type="text"],
+  #toolbar input[type="number"],
+  #toolbar select,
+  #toolbar button,
+  #quality-control,
+  #local-magnifier-zoom-controls {
+    width: 100%;
+  }
+  #quality-control,
+  #local-magnifier-zoom-controls {
+    justify-content: space-between;
+  }
+  #quality-control select,
+  #local-magnifier-zoom-controls select {
+    flex-grow: 1;
+  }
+
+  #page-navigation {
+    margin-left: 0;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+  #page-navigation > div {
+    display: flex;
+    width: 100%;
+    gap: 5px;
+  }
+  #page-navigation input[type="number"] {
+    flex-grow: 1;
+  }
+  #page-navigation #page-slider {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+  }
+  #pdf-container {
+    padding: 5px;
+    padding-bottom: 60px; /* Ensure padding for bottom bar */
+  }
+  #floating-action-buttons {
+    bottom: 70px;
+    right: 15px;
+    gap: 8px;
+  } /* Adjusted position due to bottom bar */
+  #floating-action-buttons button {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+  .toggle-underline-icon {
+    font-size: 1em;
+  }
+
+  #bottom-results-bar {
+    padding: 8px;
+    gap: 0; /* Now only select, no need for gap */
+  }
+  /* Removed button specific styles under mobile media query */
+  #bottom-results-bar select {
+    padding: 6px;
+    font-size: 0.9em;
+  }
+}
+@media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
+  #toolbar {
+    width: 240px;
+    max-width: 70vw;
+    padding: 50px 5px 5px 5px !important;
+    gap: 3px !important;
+  }
+  #app-container.menu-active #toolbar-toggle-tab {
+    left: 240px; /* Adjust for smaller toolbar width */
+  }
+  #toolbar-toggle-tab {
+    height: 35px;
+    font-size: 1.1em;
+  }
+  #toolbar > * {
+    overflow-x: hidden !important;
+    text-overflow: ellipsis !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  #toolbar h2 {
+    font-size: 0.85em !important;
+    margin-bottom: 2px !important;
+  }
+  #toolbar input,
+  #toolbar select,
+  #toolbar button {
+    padding: 3px !important;
+    font-size: 0.75em !important;
+  }
+  #toolbar input[type="file"] {
+    font-size: 0.7em !important;
+  }
+  #quality-control label,
+  #local-magnifier-zoom-controls label {
+    font-size: 0.7em !important;
+    margin-right: 3px !important;
+    padding: 1px !important;
+  }
+  #quality-control select,
+  #local-magnifier-zoom-controls select {
+    font-size: 0.7em !important;
+    padding: 1px !important;
+  }
+  #page-navigation {
+    gap: 3px !important;
+    padding: 1px !important;
+  }
+  #page-navigation > * {
+    padding-left: 1px !important;
+    padding-right: 1px !important;
+  }
+  #page-navigation button {
+    padding: 2px 4px !important;
+    font-size: 0.7em !important;
+    text-align: left;
+  }
+  #page-navigation span#page-num-display {
+    padding: 1px 0 !important;
+    font-size: 0.7em !important;
+  }
+  #page-navigation #page-slider {
+    margin: 1px 0 !important;
+    height: 14px !important;
+  }
+  #page-navigation input[type="number"] {
+    padding: 2px !important;
+    font-size: 0.75em !important;
+  }
+}
+@media (max-width: 480px) {
+  #toolbar h2 {
+    font-size: 1.1em;
+  }
+  /* For very small screens, if the select still overflows,
+     we can consider making the bottom bar itself use a column layout,
+     though for just one select, it might not be necessary. */
+  /* #bottom-results-bar #result-nav-wrapper {
         flex-direction: column;
-        gap: 10px;
-        align-items: flex-end;
-    }
-    .fab-button-group {
-        display: flex;
-        flex-direction: row;
-        gap: 10px;
-        align-items: center;
-    }
-
-    #floating-action-buttons button {
-        background-color: rgba(0, 0, 0, 0.5);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-        cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transition: background-color 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    #floating-action-buttons button:hover {
-        background-color: rgba(0, 0, 0, 0.7);
-    }
-     #floating-action-buttons button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        background-color: rgba(0,0,0,0.3);
-    }
-
-    .toggle-underline-icon {
-        font-size: 1.1em;
-        font-weight: bold;
-        display: inline-block;
-    }
-    #toggle-underline-btn.active .toggle-underline-icon {
-        text-decoration-line: underline;
-        text-decoration-style: wavy;
-        text-decoration-color: sandybrown;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.15em;
-    }
-    #toggle-highlighter-btn.active {
-        background-color: rgba(0, 100, 0, 0.7);
-    }
-    #toggle-text-selection-btn.active {
-        background-color: rgba(0, 0, 100, 0.7);
-    }
-    #toggle-local-magnifier-btn.active {
-        background-color: rgba(100, 0, 100, 0.7);
-    }
-
-    /* Bottom Results Bar Styles */
-    #bottom-results-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
+        align-items: stretch;
         width: 100%;
-        background-color: rgba(248, 249, 250, 0.95);
-        border-top: 1px solid #dee2e6;
-        padding: 5px 10px;
-        box-sizing: border-box;
-        display: none; /* Initially hidden */
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-        z-index: 1002;
-    }
-    body.results-bar-visible #bottom-results-bar {
-        display: flex;
-    }
-    #bottom-results-bar #result-nav-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        flex-grow: 1;
-        max-width: 600px; /* Limit width on larger screens */
-    }
-    #bottom-results-bar button {
-        padding: 6px 10px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        background-color: #e9ecef;
-        cursor: pointer;
-        font-size: 1em;
-    }
-    #bottom-results-bar button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
     }
     #bottom-results-bar select {
-        flex-grow: 1;
-        padding: 8px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        font-size: 1em;
-        box-sizing: border-box;
-        background-color: white;
-    }
-
-    /* Mobile Styles */
-    @media (max-width: 768px) {
-      #toolbar-toggle-tab {
-          display: flex;
-          position: fixed;
-          top: 10px;
-          left: 0; /* Changed to 0 for the tab */
-          z-index: 1003;
-          pointer-events: auto;
-          background-color: #f0f0f0;
-          border: 1px solid #ccc;
-          border-left: none; /* No left border for the tab */
-          padding: 8px 12px;
-          cursor: pointer;
-          font-size: 1.2em;
-          border-radius: 0 4px 4px 0; /* Rounded on the right */
-          transition: left 0.3s ease-in-out;
-          height: 40px; /* Adjust height to match toolbar elements */
-          align-items: center;
-          justify-content: center;
-      }
-      #toolbar-toggle-tab .icon {
-          transition: transform 0.3s ease-in-out;
-          transform: rotate(0deg); /* Initial state for the icon */
-      }
-      #app-container.menu-active #toolbar-toggle-tab {
-          left: 280px; /* Moves with the toolbar */
-      }
-      #app-container.menu-active #toolbar-toggle-tab .icon {
-          transform: rotate(180deg); /* Rotate icon when active */
-      }
-
-      #toolbar {
-        position: fixed; top: 0; left: 0; width: 280px; max-width: 80vw; height: 100vh;
-        background-color: #f0f0f0; border-right: 1px solid #ccc; display: flex;
-        flex-direction: column; align-items: stretch; padding: 50px 15px 20px 15px;
-        box-sizing: border-box; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        -webkit-transform: translateX(-100%);
-        transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
-        z-index: 1001; overflow-y: auto; overflow-x: hidden; gap: 15px;
-      }
-      #app-container.menu-active #toolbar {
-        -webkit-transform: translateX(0);
-        transform: translateX(0);
-      }
-      #toolbar > * { flex-shrink: 0; }
-      #toolbar input[type="text"], #toolbar input[type="number"], #toolbar select, #toolbar button, #quality-control, #local-magnifier-zoom-controls {
-         width: 100%;
-      }
-       #quality-control, #local-magnifier-zoom-controls { justify-content: space-between; }
-      #quality-control select, #local-magnifier-zoom-controls select { flex-grow: 1; }
-
-      #page-navigation { margin-left: 0; flex-direction: column; width: 100%; gap: 8px; }
-       #page-navigation > div { display: flex; width: 100%; gap: 5px; }
-        #page-navigation input[type="number"] { flex-grow: 1; }
-      #page-navigation #page-slider {
-          width: 100%;
-          box-sizing: border-box;
-          margin: 0;
-      }
-      #pdf-container { padding: 5px; padding-bottom: 60px; /* Ensure padding for bottom bar */ }
-      #floating-action-buttons { bottom: 70px; right: 15px; gap: 8px; } /* Adjusted position due to bottom bar */
-      #floating-action-buttons button { width: 45px; height: 45px; font-size: 20px; }
-      .toggle-underline-icon { font-size: 1em; }
-
-      #bottom-results-bar {
-          padding: 8px;
-          gap: 5px;
-      }
-      #bottom-results-bar button {
-          padding: 4px 8px;
-          font-size: 0.9em;
-      }
-      #bottom-results-bar select {
-          padding: 6px;
-          font-size: 0.9em;
-      }
-    }
-      #bottom-results-bar select#resultsDropdown { /* 更具體地選擇下拉選單 */
-        max-width: calc(100% - 100px); /* 留一些空間給左右按鈕，根據實際按鈕寬度調整 */
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        /* display: block; /* 確保它不會被壓縮到太小 */
-    }
-    @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
-        #toolbar {
-            width: 240px; max-width: 70vw;
-            padding: 50px 5px 5px 5px !important; gap: 3px !important;
-        }
-        #app-container.menu-active #toolbar-toggle-tab {
-            left: 240px; /* Adjust for smaller toolbar width */
-        }
-        #toolbar-toggle-tab {
-            height: 35px;
-            font-size: 1.1em;
-        }
-        #toolbar > * {
-            overflow-x: hidden !important; text-overflow: ellipsis !important;
-            padding-left: 2px !important; padding-right: 2px !important;
-            margin-left: 0 !important; margin-right: 0 !important;
-        }
-        #toolbar h2 {
-            font-size: 0.85em !important; margin-bottom: 2px !important;
-        }
-        #toolbar input, #toolbar select, #toolbar button {
-            padding: 3px !important; font-size: 0.75em !important;
-        }
-        #toolbar input[type="file"] { font-size: 0.7em !important; }
-        #quality-control label, #local-magnifier-zoom-controls label { font-size: 0.7em !important; margin-right: 3px !important; padding: 1px !important; }
-        #quality-control select, #local-magnifier-zoom-controls select { font-size: 0.7em !important; padding: 1px !important; }
-        #page-navigation { gap: 3px !important; padding: 1px !important; }
-        #page-navigation > * { padding-left: 1px !important; padding-right: 1px !important; }
-        #page-navigation button { padding: 2px 4px !important; font-size: 0.7em !important; text-align: left; }
-        #page-navigation span#page-num-display { padding: 1px 0 !important; font-size: 0.7em !important; }
-        #page-navigation #page-slider { margin: 1px 0 !important; height: 14px !important; }
-        #page-navigation input[type="number"] { padding: 2px !important; font-size: 0.75em !important; }
-    }
-    @media (max-width: 480px) { #toolbar h2 { font-size: 1.1em; } }
+        width: 100%;
+    } */
+}
   </style>
 </head>
 <body>
