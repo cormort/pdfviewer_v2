@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let globalTotalPages = 0;
     let currentPage = 1;
     let pageRendering = false;
+    // ** CHANGE: Keep track of search results globally **
+    let currentSearchResults = [];
 
     const canvas = document.getElementById('pdf-canvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
@@ -42,9 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInputElem = document.getElementById('searchInput');
     const searchActionButton = document.getElementById('search-action-button');
     
-    // ** CHANGE: Get new result navigation buttons **
     const prevResultBtn = document.getElementById('prev-result-btn');
     const nextResultBtn = document.getElementById('next-result-btn');
+
+    // ** CHANGE: Get new floating action button elements **
+    const fabResultNavGroup = document.getElementById('fab-result-nav-group');
+    const fabPrevResultBtn = document.getElementById('fab-prev-result-btn');
+    const fabNextResultBtn = document.getElementById('fab-next-result-btn');
+    const fabResultCounter = document.getElementById('fab-result-counter');
 
     const magnifierGlass = document.getElementById('magnifier-glass');
     const magnifierCanvas = document.getElementById('magnifier-canvas');
@@ -64,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastX = 0;
     let lastY = 0;
 
+    // ... (getDocAndLocalPage, initLocalMagnifier, updateLocalMagnifier, updatePageControls functions remain the same) ...
     function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) {
             return null;
@@ -234,10 +242,11 @@ document.addEventListener('DOMContentLoaded', () => {
         pageMap = [];
         globalTotalPages = 0;
         currentPage = 1;
-        if (resultsDropdown) {
-            resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-            updateResultNavButtons();
-        }
+        // ** CHANGE: Reset search results and hide FABs **
+        currentSearchResults = [];
+        if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+        updateAllNavControls();
+
         if (searchInputElem) searchInputElem.value = '';
         showSearchResultsHighlights = true;
         if (textLayerDivGlobal) textLayerDivGlobal.classList.remove('highlights-hidden');
@@ -306,6 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // ... (renderPage, renderTextLayer, drawing functions remain the same) ...
     function renderPage(globalPageNum, highlightPattern = null) {
         if (pdfDocs.length === 0 || !pdfContainer || !canvas || !ctx || !textLayerDivGlobal || !drawingCanvas || !drawingCtx) {
             return;
@@ -465,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawingCanvas.addEventListener('touchend', stopDrawing);
         drawingCanvas.addEventListener('touchcancel', stopDrawing);
     }
-
+    
     function searchKeyword() {
         if (!searchInputElem || !resultsDropdown) {
             if (pdfDocs.length > 0) renderPage(currentPage, null);
@@ -473,12 +483,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const input = searchInputElem.value.trim();
         resultsDropdown.innerHTML = '<option value="">搜尋中，請稍候...</option>';
-        updateResultNavButtons(); // Update nav state
+        currentSearchResults = [];
+        updateAllNavControls();
 
         if (pdfDocs.length === 0 || !input) {
             if (pdfDocs.length > 0) renderPage(currentPage, null);
             resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-            updateResultNavButtons(); // Update nav state
+            updateAllNavControls();
             return;
         }
         let pattern;
@@ -492,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (kw.length === 0) {
                     if (pdfDocs.length > 0) renderPage(currentPage, null);
                     resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-                    updateResultNavButtons(); // Update nav state
+                    updateAllNavControls();
                     return;
                 }
                 pattern = new RegExp(kw.join('|'), 'gi');
@@ -500,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             alert('正則表達式格式錯誤: ' + e.message);
             resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-            updateResultNavButtons(); // Update nav state
+            updateAllNavControls();
             return;
         }
 
@@ -544,6 +555,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const results = allPageResults.filter(r => r !== null);
             resultsDropdown.innerHTML = '';
             resultsDropdown.disabled = false;
+            
+            // ** CHANGE: Store results globally **
+            currentSearchResults = results;
 
             if (results.length === 0) {
                 const o = document.createElement('option');
@@ -590,44 +604,59 @@ document.addEventListener('DOMContentLoaded', () => {
                     goToPage(results[0].page, pattern);
                 }
             }
-            updateResultNavButtons(); // Update nav state after populating
+            updateAllNavControls();
         }).catch(err => {
             console.error("Search process failed unexpectedly:", err);
             resultsDropdown.innerHTML = '<option value="">搜尋錯誤</option>';
             resultsDropdown.disabled = false;
             alert("搜尋過程發生未知錯誤，請檢查主控台。");
             renderPage(currentPage, null);
-            updateResultNavButtons(); // Update nav state on error
+            updateAllNavControls();
         });
     }
 
-    // ** CHANGE: New function to update result navigation buttons **
-    function updateResultNavButtons() {
-        if (!resultsDropdown || !prevResultBtn || !nextResultBtn) return;
+    // ** CHANGE: Renamed and expanded function to update ALL nav controls (toolbar and FAB) **
+    function updateAllNavControls() {
+        if (!resultsDropdown || !prevResultBtn || !nextResultBtn || !fabResultNavGroup) return;
 
         const options = Array.from(resultsDropdown.options);
         const validOptions = options.filter(opt => !opt.disabled && opt.value);
 
-        if (validOptions.length <= 1) {
+        const hasResults = validOptions.length > 0;
+        fabResultNavGroup.classList.toggle('hidden', !hasResults);
+
+        if (!hasResults) {
             prevResultBtn.disabled = true;
             nextResultBtn.disabled = true;
             return;
         }
-
+        
+        const totalResults = validOptions.length;
         const currentValidIndex = validOptions.findIndex(opt => opt.value === resultsDropdown.value);
 
         if (currentValidIndex === -1) {
             prevResultBtn.disabled = true;
             nextResultBtn.disabled = true;
+            fabPrevResultBtn.disabled = true;
+            fabNextResultBtn.disabled = true;
+            if(fabResultCounter) fabResultCounter.textContent = `- / ${totalResults}`;
             return;
         }
+        
+        const isFirst = currentValidIndex <= 0;
+        const isLast = currentValidIndex >= totalResults - 1;
 
-        prevResultBtn.disabled = (currentValidIndex <= 0);
-        nextResultBtn.disabled = (currentValidIndex >= validOptions.length - 1);
+        // Update toolbar buttons
+        prevResultBtn.disabled = isFirst;
+        nextResultBtn.disabled = isLast;
+
+        // Update FABs
+        fabPrevResultBtn.disabled = isFirst;
+        fabNextResultBtn.disabled = isLast;
+        if(fabResultCounter) fabResultCounter.textContent = `${currentValidIndex + 1} / ${totalResults}`;
     }
 
-    // ** CHANGE: New function to navigate between results **
-    function navigateResults(direction) { // direction: -1 for prev, 1 for next
+    function navigateResults(direction) {
         if (!resultsDropdown) return;
         const options = Array.from(resultsDropdown.options);
         const validOptions = options.filter(opt => !opt.disabled && opt.value);
@@ -645,17 +674,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     if (searchActionButton) {
         searchActionButton.addEventListener('click', searchKeyword);
     }
 
-    // ** CHANGE: Add event listeners for new navigation buttons **
     if (prevResultBtn) {
         prevResultBtn.addEventListener('click', () => navigateResults(-1));
     }
     if (nextResultBtn) {
         nextResultBtn.addEventListener('click', () => navigateResults(1));
+    }
+
+    // ** CHANGE: Add event listeners for new FABs **
+    if (fabPrevResultBtn) {
+        fabPrevResultBtn.addEventListener('click', () => navigateResults(-1));
+    }
+    if (fabNextResultBtn) {
+        fabNextResultBtn.addEventListener('click', () => navigateResults(1));
     }
 
     function goToPageDropdown(pageNumStr) {
@@ -667,13 +702,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     if (resultsDropdown) {
-        // ** CHANGE: Update nav buttons on dropdown change **
         resultsDropdown.addEventListener('change', () => {
             goToPageDropdown(resultsDropdown.value);
-            updateResultNavButtons();
+            updateAllNavControls();
         });
     }
 
+    // ... (rest of the file remains the same, no changes needed below this line) ...
     function goToPage(globalPageNum, highlightPatternForPage = null) {
         if (pdfDocs.length === 0 || isNaN(globalPageNum)) return;
         const n = Math.max(1, Math.min(globalPageNum, globalTotalPages));
@@ -991,6 +1026,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     initLocalMagnifier();
     updatePageControls();
-    updateResultNavButtons(); // Initial call
+    updateAllNavControls();
 
 });
