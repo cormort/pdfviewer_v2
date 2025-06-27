@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ** 設定 worker 的本地路徑 **
     if (typeof pdfjsLib !== 'undefined') {
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
@@ -9,20 +10,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // --- 變數宣告 (大部分不變) ---
     let pdfDocs = [];
     let pageMap = [];
     let globalTotalPages = 0;
     let currentPage = 1;
     let pageRendering = false;
 
-    // --- DOM 元素獲取 (部分修改) ---
-    const sidebar = document.getElementById('sidebar');
-    const sidebarHandle = document.getElementById('sidebar-handle');
-    const pdfContainer = document.getElementById('pdf-container');
-    
     const canvas = document.getElementById('pdf-canvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
+    const toolbar = document.getElementById('toolbar');
+    const toolbarToggle = document.getElementById('toolbar-toggle');
+    const pdfContainer = document.getElementById('pdf-container');
     const textLayerDivGlobal = document.getElementById('text-layer');
     const goToFirstPageBtn = document.getElementById('go-to-first-page');
     const prevPageBtn = document.getElementById('prev-page');
@@ -43,6 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const drawingCtx = drawingCanvas ? drawingCanvas.getContext('2d') : null;
     const searchInputElem = document.getElementById('searchInput');
     const searchActionButton = document.getElementById('search-action-button');
+    
+    // ** CHANGE: Get new result navigation buttons **
+    const prevResultBtn = document.getElementById('prev-result-btn');
+    const nextResultBtn = document.getElementById('next-result-btn');
 
     const magnifierGlass = document.getElementById('magnifier-glass');
     const magnifierCanvas = document.getElementById('magnifier-canvas');
@@ -62,23 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastX = 0;
     let lastY = 0;
 
-    // --- 全新的側邊欄控制邏輯 ---
-    if (sidebar && sidebarHandle) {
-        sidebarHandle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-        });
-    }
-
-    // 當點擊 PDF 區域時，如果側邊欄是開的，就把它關起來
-    if (pdfContainer && sidebar) {
-        pdfContainer.addEventListener('click', () => {
-            if (sidebar.classList.contains('open')) {
-                sidebar.classList.remove('open');
-            }
-        });
-    }
-    
-    // --- 其他函式保持不變 ---
     function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) {
             return null;
@@ -95,8 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // ... (所有其他函式，如 initLocalMagnifier, updatePageControls, renderPage, searchKeyword 等，都與前一版完全相同)
-    
     function initLocalMagnifier() {
         if (magnifierCanvas && magnifierGlass) {
             magnifierGlass.style.width = `${LOCAL_MAGNIFIER_SIZE}px`;
@@ -225,6 +208,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (localMagnifierZoomSelector) localMagnifierZoomSelector.disabled = !hasDocs;
     }
 
+    if (toolbarToggle && toolbar) {
+        toolbarToggle.addEventListener('click', () => {
+            toolbar.classList.toggle('active');
+        });
+    }
+    if (pdfContainer && toolbar) {
+        pdfContainer.addEventListener('click', (e) => {
+            if (e.target === pdfContainer && window.innerWidth <= 768 && toolbar.classList.contains('active')) {
+                toolbar.classList.remove('active');
+            }
+        });
+    }
+
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const files = e.target.files;
         if (!files || files.length === 0) {
@@ -238,7 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
         pageMap = [];
         globalTotalPages = 0;
         currentPage = 1;
-        if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+        if (resultsDropdown) {
+            resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+            updateResultNavButtons();
+        }
         if (searchInputElem) searchInputElem.value = '';
         showSearchResultsHighlights = true;
         if (textLayerDivGlobal) textLayerDivGlobal.classList.remove('highlights-hidden');
@@ -474,9 +473,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const input = searchInputElem.value.trim();
         resultsDropdown.innerHTML = '<option value="">搜尋中，請稍候...</option>';
+        updateResultNavButtons(); // Update nav state
+
         if (pdfDocs.length === 0 || !input) {
             if (pdfDocs.length > 0) renderPage(currentPage, null);
             resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+            updateResultNavButtons(); // Update nav state
             return;
         }
         let pattern;
@@ -490,6 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (kw.length === 0) {
                     if (pdfDocs.length > 0) renderPage(currentPage, null);
                     resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+                    updateResultNavButtons(); // Update nav state
                     return;
                 }
                 pattern = new RegExp(kw.join('|'), 'gi');
@@ -497,6 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             alert('正則表達式格式錯誤: ' + e.message);
             resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+            updateResultNavButtons(); // Update nav state
             return;
         }
 
@@ -586,17 +590,72 @@ document.addEventListener('DOMContentLoaded', () => {
                     goToPage(results[0].page, pattern);
                 }
             }
+            updateResultNavButtons(); // Update nav state after populating
         }).catch(err => {
             console.error("Search process failed unexpectedly:", err);
             resultsDropdown.innerHTML = '<option value="">搜尋錯誤</option>';
             resultsDropdown.disabled = false;
             alert("搜尋過程發生未知錯誤，請檢查主控台。");
             renderPage(currentPage, null);
+            updateResultNavButtons(); // Update nav state on error
         });
     }
 
+    // ** CHANGE: New function to update result navigation buttons **
+    function updateResultNavButtons() {
+        if (!resultsDropdown || !prevResultBtn || !nextResultBtn) return;
+
+        const options = Array.from(resultsDropdown.options);
+        const validOptions = options.filter(opt => !opt.disabled && opt.value);
+
+        if (validOptions.length <= 1) {
+            prevResultBtn.disabled = true;
+            nextResultBtn.disabled = true;
+            return;
+        }
+
+        const currentValidIndex = validOptions.findIndex(opt => opt.value === resultsDropdown.value);
+
+        if (currentValidIndex === -1) {
+            prevResultBtn.disabled = true;
+            nextResultBtn.disabled = true;
+            return;
+        }
+
+        prevResultBtn.disabled = (currentValidIndex <= 0);
+        nextResultBtn.disabled = (currentValidIndex >= validOptions.length - 1);
+    }
+
+    // ** CHANGE: New function to navigate between results **
+    function navigateResults(direction) { // direction: -1 for prev, 1 for next
+        if (!resultsDropdown) return;
+        const options = Array.from(resultsDropdown.options);
+        const validOptions = options.filter(opt => !opt.disabled && opt.value);
+        if (validOptions.length === 0) return;
+
+        const currentValidIndex = validOptions.findIndex(opt => opt.value === resultsDropdown.value);
+        if (currentValidIndex === -1) return;
+
+        let nextValidIndex = currentValidIndex + direction;
+
+        if (nextValidIndex >= 0 && nextValidIndex < validOptions.length) {
+            const nextOption = validOptions[nextValidIndex];
+            resultsDropdown.value = nextOption.value;
+            resultsDropdown.dispatchEvent(new Event('change'));
+        }
+    }
+
+
     if (searchActionButton) {
         searchActionButton.addEventListener('click', searchKeyword);
+    }
+
+    // ** CHANGE: Add event listeners for new navigation buttons **
+    if (prevResultBtn) {
+        prevResultBtn.addEventListener('click', () => navigateResults(-1));
+    }
+    if (nextResultBtn) {
+        nextResultBtn.addEventListener('click', () => navigateResults(1));
     }
 
     function goToPageDropdown(pageNumStr) {
@@ -608,7 +667,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     if (resultsDropdown) {
-        resultsDropdown.addEventListener('change', () => goToPageDropdown(resultsDropdown.value));
+        // ** CHANGE: Update nav buttons on dropdown change **
+        resultsDropdown.addEventListener('change', () => {
+            goToPageDropdown(resultsDropdown.value);
+            updateResultNavButtons();
+        });
     }
 
     function goToPage(globalPageNum, highlightPatternForPage = null) {
@@ -928,4 +991,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     initLocalMagnifier();
     updatePageControls();
+    updateResultNavButtons(); // Initial call
+
 });
