@@ -303,31 +303,65 @@ body.results-bar-visible #bottom-results-bar {
   #toolbar-toggle-tab {
     display: flex;
     position: fixed;
-    /* --- START: Vertical centering for the tab --- */
-    top: 50%; /* Position element's top edge at 50% of viewport height */
-    transform: translateY(-50%); /* Move element up by half its own height */
-    transition: left 0.3s ease-in-out, transform 0.3s ease-in-out; /* Add transform to transition */
-    /* --- END: Vertical centering for the tab --- */
-    left: 0; /* Changed to 0 for the tab */
+    top: 50%;
+    transform: translateY(-50%);
+    /* left 初始位置在畫面外，這樣才能滑入 */
+    left: 0; /* 預設在收起狀態時，頁籤的左邊緣在視窗左邊緣 */
     z-index: 1003;
     pointer-events: auto;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    border-left: none; /* No left border for the tab */
+    background-color: #474747; /* 來自 .asideMenu */
+    border: 1px solid #474747; /* 與背景色相同 */
+    border-left: none; /* 讓頁籤左側無邊框 */
+    border-radius: 0 4px 4px 0; /* 圓角在右側 */
     padding: 8px 12px;
     cursor: pointer;
     font-size: 1.2em;
-    border-radius: 0 4px 4px 0; /* Rounded on the right */
-    height: 40px; /* Adjust height to match toolbar elements */
+    height: 40px;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 0 5px hsla(240, 40%, 15%, 0.6); /* 來自 .asideMenu */
+    transition: left 0.5s ease-in-out, transform 0.5s ease-in-out; /* 增加 transition 時間 */
   }
   #toolbar-toggle-tab .icon {
     transition: transform 0.3s ease-in-out;
     transform: rotate(0deg); /* Initial state for the icon */
+    color: white; /* 頁籤圖標顏色 */
+  }
+
+  /* #toolbar 樣式調整 */
+  #toolbar {
+    position: fixed;
+    top: 0;
+    left: 0; /* 預設在收起狀態時，工具列的左邊緣在視窗左邊緣 */
+    width: 300px; /* 來自 .asideMenu */
+    max-width: 80vw;
+    height: 100vh;
+    background-color: #474747; /* 來自 .asideMenu */
+    border-right: 5px solid #ff9a15; /* 來自 .asideMenu (原本 border-bottom) */
+    padding: 20px; /* 來自 .asideMenu (原本 50px 15px 20px 15px) */
+    box-sizing: border-box;
+    box-shadow: 0 0 5px hsla(240, 40%, 15%, 0.6); /* 來自 .asideMenu */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center; /* 讓內容垂直置中 */
+    -webkit-transform: translateX(-100%); /* 預設向左移出畫面外 */
+    transform: translateX(-100%);
+    transition: transform 0.5s ease-in-out; /* 調整 transition 時間 */
+    z-index: 1001;
+    overflow-y: auto;
+    overflow-x: hidden;
+    gap: 15px; /* 保持項目間距 */
+  }
+
+  /* 透過父層容器的 class 來控制滑動 */
+  #app-container.menu-active #toolbar {
+    -webkit-transform: translateX(0);
+    transform: translateX(0); /* 滑入畫面 */
   }
   #app-container.menu-active #toolbar-toggle-tab {
-    left: 280px; /* Moves with the toolbar */
+    /* 頁籤跟著移動到選單的右邊緣 (300px 是選單寬度) */
+    left: 300px; /* 調整為 toolbar 的 width */
   }
   #app-container.menu-active #toolbar-toggle-tab .icon {
     transform: rotate(180deg); /* Rotate icon when active */
