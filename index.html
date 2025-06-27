@@ -490,8 +490,9 @@
   </div>
 
   <script type="module">
-    import { GlobalWorkerOptions } from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.0.375/pdf.mjs';
-    GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.0.375/pdf.worker.mjs';
+    // This script should be placed before the main script.js
+    import { GlobalWorkerOptions } from './lib/pdfjs/pdf.mjs'; 
+    GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
   </script>
   <script type="module" src="./script.js"></script>
 </body>
