@@ -1,7 +1,7 @@
 // This inline script in index.html MUST run first to configure the worker:
 // <script type="module">
-//   import { GlobalWorkerOptions } from './lib/pdfjs/pdf.mjs';
-//   GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
+//    import { GlobalWorkerOptions } from './lib/pdfjs/pdf.mjs';
+//    GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
 // </script>
 // This main script then runs.
 
@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let showSearchResultsHighlights = true, highlighterEnabled = false, textSelectionModeActive = false, localMagnifierEnabled = false;
     let isDrawing = false, lastX = 0, lastY = 0;
     let LOCAL_MAGNIFIER_SIZE = 120, LOCAL_MAGNIFIER_ZOOM_LEVEL = 2.5;
+    let resizeTimeout; // Declare resizeTimeout here as a global variable within this scope
 
     // 3. DOM ELEMENT SELECTIONS
     // =========================================================================
@@ -28,10 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const toolbarToggle = document.getElementById('toolbar-toggle-tab');
     const pdfContainer = document.getElementById('pdf-container');
     const canvas = document.getElementById('pdf-canvas');
-    const ctx = canvas.getContext('2d');
+    // Add null checks for getContext to prevent errors if canvas isn't found
+    const ctx = canvas ? canvas.getContext('2d') : null;
     const textLayerDivGlobal = document.getElementById('text-layer');
     const drawingCanvas = document.getElementById('drawing-canvas');
-    const drawingCtx = drawingCanvas.getContext('2d');
+    // Add null checks for getContext
+    const drawingCtx = drawingCanvas ? drawingCanvas.getContext('2d') : null;
     const fileInput = document.getElementById('fileInput');
     const searchInputElem = document.getElementById('searchInput');
     const searchActionButton = document.getElementById('search-action-button');
@@ -56,7 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const sharePageBtn = document.getElementById('share-page-btn');
     const magnifierGlass = document.getElementById('magnifier-glass');
     const magnifierCanvas = document.getElementById('magnifier-canvas');
-    const localMagnifierCtx = magnifierCanvas.getContext('2d');
+    // Add null checks for getContext
+    const localMagnifierCtx = magnifierCanvas ? magnifierCanvas.getContext('2d') : null;
     const localMagnifierZoomControlsDiv = document.getElementById('local-magnifier-zoom-controls');
     const localMagnifierZoomSelector = document.getElementById('local-magnifier-zoom-selector');
 
@@ -101,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPage(globalPageNum) {
         if (pdfDocs.length === 0 || pageRendering) return;
         pageRendering = true;
-        updatePageControls();
+        updatePageControls(); // This call is now safe
         const pageInfo = getDocAndLocalPage(globalPageNum);
         if (!pageInfo) { pageRendering = false; updatePageControls(); return; }
         const { doc, localPage } = pageInfo;
@@ -130,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }).then(() => {
                 if (showSearchResultsHighlights && patternToUse) {
                     Array.from(textLayerDivGlobal.querySelectorAll('span')).forEach(span => {
-                         if (patternToUse.test(span.textContent)) span.classList.add('wavy-underline');
+                           if (patternToUse.test(span.textContent)) span.classList.add('wavy-underline');
                     });
                 }
                 drawingCanvas.width = canvas.offsetWidth;
@@ -275,7 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
         textLayerDivGlobal.classList.remove('text-selection-active');
         textLayerDivGlobal.style.pointerEvents = 'none';
         drawingCanvas.style.pointerEvents = 'none';
-        canvas.style.visibility = 'visible';
+        // Only attempt to set visibility if canvas exists
+        if (canvas) canvas.style.visibility = 'visible'; 
         if (drawingCtx) drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
         if (magnifierGlass) magnifierGlass.style.display = 'none';
         updatePageControls();
@@ -288,7 +293,8 @@ document.addEventListener('DOMContentLoaded', () => {
         textLayerDivGlobal.classList.toggle('text-selection-active', textSelectionModeActive);
         textLayerDivGlobal.style.pointerEvents = textSelectionModeActive ? 'auto' : 'none';
         drawingCanvas.style.pointerEvents = highlighterEnabled ? 'auto' : 'none';
-        canvas.style.visibility = textSelectionModeActive ? 'hidden' : 'visible';
+        // Only attempt to set visibility if canvas exists
+        if (canvas) canvas.style.visibility = textSelectionModeActive ? 'hidden' : 'visible'; 
         if (!localMagnifierEnabled && magnifierGlass) magnifierGlass.style.display = 'none';
         updatePageControls();
     }
@@ -302,10 +308,102 @@ document.addEventListener('DOMContentLoaded', () => {
     function stopDrawing() { isDrawing = false; }
     function handlePointerMoveForLocalMagnifier(e) { if (!localMagnifierEnabled) return; const touch = e.touches ? e.touches[0] : e; updateLocalMagnifier(touch.clientX, touch.clientY); }
     function handlePointerLeaveForLocalMagnifier() { if (localMagnifierEnabled && magnifierGlass) magnifierGlass.style.display = 'none'; }
-    function updateLocalMagnifier(clientX, clientY) { /* ... original logic ... */ }
-    async function getAnnotatedPageAsBlob(type = 'image/png') { /* ... original logic ... */ }
-    async function exportPageAsImage() { /* ... original logic ... */ }
-    async function sharePage() { /* ... original logic ... */ }
+    // You need to provide the actual implementation for updateLocalMagnifier
+    function updateLocalMagnifier(clientX, clientY) {
+        if (!magnifierGlass || !magnifierCanvas || !localMagnifierCtx || !canvas) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const canvasX = clientX - rect.left;
+        const canvasY = clientY - rect.top;
+
+        if (canvasX < 0 || canvasX > rect.width || canvasY < 0 || canvasY > rect.height) {
+            magnifierGlass.style.display = 'none';
+            return;
+        }
+
+        magnifierGlass.style.display = 'block';
+        magnifierGlass.style.left = `${clientX - LOCAL_MAGNIFIER_SIZE / 2}px`;
+        magnifierGlass.style.top = `${clientY - LOCAL_MAGNIFIER_SIZE / 2}px`;
+        magnifierCanvas.width = LOCAL_MAGNIFIER_SIZE;
+        magnifierCanvas.height = LOCAL_MAGNIFIER_SIZE;
+
+        const sourceX = canvasX - (LOCAL_MAGNIFIER_SIZE / LOCAL_MAGNIFIER_ZOOM_LEVEL / 2);
+        const sourceY = canvasY - (LOCAL_MAGNIFIER_SIZE / LOCAL_MAGNIFIER_ZOOM_LEVEL / 2);
+
+        localMagnifierCtx.drawImage(
+            canvas,
+            sourceX,
+            sourceY,
+            LOCAL_MAGNIFIER_SIZE / LOCAL_MAGNIFIER_ZOOM_LEVEL,
+            LOCAL_MAGNIFIER_SIZE / LOCAL_MAGNIFIER_ZOOM_LEVEL,
+            0,
+            0,
+            LOCAL_MAGNIFIER_SIZE,
+            LOCAL_MAGNIFIER_SIZE
+        );
+    }
+    async function getAnnotatedPageAsBlob(type = 'image/png') {
+        if (!pdfDocs.length || !canvas || !drawingCanvas) return null;
+
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+
+        // Draw PDF content
+        tempCtx.drawImage(canvas, 0, 0);
+
+        // Draw highlighter markings
+        tempCtx.drawImage(drawingCanvas, 0, 0);
+
+        return new Promise(resolve => {
+            tempCanvas.toBlob(resolve, type);
+        });
+    }
+
+    async function exportPageAsImage() {
+        const blob = await getAnnotatedPageAsBlob();
+        if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const docInfo = getDocAndLocalPage(currentPage);
+            const filename = docInfo ? `page_${currentPage}_${docInfo.docName.replace(/\.pdf$/, '')}.png` : `page_${currentPage}.png`;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } else {
+            alert('無法匯出頁面，請確認已載入PDF。');
+        }
+    }
+
+    async function sharePage() {
+        if (!navigator.share) {
+            alert('您的瀏覽器不支持分享功能。');
+            return;
+        }
+
+        const blob = await getAnnotatedPageAsBlob();
+        if (blob) {
+            try {
+                const file = new File([blob], `page_${currentPage}.png`, { type: 'image/png' });
+                await navigator.share({
+                    files: [file],
+                    title: `PDF Viewer - Page ${currentPage}`,
+                    text: `Check out page ${currentPage} from this PDF!`,
+                });
+            } catch (error) {
+                console.error('分享失敗:', error);
+                alert('分享失敗。');
+            }
+        } else {
+            alert('無法分享頁面，請確認已載入PDF。');
+        }
+    }
+
 
     // 5. EVENT LISTENERS & INITIALIZATION
     // =========================================================================
@@ -347,6 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(() => { if (pdfDocs.length > 0) renderPage(currentPage); }, 250); });
 
     // Initial call to set up the UI correctly on page load
-    updatePageControls();
+    updatePageControls(); // This is now safe as updatePageControls is defined above.
     updateResultsNav();
 });
