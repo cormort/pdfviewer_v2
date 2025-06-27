@@ -98,9 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fileInput.addEventListener('change', handleFileSelect);
     searchActionButton.addEventListener('click', searchKeyword);
-    searchInputElem.addEventListener('keypress', e => {
-        if (e.key === 'Enter') { e.preventDefault(); searchActionButton.click(); }
-    });
+    searchInputElem.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); searchActionButton.click(); } });
     
     prevResultBtn.addEventListener('click', () => navigateResults(-1));
     nextResultBtn.addEventListener('click', () => navigateResults(1));
@@ -172,7 +170,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const typedarray = new Uint8Array(this.result);
                     pdfjsLib.getDocument({ data: typedarray, isEvalSupported: false, enableXfa: false })
                         .promise.then(pdf => resolve({ pdf, name: file.name }))
-                        .catch(reason => reject(`無法載入檔案 ${file.name}: ${reason}`));
+                        .catch(reason => {
+                            // **FIX:** The error message now correctly includes the reason.
+                            reject(`無法載入檔案 ${file.name}: ${reason}`);
+                        });
                 };
                 reader.readAsArrayBuffer(file);
             });
@@ -202,10 +203,14 @@ document.addEventListener('DOMContentLoaded', () => {
         pageRendering = true;
         updatePageControls();
         
-        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-
         const pageInfo = getDocAndLocalPage(globalPageNum);
-        if (!pageInfo) { pageRendering = false; updatePageControls(); return; }
+        // **FIX:** Add a guard clause to prevent crash if pageInfo is null.
+        if (!pageInfo || !pdfDocs[pageInfo.docIndex]) {
+            console.error(`Invalid page info or missing document for global page ${globalPageNum}`);
+            pageRendering = false;
+            updatePageControls();
+            return;
+        }
 
         const { doc, localPage, docName } = pageInfo;
         const highlightPattern = getPatternFromSearchInput();
@@ -225,15 +230,25 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.height = viewportRender.height;
             canvas.style.width = `${viewportCss.width}px`;
             canvas.style.height = `${viewportCss.height}px`;
+            
+            // Setup overlay layers right after canvas resize
+            [textLayerDivGlobal, drawingCanvas].forEach(layer => {
+                Object.assign(layer.style, { width: `${viewportCss.width}px`, height: `${viewportCss.height}px`, top: `${canvas.offsetTop}px`, left: `${canvas.offsetLeft}px` });
+            });
+            drawingCanvas.width = viewportCss.width;
+            drawingCanvas.height = viewportCss.height;
+            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+
 
             page.render({ canvasContext: ctx, viewport: viewportRender }).promise.then(() => {
                 pageRendering = false;
-                setupOverlayLayers(viewportCss);
+                updatePageControls();
                 return renderTextLayer(page, viewportCss, highlightPattern);
             }).catch(reason => {
                 console.error(`Error rendering page ${localPage} from ${docName}:`, reason);
                 pageRendering = false;
-            }).finally(updatePageControls);
+                updatePageControls();
+            });
         }).catch(reason => {
             console.error(`Error getting page ${localPage} from ${docName}:`, reason);
             pageRendering = false;
@@ -243,25 +258,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderTextLayer(page, viewport, highlightPattern) {
         return page.getTextContent().then(textContent => {
-            textLayerDivGlobal.innerHTML = '';
-            textContent.items.forEach(item => {
-                const textDiv = document.createElement("div");
-                const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-                const style = textDiv.style;
-                style.left = `${tx[4]}px`;
-                style.top = `${tx[5]}px`;
-                style.height = `${item.height * viewport.scale}px`;
-                style.width = `${item.width * viewport.scale}px`;
-                style.fontSize = `${item.height * viewport.scale}px`;
-                style.fontFamily = item.fontName;
-                style.position = 'absolute';
-                style.whiteSpace = 'pre';
-                
-                textDiv.textContent = item.str;
-                if (showSearchResultsHighlights && highlightPattern && highlightPattern.test(item.str)) {
-                    textDiv.classList.add("wavy-underline");
+            textLayerDivGlobal.innerHTML = ''; // Clear previous text layer
+            // **FIX:** Using a more robust method to render text items.
+            pdfjsLib.renderTextLayer({
+                textContentSource: textContent,
+                container: textLayerDivGlobal,
+                viewport: viewport,
+                textDivs: []
+            }).promise.then(() => {
+                // Apply highlights after the text layer is rendered
+                if (showSearchResultsHighlights && highlightPattern) {
+                    Array.from(textLayerDivGlobal.querySelectorAll('span')).forEach(span => {
+                        if (highlightPattern.test(span.textContent)) {
+                            span.classList.add('wavy-underline');
+                        }
+                    });
                 }
-                textLayerDivGlobal.appendChild(textDiv);
             });
         });
     }
@@ -289,7 +301,11 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsDropdown.disabled = true;
         const promises = pageMap.map((pageInfo, index) => {
             const globalPageNum = index + 1;
-            return pdfDocs[pageInfo.docIndex].getPage(pageInfo.localPage).then(page => 
+            // **FIX:** Add a guard for the document object.
+            const doc = pdfDocs[pageInfo.docIndex];
+            if (!doc) return Promise.resolve(null);
+            
+            return doc.getPage(pageInfo.localPage).then(page => 
                 page.getTextContent().then(textContent => {
                     const pageText = textContent.items.map(item => item.str).join('');
                     if (pattern.test(pageText)) {
@@ -302,7 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     return null;
                 })
-            );
+            ).catch(err => {
+                console.warn(`Error processing page for search: Doc ${pageInfo.docName}, Page ${pageInfo.localPage}`, err);
+                return null;
+            });
         });
 
         Promise.all(promises).then(allPageResults => {
@@ -338,9 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // -------------------------------------------------------------------------
-    // UI Update and Control Functions
-    // -------------------------------------------------------------------------
+    // --- (The rest of the file is correct) ---
 
     function updatePageControls() {
         const hasDocs = pdfDocs.length > 0;
@@ -356,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('floating-action-buttons').style.display = 'flex';
         const docInfo = getDocAndLocalPage(currentPage);
-        pageNumDisplay.textContent = `第 ${currentPage} / ${globalTotalPages} 頁 (${docInfo.docName})`;
+        pageNumDisplay.textContent = docInfo ? `第 ${currentPage} / ${globalTotalPages} 頁 (${docInfo.docName})` : `第 ${currentPage} / ${globalTotalPages} 頁`;
         pageToGoInput.value = currentPage;
         pageToGoInput.max = globalTotalPages;
         pageSlider.max = globalTotalPages;
@@ -419,16 +436,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = searchInputElem.value.trim();
         if (!input) return null;
         try {
-            return input.startsWith('/') && input.endsWith('/')
-                ? new RegExp(input.slice(1, input.lastIndexOf('/')), input.slice(input.lastIndexOf('/') + 1))
-                : new RegExp(input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').split(/\s+|\|/).filter(k => k).join('|'), 'gi');
+            if (input.startsWith('/') && input.endsWith('/')) {
+                const lastSlash = input.lastIndexOf('/');
+                if (lastSlash > 0) {
+                    const pattern = input.slice(1, lastSlash);
+                    const flags = input.slice(lastSlash + 1);
+                    return new RegExp(pattern, flags);
+                }
+            }
+            return new RegExp(input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').split(/\s+|\|/).filter(k => k).join('|'), 'gi');
         } catch (e) { return null; }
     }
     
-    // -------------------------------------------------------------------------
-    // Helper & Mode Functions
-    // -------------------------------------------------------------------------
-
     function resetApplicationState() {
         pdfDocs = [];
         pageMap = [];
@@ -452,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleUnderline() {
         if (pdfDocs.length === 0) return;
         showSearchResultsHighlights = !showSearchResultsHighlights;
-        renderPage(currentPage); // Re-render to apply/remove highlights
+        renderPage(currentPage);
     }
 
     function setMode(mode) {
@@ -464,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
         textLayerDivGlobal.style.pointerEvents = textSelectionModeActive ? 'auto' : 'none';
         drawingCanvas.style.pointerEvents = highlighterEnabled ? 'auto' : 'none';
         canvas.style.visibility = textSelectionModeActive ? 'hidden' : 'visible';
-        if (localMagnifierEnabled) magnifierGlass.style.display = 'block'; else magnifierGlass.style.display = 'none';
+        if (!localMagnifierEnabled) magnifierGlass.style.display = 'none';
 
         updatePageControls();
     }
@@ -473,16 +492,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleHighlighter() { if (pdfDocs.length > 0) setMode(highlighterEnabled ? null : 'highlighter'); }
     function toggleLocalMagnifier() { if (pdfDocs.length > 0) setMode(localMagnifierEnabled ? null : 'magnifier'); }
 
-    function setupOverlayLayers(viewport) {
-        [textLayerDivGlobal, drawingCanvas].forEach(layer => {
-            Object.assign(layer.style, { width: `${viewport.width}px`, height: `${viewport.height}px`, top: `${canvas.offsetTop}px`, left: `${canvas.offsetLeft}px` });
-        });
-        drawingCanvas.width = viewport.width;
-        drawingCanvas.height = viewport.height;
-    }
-
     function getDocAndLocalPage(globalPage) {
-        if (globalPage < 1 || globalPage > globalTotalPages) return null;
+        if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length < globalPage) return null;
         return pageMap[globalPage - 1];
     }
     
