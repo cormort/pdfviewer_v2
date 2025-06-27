@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>多PDF智能檢索器</title>
+  <title>多PDF智能檢索器 (包夾式結果)</title>
   <style>
     body {
       font-family: sans-serif;
@@ -68,7 +68,6 @@
     #toolbar input[type="text"] { width: 150px; }
     #toolbar input[type="number"] { width: 60px; text-align: center;}
 
-    /* ** NEW/MODIFIED STYLES FOR RESULT NAVIGATION ** */
     #result-nav-wrapper {
         display: flex;
         align-items: center;
@@ -76,14 +75,12 @@
     }
     #result-nav-wrapper button {
         flex-shrink: 0;
-        padding: 8px 10px; /* Adjust padding for arrows */
+        padding: 8px 10px;
     }
     #result-nav-wrapper select {
         flex-grow: 1;
         min-width: 120px;
     }
-    /* ** END OF NEW STYLES ** */
-
 
     #quality-control, #local-magnifier-zoom-controls {
         display: flex;
@@ -213,6 +210,16 @@
         gap: 10px;
         align-items: center;
     }
+    /* ** NEW STYLE for result counter ** */
+    #fab-result-counter {
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 14px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
 
     #floating-action-buttons button {
         background-color: rgba(0, 0, 0, 0.5);
@@ -259,6 +266,9 @@
     #toggle-local-magnifier-btn.active {
         background-color: rgba(100, 0, 100, 0.7);
     }
+    .hidden {
+        display: none !important;
+    }
 
     /* Mobile Styles */
     @media (max-width: 768px) {
@@ -281,12 +291,11 @@
       #toolbar input[type="text"], #toolbar input[type="number"], #toolbar select, #toolbar button, #quality-control, #local-magnifier-zoom-controls, #result-nav-wrapper {
          width: 100%;
       }
-      /* ** NEW/MODIFIED STYLES FOR MOBILE RESULT NAVIGATION ** */
       #result-nav-wrapper button {
-          width: auto !important; /* Prevent buttons from taking full width */
+          width: auto !important;
       }
       #result-nav-wrapper select {
-          width: 100%; /* Allow select to fill space */
+          width: 100%;
       }
 
        #quality-control, #local-magnifier-zoom-controls { justify-content: space-between; }
@@ -303,6 +312,7 @@
       #pdf-container { padding: 5px; }
       #floating-action-buttons { bottom: 15px; right: 15px; gap: 8px; }
       #floating-action-buttons button { width: 45px; height: 45px; font-size: 20px; }
+      #fab-result-counter { font-size: 12px; padding: 4px 8px;}
       .toggle-underline-icon { font-size: 1em; }
     }
     @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
@@ -344,7 +354,6 @@
       <input type="text" id="searchInput" placeholder="關鍵字或正則" />
       <button id="search-action-button">搜尋</button>
 
-      <!-- ** CHANGE: Replaced select with a div containing nav buttons and select ** -->
       <div id="result-nav-wrapper">
         <button id="prev-result-btn" title="上一個結果" disabled>◀</button>
         <select id="resultsDropdown">
@@ -395,6 +404,13 @@
   </div>
 
   <div id="floating-action-buttons">
+    <!-- ** CHANGE: Added a new FAB group for result navigation ** -->
+    <div id="fab-result-nav-group" class="fab-button-group hidden">
+      <button id="fab-prev-result-btn" title="上一個搜尋結果">🔼</button>
+      <span id="fab-result-counter">0 / 0</span>
+      <button id="fab-next-result-btn" title="下一個搜尋結果">🔽</button>
+    </div>
+
     <button id="toggle-underline-btn" title="切換搜尋結果底線">
         <span class="toggle-underline-icon">S</span>
     </button>
