@@ -40,10 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const pdfContainer = document.getElementById('pdf-container');
     
     const canvas = document.getElementById('pdf-canvas');
-    const ctx = canvas ? canvas.getContext('2d') : null;
+    const ctx = canvas.getContext('2d');
     const textLayerDivGlobal = document.getElementById('text-layer');
     const drawingCanvas = document.getElementById('drawing-canvas');
-    const drawingCtx = drawingCanvas ? drawingCanvas.getContext('2d') : null;
+    const drawingCtx = drawingCanvas.getContext('2d');
 
     const fileInput = document.getElementById('fileInput');
     const searchInputElem = document.getElementById('searchInput');
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const magnifierGlass = document.getElementById('magnifier-glass');
     const magnifierCanvas = document.getElementById('magnifier-canvas');
-    const localMagnifierCtx = magnifierCanvas ? magnifierCanvas.getContext('2d') : null;
+    const localMagnifierCtx = magnifierCanvas.getContext('2d');
     const toggleLocalMagnifierBtn = document.getElementById('toggle-local-magnifier-btn');
     const localMagnifierZoomControlsDiv = document.getElementById('local-magnifier-zoom-controls');
     const localMagnifierZoomSelector = document.getElementById('local-magnifier-zoom-selector');
@@ -82,14 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     // -------------------------------------------------------------------------
 
-    // Toolbar Toggle (Tab Style)
     if (toolbarToggle && appContainer) {
         toolbarToggle.addEventListener('click', () => {
             appContainer.classList.toggle('menu-active');
         });
     }
 
-    // Close menu when clicking on the PDF container area
     if (pdfContainer && appContainer) {
         pdfContainer.addEventListener('click', (e) => {
             if (e.target === pdfContainer && window.innerWidth <= 768 && appContainer.classList.contains('menu-active')) {
@@ -98,19 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // File Input
     fileInput.addEventListener('change', handleFileSelect);
-
-    // Search
     searchActionButton.addEventListener('click', searchKeyword);
     searchInputElem.addEventListener('keypress', e => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            searchActionButton.click();
-        }
+        if (e.key === 'Enter') { e.preventDefault(); searchActionButton.click(); }
     });
     
-    // Result Navigation (Bottom Bar)
     prevResultBtn.addEventListener('click', () => navigateResults(-1));
     nextResultBtn.addEventListener('click', () => navigateResults(1));
     resultsDropdown.addEventListener('change', () => {
@@ -118,53 +109,29 @@ document.addEventListener('DOMContentLoaded', () => {
         updateResultsNav();
     });
 
-    // Page Navigation
-    goToFirstPageBtn.addEventListener('click', () => goToPage(1, getPatternFromSearchInput()));
-    prevPageBtn.addEventListener('click', () => {
-        if (currentPage > 1) goToPage(currentPage - 1, getPatternFromSearchInput());
-    });
-    nextPageBtn.addEventListener('click', () => {
-        if (pdfDocs.length > 0 && currentPage < globalTotalPages) goToPage(currentPage + 1, getPatternFromSearchInput());
-    });
+    goToFirstPageBtn.addEventListener('click', () => goToPage(1));
+    prevPageBtn.addEventListener('click', () => { if (currentPage > 1) goToPage(currentPage - 1); });
+    nextPageBtn.addEventListener('click', () => { if (currentPage < globalTotalPages) goToPage(currentPage + 1); });
     goToPageBtn.addEventListener('click', handleGoToPage);
-    pageToGoInput.addEventListener('keypress', e => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            goToPageBtn.click();
-        }
-    });
+    pageToGoInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); goToPageBtn.click(); } });
     pageSlider.addEventListener('input', () => {
         const newPage = parseInt(pageSlider.value);
-        if (pageToGoInput.value !== newPage.toString()) {
-            pageToGoInput.value = newPage;
-        }
-        if (currentPage !== newPage) {
-            goToPage(newPage, getPatternFromSearchInput());
-        }
+        if (pageToGoInput.value !== newPage.toString()) pageToGoInput.value = newPage;
+        if (currentPage !== newPage) goToPage(newPage);
     });
 
-    // Quality Control
-    qualitySelector.addEventListener('change', () => {
-        if (pdfDocs.length > 0) renderPage(currentPage, getPatternFromSearchInput());
-    });
+    qualitySelector.addEventListener('change', () => { if (pdfDocs.length > 0) renderPage(currentPage); });
 
-    // Floating Action Buttons (FABs)
     toggleUnderlineBtn.addEventListener('click', toggleUnderline);
     toggleTextSelectionBtn.addEventListener('click', toggleTextSelection);
     toggleHighlighterBtn.addEventListener('click', toggleHighlighter);
-    clearHighlighterBtn.addEventListener('click', () => {
-        if (pdfDocs.length > 0) drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-    });
+    clearHighlighterBtn.addEventListener('click', () => { if (pdfDocs.length > 0) drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height); });
     toggleLocalMagnifierBtn.addEventListener('click', toggleLocalMagnifier);
     exportPageBtn.addEventListener('click', exportPageAsImage);
     sharePageBtn.addEventListener('click', sharePage);
 
-    // Magnifier Controls
-    localMagnifierZoomSelector.addEventListener('change', (e) => {
-        LOCAL_MAGNIFIER_ZOOM_LEVEL = parseFloat(e.target.value);
-    });
+    localMagnifierZoomSelector.addEventListener('change', (e) => { LOCAL_MAGNIFIER_ZOOM_LEVEL = parseFloat(e.target.value); });
 
-    // Drawing Canvas Events
     drawingCanvas.addEventListener('mousedown', startDrawing);
     drawingCanvas.addEventListener('mousemove', draw);
     drawingCanvas.addEventListener('mouseup', stopDrawing);
@@ -174,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
     drawingCanvas.addEventListener('touchend', stopDrawing);
     drawingCanvas.addEventListener('touchcancel', stopDrawing);
 
-    // Magnifier Glass Events
     pdfContainer.addEventListener('mousemove', handlePointerMoveForLocalMagnifier);
     pdfContainer.addEventListener('mouseleave', handlePointerLeaveForLocalMagnifier);
     pdfContainer.addEventListener('touchstart', handlePointerMoveForLocalMagnifier, { passive: false });
@@ -182,17 +148,11 @@ document.addEventListener('DOMContentLoaded', () => {
     pdfContainer.addEventListener('touchend', handlePointerLeaveForLocalMagnifier);
     pdfContainer.addEventListener('touchcancel', handlePointerLeaveForLocalMagnifier);
 
-    // Window Resize
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            if (pdfDocs.length > 0) {
-                renderPage(currentPage, getPatternFromSearchInput());
-            }
-        }, 250);
+        resizeTimeout = setTimeout(() => { if (pdfDocs.length > 0) renderPage(currentPage); }, 250);
     });
-
 
     // -------------------------------------------------------------------------
     // Core Functions
@@ -202,38 +162,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        pdfDocs = [];
-        pageMap = [];
-        globalTotalPages = 0;
-        currentPage = 1;
-
-        if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-        updateResultsNav();
-        if (searchInputElem) searchInputElem.value = '';
-        showSearchResultsHighlights = true;
-        
-        resetModes();
+        resetApplicationState();
 
         const loadingPromises = Array.from(files).map(file => {
             return new Promise((resolve, reject) => {
-                if (file.type !== 'application/pdf') {
-                    console.warn(`Skipping non-PDF file: ${file.name}`);
-                    resolve(null);
-                    return;
-                }
+                if (file.type !== 'application/pdf') { resolve(null); return; }
                 const reader = new FileReader();
                 reader.onload = function() {
                     const typedarray = new Uint8Array(this.result);
-                    pdfjsLib.getDocument({
-                        data: typedarray,
-                        isEvalSupported: false,
-                        enableXfa: false
-                    }).promise.then(pdf => {
-                        resolve({ pdf: pdf, name: file.name });
-                    }).catch(reason => {
-                        console.error(`Error loading ${file.name}:`, reason);
-                        reject(`無法載入檔案 ${file.name}`);
-                    });
+                    pdfjsLib.getDocument({ data: typedarray, isEvalSupported: false, enableXfa: false })
+                        .promise.then(pdf => resolve({ pdf, name: file.name }))
+                        .catch(reason => reject(`無法載入檔案 ${file.name}: ${reason}`));
                 };
                 reader.readAsArrayBuffer(file);
             });
@@ -241,29 +180,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         Promise.all(loadingPromises).then(results => {
             const loadedPdfs = results.filter(r => r !== null);
-            if (loadedPdfs.length === 0) {
-                alert("未選擇任何有效的PDF檔案。");
-                pdfDocs = [];
-                updatePageControls();
-                return;
-            }
+            if (loadedPdfs.length === 0) { alert("未選擇任何有效的PDF檔案。"); return; }
+            
             loadedPdfs.forEach((result, docIndex) => {
                 pdfDocs.push(result.pdf);
                 for (let i = 1; i <= result.pdf.numPages; i++) {
-                    pageMap.push({ docIndex: docIndex, localPage: i, docName: result.name });
+                    pageMap.push({ docIndex, localPage: i, docName: result.name });
                 }
             });
             globalTotalPages = pageMap.length;
             renderPage(1);
         }).catch(error => {
             alert("讀取PDF文件時發生錯誤: " + error);
-            pdfDocs = [];
-            updatePageControls();
+            resetApplicationState();
         });
     }
 
-    function renderPage(globalPageNum, highlightPattern = null) {
-        if (pdfDocs.length === 0) return;
+    function renderPage(globalPageNum) {
+        if (pdfDocs.length === 0 || pageRendering) return;
 
         pageRendering = true;
         updatePageControls();
@@ -271,21 +205,15 @@ document.addEventListener('DOMContentLoaded', () => {
         drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
 
         const pageInfo = getDocAndLocalPage(globalPageNum);
-        if (!pageInfo) {
-            console.error(`Could not find page info for global page ${globalPageNum}`);
-            pageRendering = false;
-            updatePageControls();
-            return;
-        }
+        if (!pageInfo) { pageRendering = false; updatePageControls(); return; }
 
         const { doc, localPage, docName } = pageInfo;
+        const highlightPattern = getPatternFromSearchInput();
 
         doc.getPage(localPage).then(page => {
             const viewportOriginal = page.getViewport({ scale: 1 });
-            let availableWidth = pdfContainer.clientWidth - 20; // some padding
-            if (availableWidth <= 0) availableWidth = window.innerWidth > 40 ? window.innerWidth - 40 : 300;
-            
-            const baseScale = availableWidth / viewportOriginal.width;
+            const availableWidth = pdfContainer.clientWidth - 20;
+            const baseScale = availableWidth > 0 ? availableWidth / viewportOriginal.width : 1;
             const viewportCss = page.getViewport({ scale: baseScale });
             
             const devicePixelRatio = window.devicePixelRatio || 1;
@@ -298,20 +226,16 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.style.width = `${viewportCss.width}px`;
             canvas.style.height = `${viewportCss.height}px`;
 
-            const renderContext = { canvasContext: ctx, viewport: viewportRender };
-
-            page.render(renderContext).promise.then(() => {
+            page.render({ canvasContext: ctx, viewport: viewportRender }).promise.then(() => {
                 pageRendering = false;
-                updatePageControls();
                 setupOverlayLayers(viewportCss);
                 return renderTextLayer(page, viewportCss, highlightPattern);
             }).catch(reason => {
-                console.error(`Error rendering page ${localPage} from doc ${docName}: `, reason);
+                console.error(`Error rendering page ${localPage} from ${docName}:`, reason);
                 pageRendering = false;
-                updatePageControls();
-            });
+            }).finally(updatePageControls);
         }).catch(reason => {
-            console.error(`Error getting page ${localPage} from doc ${docName}: `, reason);
+            console.error(`Error getting page ${localPage} from ${docName}:`, reason);
             pageRendering = false;
             updatePageControls();
         });
@@ -326,39 +250,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 const style = textDiv.style;
                 style.left = `${tx[4]}px`;
                 style.top = `${tx[5]}px`;
-                style.height = `${item.height}px`;
-                style.width = `${item.width}px`;
-                style.transform = `scale(${viewport.scale})`;
+                style.height = `${item.height * viewport.scale}px`;
+                style.width = `${item.width * viewport.scale}px`;
+                style.fontSize = `${item.height * viewport.scale}px`;
                 style.fontFamily = item.fontName;
+                style.position = 'absolute';
+                style.whiteSpace = 'pre';
                 
                 textDiv.textContent = item.str;
-                if (highlightPattern && highlightPattern.test(item.str)) {
+                if (showSearchResultsHighlights && highlightPattern && highlightPattern.test(item.str)) {
                     textDiv.classList.add("wavy-underline");
                 }
                 textLayerDivGlobal.appendChild(textDiv);
             });
-        }).catch(reason => console.error("Error rendering text layer: " + reason));
+        });
     }
     
     function searchKeyword() {
         const input = searchInputElem.value.trim();
-        resultsDropdown.innerHTML = '<option value="">搜尋中，請稍候...</option>';
+        resultsDropdown.innerHTML = '<option value="">搜尋中...</option>';
         updateResultsNav();
 
         if (pdfDocs.length === 0 || !input) {
             resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
             updateResultsNav();
-            if (pdfDocs.length > 0) renderPage(currentPage, null);
+            if (pdfDocs.length > 0) renderPage(currentPage);
             return;
         }
 
-        let pattern;
-        try {
-            pattern = input.startsWith('/') && input.endsWith('/')
-                ? new RegExp(input.slice(1, -1), 'gi')
-                : new RegExp(input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').split(/\s+|\|/).filter(k => k).join('|'), 'gi');
-        } catch (e) {
-            alert('正則表達式格式錯誤: ' + e.message);
+        const pattern = getPatternFromSearchInput();
+        if (!pattern) {
+            alert('正則表達式格式錯誤。');
             resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
             updateResultsNav();
             return;
@@ -367,30 +289,25 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsDropdown.disabled = true;
         const promises = pageMap.map((pageInfo, index) => {
             const globalPageNum = index + 1;
-            return pdfDocs[pageInfo.docIndex].getPage(pageInfo.localPage).then(page => {
-                return page.getTextContent().then(textContent => {
+            return pdfDocs[pageInfo.docIndex].getPage(pageInfo.localPage).then(page => 
+                page.getTextContent().then(textContent => {
                     const pageText = textContent.items.map(item => item.str).join('');
                     if (pattern.test(pageText)) {
                         const match = pageText.match(pattern)[0];
                         const contextIndex = pageText.indexOf(match);
                         const start = Math.max(0, contextIndex - 20);
                         const end = Math.min(pageText.length, contextIndex + match.length + 20);
-                        const summary = `${pageText.substring(start, contextIndex)}<span class="wavy-underline">${match}</span>${pageText.substring(contextIndex + match.length, end)}`;
-                        return { page: globalPageNum, summary: summary, docName: pageInfo.docName };
+                        const summary = `...${pageText.substring(start, contextIndex)}<span class="wavy-underline">${match}</span>${pageText.substring(contextIndex + match.length, end)}...`;
+                        return { page: globalPageNum, summary, docName: pageInfo.docName };
                     }
                     return null;
-                });
-            }).catch(err => {
-                console.warn(`Error processing page for search: Doc ${pageInfo.docName}, Page ${pageInfo.localPage}`, err);
-                return null;
-            });
+                })
+            );
         });
 
         Promise.all(promises).then(allPageResults => {
             const results = allPageResults.filter(r => r !== null);
             resultsDropdown.innerHTML = '';
-            resultsDropdown.disabled = false;
-
             if (results.length === 0) {
                 resultsDropdown.innerHTML = '<option>找不到關鍵字</option>';
             } else {
@@ -409,15 +326,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = `第 ${r.page} 頁: ${r.summary}`;
                     option.textContent = tempDiv.textContent || tempDiv.innerText || "";
-                    option.title = `檔案: ${r.docName}`;
                     resultsDropdown.appendChild(option);
                 });
-                goToPage(results[0].page, pattern);
+                goToPage(results[0].page);
             }
-            updateResultsNav();
         }).catch(err => {
-            console.error("Search process failed unexpectedly:", err);
             resultsDropdown.innerHTML = '<option>搜尋錯誤</option>';
+        }).finally(() => {
+            resultsDropdown.disabled = false;
             updateResultsNav();
         });
     }
@@ -452,7 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         sharePageBtn.disabled = !navigator.share;
         
-        // Update button active states
         toggleUnderlineBtn.classList.toggle('active', showSearchResultsHighlights);
         toggleHighlighterBtn.classList.toggle('active', highlighterEnabled);
         toggleTextSelectionBtn.classList.toggle('active', textSelectionModeActive);
@@ -491,123 +406,76 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function goToPage(globalPageNum, highlightPattern = null) {
-        if (pageRendering || pdfDocs.length === 0 || isNaN(globalPageNum)) return;
-        currentPage = Math.max(1, Math.min(globalPageNum, globalTotalPages));
-        renderPage(currentPage, highlightPattern || getPatternFromSearchInput());
+    function goToPage(pageNum) {
+        if (pageRendering || pdfDocs.length === 0 || isNaN(pageNum)) return;
+        currentPage = Math.max(1, Math.min(pageNum, globalTotalPages));
+        renderPage(currentPage);
     }
-
-    function goToPageDropdown(pageNumStr) {
-        if (pageNumStr) goToPage(parseInt(pageNumStr));
-    }
-
-    function handleGoToPage() {
-        const pageNum = parseInt(pageToGoInput.value);
-        if (!isNaN(pageNum)) {
-            goToPage(pageNum);
-        } else {
-            alert(pdfDocs.length > 0 ? `請輸入 1 到 ${globalTotalPages} 的頁碼` : '請先載入PDF檔案');
-            if(pdfDocs.length > 0) pageToGoInput.value = currentPage;
-        }
-    }
-
+    
+    function goToPageDropdown(pageNumStr) { if (pageNumStr) goToPage(parseInt(pageNumStr)); }
+    function handleGoToPage() { goToPage(parseInt(pageToGoInput.value)); }
+    
     function getPatternFromSearchInput() {
         const input = searchInputElem.value.trim();
         if (!input) return null;
         try {
             return input.startsWith('/') && input.endsWith('/')
-                ? new RegExp(input.slice(1, -1), 'gi')
+                ? new RegExp(input.slice(1, input.lastIndexOf('/')), input.slice(input.lastIndexOf('/') + 1))
                 : new RegExp(input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').split(/\s+|\|/).filter(k => k).join('|'), 'gi');
-        } catch (e) {
-            return null;
-        }
+        } catch (e) { return null; }
     }
     
     // -------------------------------------------------------------------------
     // Helper & Mode Functions
     // -------------------------------------------------------------------------
 
+    function resetApplicationState() {
+        pdfDocs = [];
+        pageMap = [];
+        globalTotalPages = 0;
+        currentPage = 1;
+        resetModes();
+        updatePageControls();
+    }
+    
     function resetModes() {
-        highlighterEnabled = false;
-        textSelectionModeActive = false;
-        localMagnifierEnabled = false;
-        
-        if (textLayerDivGlobal) {
-            textLayerDivGlobal.classList.remove('text-selection-active');
-            textLayerDivGlobal.style.pointerEvents = 'none';
-        }
-        if (drawingCanvas) drawingCanvas.style.pointerEvents = 'none';
-        if (canvas) canvas.style.visibility = 'visible';
-        if (drawingCtx && drawingCanvas) drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-        if (magnifierGlass) magnifierGlass.style.display = 'none';
+        highlighterEnabled = textSelectionModeActive = localMagnifierEnabled = false;
+        textLayerDivGlobal.classList.remove('text-selection-active');
+        textLayerDivGlobal.style.pointerEvents = 'none';
+        drawingCanvas.style.pointerEvents = 'none';
+        canvas.style.visibility = 'visible';
+        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        magnifierGlass.style.display = 'none';
         updatePageControls();
     }
 
     function toggleUnderline() {
         if (pdfDocs.length === 0) return;
         showSearchResultsHighlights = !showSearchResultsHighlights;
-        textLayerDivGlobal.classList.toggle('highlights-hidden', !showSearchResultsHighlights);
-        updatePageControls();
+        renderPage(currentPage); // Re-render to apply/remove highlights
     }
 
-    function toggleTextSelection() {
-        if (pdfDocs.length === 0) return;
-        textSelectionModeActive = !textSelectionModeActive;
+    function setMode(mode) {
+        textSelectionModeActive = (mode === 'text');
+        highlighterEnabled = (mode === 'highlighter');
+        localMagnifierEnabled = (mode === 'magnifier');
         
-        if (textSelectionModeActive) {
-            highlighterEnabled = false;
-            localMagnifierEnabled = false;
-            textLayerDivGlobal.style.pointerEvents = 'auto';
-            textLayerDivGlobal.classList.add('text-selection-active');
-            canvas.style.visibility = 'hidden';
-            drawingCanvas.style.pointerEvents = 'none';
-        } else {
-            textLayerDivGlobal.style.pointerEvents = 'none';
-            textLayerDivGlobal.classList.remove('text-selection-active');
-            canvas.style.visibility = 'visible';
-        }
+        textLayerDivGlobal.classList.toggle('text-selection-active', textSelectionModeActive);
+        textLayerDivGlobal.style.pointerEvents = textSelectionModeActive ? 'auto' : 'none';
+        drawingCanvas.style.pointerEvents = highlighterEnabled ? 'auto' : 'none';
+        canvas.style.visibility = textSelectionModeActive ? 'hidden' : 'visible';
+        if (localMagnifierEnabled) magnifierGlass.style.display = 'block'; else magnifierGlass.style.display = 'none';
+
         updatePageControls();
     }
-
-    function toggleHighlighter() {
-        if (pdfDocs.length === 0) return;
-        highlighterEnabled = !highlighterEnabled;
-
-        if (highlighterEnabled) {
-            textSelectionModeActive = false;
-            localMagnifierEnabled = false;
-            textLayerDivGlobal.style.pointerEvents = 'none';
-            textLayerDivGlobal.classList.remove('text-selection-active');
-            canvas.style.visibility = 'visible';
-            drawingCanvas.style.pointerEvents = 'auto';
-        } else {
-            drawingCanvas.style.pointerEvents = 'none';
-        }
-        updatePageControls();
-    }
-
-    function toggleLocalMagnifier() {
-        if (pdfDocs.length === 0) return;
-        localMagnifierEnabled = !localMagnifierEnabled;
-
-        if (localMagnifierEnabled) {
-            highlighterEnabled = false;
-            textSelectionModeActive = false;
-            resetModes(); // Simplest way to ensure other modes are off
-            localMagnifierEnabled = true; // Re-enable it
-        } else {
-            magnifierGlass.style.display = 'none';
-        }
-        updatePageControls();
-    }
+    
+    function toggleTextSelection() { if (pdfDocs.length > 0) setMode(textSelectionModeActive ? null : 'text'); }
+    function toggleHighlighter() { if (pdfDocs.length > 0) setMode(highlighterEnabled ? null : 'highlighter'); }
+    function toggleLocalMagnifier() { if (pdfDocs.length > 0) setMode(localMagnifierEnabled ? null : 'magnifier'); }
 
     function setupOverlayLayers(viewport) {
-        const layers = [textLayerDivGlobal, drawingCanvas];
-        layers.forEach(layer => {
-            layer.style.width = `${viewport.width}px`;
-            layer.style.height = `${viewport.height}px`;
-            layer.style.top = `${canvas.offsetTop}px`;
-            layer.style.left = `${canvas.offsetLeft}px`;
+        [textLayerDivGlobal, drawingCanvas].forEach(layer => {
+            Object.assign(layer.style, { width: `${viewport.width}px`, height: `${viewport.height}px`, top: `${canvas.offsetTop}px`, left: `${canvas.offsetLeft}px` });
         });
         drawingCanvas.width = viewport.width;
         drawingCanvas.height = viewport.height;
@@ -618,7 +486,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return pageMap[globalPage - 1];
     }
     
-    // Drawing functions
     function getEventPosition(e) {
         const rect = drawingCanvas.getBoundingClientRect();
         const touch = e.touches ? e.touches[0] : e;
@@ -637,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawingCtx.moveTo(lastX, lastY);
         drawingCtx.lineTo(x, y);
         drawingCtx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
-        drawingCtx.lineWidth = 15;
+        drawingCtx.lineWidth = 20;
         drawingCtx.lineCap = 'round';
         drawingCtx.stroke();
         [lastX, lastY] = [x, y];
@@ -645,7 +512,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function stopDrawing() { isDrawing = false; }
     
-    // Magnifier functions
     function initLocalMagnifier() {
         magnifierGlass.style.width = `${LOCAL_MAGNIFIER_SIZE}px`;
         magnifierGlass.style.height = `${LOCAL_MAGNIFIER_SIZE}px`;
@@ -658,9 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const touch = e.touches ? e.touches[0] : e;
         updateLocalMagnifier(touch.clientX, touch.clientY);
     }
-    function handlePointerLeaveForLocalMagnifier() {
-        if (localMagnifierEnabled) magnifierGlass.style.display = 'none';
-    }
+    function handlePointerLeaveForLocalMagnifier() { if (localMagnifierEnabled) magnifierGlass.style.display = 'none'; }
     function updateLocalMagnifier(clientX, clientY) {
         const canvasRect = canvas.getBoundingClientRect();
         if (clientX < canvasRect.left || clientX > canvasRect.right || clientY < canvasRect.top || clientY > canvasRect.bottom) {
@@ -671,10 +535,8 @@ document.addEventListener('DOMContentLoaded', () => {
         magnifierGlass.style.display = 'block';
         const cssX = clientX - canvasRect.left;
         const cssY = clientY - canvasRect.top;
-        
         const scaleX = canvas.width / canvas.offsetWidth;
         const scaleY = canvas.height / canvas.offsetHeight;
-        
         const srcSize = LOCAL_MAGNIFIER_SIZE / LOCAL_MAGNIFIER_ZOOM_LEVEL;
         const srcX = (cssX * scaleX) - (srcSize * scaleX / 2);
         const srcY = (cssY * scaleY) - (srcSize * scaleY / 2);
@@ -686,11 +548,10 @@ document.addEventListener('DOMContentLoaded', () => {
              localMagnifierCtx.drawImage(drawingCanvas, srcX/scaleX, srcY/scaleY, srcSize, srcSize, 0, 0, LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE);
         }
 
-        magnifierGlass.style.left = `${clientX - canvasRect.left - LOCAL_MAGNIFIER_SIZE / 2}px`;
-        magnifierGlass.style.top = `${clientY - canvasRect.top - LOCAL_MAGNIFIER_SIZE - 20}px`;
+        magnifierGlass.style.left = `${cssX - LOCAL_MAGNIFIER_SIZE / 2}px`;
+        magnifierGlass.style.top = `${cssY - LOCAL_MAGNIFIER_SIZE - 20}px`;
     }
 
-    // Export and Share functions
     async function getAnnotatedPageAsBlob(type = 'image/png') {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width;
@@ -698,17 +559,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const tempCtx = tempCanvas.getContext('2d');
         tempCtx.drawImage(canvas, 0, 0);
         if(drawingCanvas.width > 0) tempCtx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tempCanvas.width, tempCanvas.height);
-        
         return new Promise(resolve => tempCanvas.toBlob(resolve, type, 0.9));
     }
     async function exportPageAsImage() {
         if (pdfDocs.length === 0 || pageRendering) return;
         const blob = await getAnnotatedPageAsBlob();
+        if(!blob) return;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         const pageInfo = getDocAndLocalPage(currentPage);
         a.href = url;
-        a.download = `page_${currentPage}_(${pageInfo.docName}-p${pageInfo.localPage}).png`;
+        a.download = `page_${currentPage}_(${pageInfo.docName.replace(/\.pdf$/i, '')}-p${pageInfo.localPage}).png`;
         a.click();
         URL.revokeObjectURL(url);
     }
@@ -718,27 +579,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!blob) return;
 
         const pageInfo = getDocAndLocalPage(currentPage);
-        const filename = `page_${currentPage}_(${pageInfo.docName}-p${pageInfo.localPage}).png`;
+        const filename = `page_${currentPage}_(${pageInfo.docName.replace(/\.pdf$/i, '')}-p${pageInfo.localPage}).png`;
         const file = new File([blob], filename, { type: blob.type });
 
-        const shareData = {
-            title: `PDF 頁面 ${currentPage}`,
-            text: `來自 ${pageInfo.docName} 的第 ${pageInfo.localPage} 頁`,
-            files: [file]
-        };
-
+        const shareData = { title: `PDF 頁面 ${currentPage}`, text: `來自 ${pageInfo.docName} 的第 ${pageInfo.localPage} 頁`, files: [file] };
         if (navigator.canShare && navigator.canShare(shareData)) {
-            try {
-                await navigator.share(shareData);
-            } catch (err) {
-                console.error('Share failed:', err);
-            }
+            await navigator.share(shareData).catch(err => console.error('Share failed:', err));
         } else {
             alert('您的瀏覽器不支援分享檔案。');
         }
     }
-
-
+    
     // -------------------------------------------------------------------------
     // Initial Setup Calls
     // -------------------------------------------------------------------------
