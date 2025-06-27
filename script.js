@@ -719,15 +719,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (prevResultBtn) {
-        prevResultBtn.addEventListener('click', () => navigateResults(-1));
-    }
-
-    if (nextResultBtn) {
-        nextResultBtn.addEventListener('click', () => navigateResults(1));
-    }
-
-
     if (searchActionButton) {
         searchActionButton.addEventListener('click', searchKeyword);
     }
