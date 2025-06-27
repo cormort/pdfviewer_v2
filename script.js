@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if pdfjsLib is defined, if not, try to load it from CDN
-    // This block is largely unchanged, but the inline script in HTML now handles GlobalWorkerOptions
+    // Check if pdfjsLib is defined. The inline script in HTML now handles GlobalWorkerOptions
     // to ensure it's set before pdf.mjs fully initializes.
     if (typeof pdfjsLib === 'undefined') {
         console.error("pdfjsLib is not defined. Ensure pdf.mjs is loaded before script.js.");
@@ -64,12 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) {
+            console.error(`Invalid globalPage: ${globalPage}, globalTotalPages: ${globalTotalPages}, pageMap.length: ${pageMap.length}`);
             return null;
         }
         const mapping = pageMap[globalPage - 1];
-        if (!mapping || pdfDocs[mapping.docIndex] === undefined) {
-            console.error(`Mapping or document not found for global page ${globalPage}`);
-            return null;
+        if (!mapping) {
+             console.error(`Mapping is null/undefined for global page ${globalPage}. pageMap entry:`, pageMap[globalPage - 1]);
+             return null;
+        }
+        if (pdfDocs[mapping.docIndex] === undefined) {
+             console.error(`pdfDocs[${mapping.docIndex}] is undefined for global page ${globalPage}. Mapping:`, mapping, "pdfDocs:", pdfDocs);
+             return null;
         }
         return {
             doc: pdfDocs[mapping.docIndex],
@@ -259,14 +263,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const files = e.target.files;
         if (!files || files.length === 0) {
+            console.log("No files selected."); // Added log
             return;
         }
 
-        // Already checked at DOMContentLoaded, but good to have a fallback
         if (typeof pdfjsLib === 'undefined') {
             alert("PDF 程式庫未能正確載入，無法開啟檔案。");
             return;
@@ -298,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return new Promise((resolve, reject) => {
                 if (file.type !== 'application/pdf') {
                     console.warn(`Skipping non-PDF file: ${file.name}`);
-                    resolve(null);
+                    resolve(null); // Resolve with null for non-PDFs
                     return;
                 }
                 const reader = new FileReader();
@@ -309,13 +312,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         isEvalSupported: false,
                         enableXfa: false
                     }).promise.then(pdf => {
+                        console.log(`Successfully loaded PDF: ${file.name}, Pages: ${pdf.numPages}`); // Added log
                         resolve({
                             pdf: pdf,
                             name: file.name
                         });
                     }).catch(reason => {
-                        console.error(`Error loading ${file.name}:`, reason);
-                        reject(`無法載入檔案 ${file.name}`);
+                        console.error(`Error loading ${file.name}:`, reason); // Kept error log
+                        // Important: Resolve with null here too, so Promise.all can complete
+                        // but the file won't be added to pdfDocs.
+                        resolve(null);
                     });
                 };
                 reader.readAsArrayBuffer(file);
@@ -324,6 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         Promise.all(loadingPromises).then(results => {
             const loadedPdfs = results.filter(r => r !== null);
+            console.log("PDF loading results (filtered):", loadedPdfs); // Added log
             if (loadedPdfs.length === 0) {
                 alert("未選擇任何有效的PDF檔案。");
                 pdfDocs = [];
@@ -342,9 +349,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             globalTotalPages = pageMap.length;
+            console.log("Global Total Pages:", globalTotalPages); // Added log
+            console.log("Page Map:", pageMap); // Added log
             renderPage(1);
         }).catch(error => {
             alert("讀取PDF文件時發生錯誤: " + error);
+            console.error("Error during Promise.all or subsequent processing:", error); // Added log
             pdfDocs = [];
             updatePageControls();
         });
@@ -360,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const pageInfo = getDocAndLocalPage(globalPageNum);
         if (!pageInfo) {
-            console.error(`Could not find page info for global page ${globalPageNum}`);
+            // Error logged within getDocAndLocalPage
             pageRendering = false;
             updatePageControls();
             return;
@@ -372,78 +382,69 @@ document.addEventListener('DOMContentLoaded', () => {
         } = pageInfo;
 
         doc.getPage(localPage).then(function(page) {
-            const viewportOriginal = page.getViewport({
-                scale: 1
+          const viewportOriginal = page.getViewport({ scale: 1 });
+          let availableWidth = pdfContainer.clientWidth;
+
+          if (availableWidth <= 0) {
+            availableWidth = window.innerWidth > 20 ? window.innerWidth - 20 : 300;
+          }
+
+          let baseScale = availableWidth / viewportOriginal.width;
+
+          if (canvas.dataset.originalBorder && pdfDocs.length > 0) canvas.style.border = canvas.dataset.originalBorder;
+          else if (pdfDocs.length > 0) canvas.style.border = '1px solid #000';
+
+          showSearchResultsHighlights ? textLayerDivGlobal.classList.remove('highlights-hidden') : textLayerDivGlobal.classList.add('highlights-hidden');
+
+          const viewportCss = page.getViewport({ scale: baseScale });
+          const devicePixelRatio = window.devicePixelRatio || 1;
+          const qualityMultiplierVal = qualitySelector ? parseFloat(qualitySelector.value) : 1.5;
+          const qualityMultiplier = qualityMultiplierVal || 1.5;
+
+          const renderScale = baseScale * devicePixelRatio * qualityMultiplier;
+          const viewportRender = page.getViewport({ scale: renderScale });
+
+          canvas.width = viewportRender.width; canvas.height = viewportRender.height;
+          canvas.style.width = viewportCss.width + "px"; canvas.style.height = viewportCss.height + "px";
+
+          const renderContext = {
+            canvasContext: ctx,
+            viewport: viewportRender
+          };
+
+          if (ctx && viewportRender) {
+            page.render(renderContext).promise.then(() => {
+              pageRendering = false;
+              updatePageControls();
+
+              textLayerDivGlobal.style.width = viewportCss.width + "px";
+              textLayerDivGlobal.style.height = viewportCss.height + "px";
+              textLayerDivGlobal.style.top = canvas.offsetTop + "px";
+              textLayerDivGlobal.style.left = canvas.offsetLeft + "px";
+
+              drawingCanvas.width = viewportCss.width;
+              drawingCanvas.height = viewportCss.height;
+              drawingCanvas.style.top = canvas.offsetTop + "px";
+              drawingCanvas.style.left = canvas.offsetLeft + "px";
+
+              drawingCtx.strokeStyle = 'rgba(255, 255, 0, 0.02)';
+              drawingCtx.lineWidth = 15;
+              drawingCtx.lineJoin = 'round'; drawingCtx.lineCap = 'round';
+
+              return renderTextLayer(page, viewportCss, highlightPattern);
+            }).catch(reason => {
+              console.error(`Error rendering page ${localPage} from doc ${pageInfo.docName}: ` + reason);
+              pageRendering = false;
+              updatePageControls();
             });
-            let availableWidth = pdfContainer.clientWidth;
-
-            if (availableWidth <= 0) {
-                availableWidth = window.innerWidth > 20 ? window.innerWidth - 20 : 300;
-            }
-
-            let baseScale = availableWidth / viewportOriginal.width;
-
-            if (canvas.dataset.originalBorder && pdfDocs.length > 0) canvas.style.border = canvas.dataset.originalBorder;
-            else if (pdfDocs.length > 0) canvas.style.border = '1px solid #000';
-
-            showSearchResultsHighlights ? textLayerDivGlobal.classList.remove('highlights-hidden') : textLayerDivGlobal.classList.add('highlights-hidden');
-
-            const viewportCss = page.getViewport({
-                scale: baseScale
-            });
-            const devicePixelRatio = window.devicePixelRatio || 1;
-            const qualityMultiplierVal = qualitySelector ? parseFloat(qualitySelector.value) : 1.5;
-            const qualityMultiplier = qualityMultiplierVal || 1.5;
-
-            const renderScale = baseScale * devicePixelRatio * qualityMultiplier;
-            const viewportRender = page.getViewport({
-                scale: renderScale
-            });
-
-            canvas.width = viewportRender.width;
-            canvas.height = viewportRender.height;
-            canvas.style.width = viewportCss.width + "px";
-            canvas.style.height = viewportCss.height + "px";
-
-            const renderContext = {
-                canvasContext: ctx,
-                viewport: viewportRender
-            };
-
-            if (ctx && viewportRender) {
-                page.render(renderContext).promise.then(() => {
-                    pageRendering = false;
-                    updatePageControls();
-
-                    textLayerDivGlobal.style.width = viewportCss.width + "px";
-                    textLayerDivGlobal.style.height = viewportCss.height + "px";
-                    textLayerDivGlobal.style.top = canvas.offsetTop + "px";
-                    textLayerDivGlobal.style.left = canvas.offsetLeft + "px";
-
-                    drawingCanvas.width = viewportCss.width;
-                    drawingCanvas.height = viewportCss.height;
-                    drawingCanvas.style.top = canvas.offsetTop + "px";
-                    drawingCanvas.style.left = canvas.offsetLeft + "px";
-
-                    drawingCtx.strokeStyle = 'rgba(255, 255, 0, 0.02)';
-                    drawingCtx.lineWidth = 15;
-                    drawingCtx.lineJoin = 'round';
-                    drawingCtx.lineCap = 'round';
-
-                    return renderTextLayer(page, viewportCss, highlightPattern);
-                }).catch(reason => {
-                    console.error(`Error rendering page ${localPage} from doc ${pageInfo.docName}: ` + reason);
-                    pageRendering = false;
-                    updatePageControls();
-                });
-            } else {
-                pageRendering = false;
-                updatePageControls();
-            }
-        }).catch(reason => {
-            console.error(`Error getting page ${localPage} from doc ${pageInfo.docName}: ` + reason);
+          } else {
             pageRendering = false;
             updatePageControls();
+          }
+        }).catch(reason => {
+          console.error(`Error getting page ${localPage} from doc ${pageInfo.docName}: ` + reason);
+          pageRendering = false;
+          updatePageControls();
         });
     }
 
@@ -680,6 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (hasResults) {
             body.classList.add('results-bar-visible');
+            // Find the index of the current page in the sorted searchResults array
             const currentIndex = searchResults.findIndex(r => r.page === currentPage);
             prevResultBtn.disabled = currentIndex <= 0;
             nextResultBtn.disabled = currentIndex >= searchResults.length - 1;
@@ -696,25 +698,27 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentIndex = searchResults.findIndex(r => r.page === currentPage);
         let newIndex = currentIndex + direction;
 
-        // Skip disabled "separator" options
-        while (newIndex >= 0 && newIndex < resultsDropdown.options.length) {
+        // Loop to find the next valid (non-disabled separator) option
+        let attempts = 0; // Prevent infinite loops in case of logic error
+        while (newIndex >= 0 && newIndex < resultsDropdown.options.length && attempts < searchResults.length * 2) {
             const option = resultsDropdown.options[newIndex];
-            if (option.disabled) {
+            if (option.disabled) { // Skip separator options
                 newIndex += direction;
+                attempts++;
             } else {
-                break;
+                break; // Found a valid result option
             }
         }
 
         if (newIndex >= 0 && newIndex < resultsDropdown.options.length) {
-            // Find the corresponding searchResult item for the valid option
             const targetGlobalPage = parseInt(resultsDropdown.options[newIndex].value);
+            // Ensure the selected option corresponds to a valid search result
             const targetResult = searchResults.find(r => r.page === targetGlobalPage);
 
             if (targetResult) {
                 resultsDropdown.value = targetResult.page;
                 goToPageDropdown(String(targetResult.page));
-                updateResultsNav();
+                // updateResultsNav will be called by goToPageDropdown -> goToPage
             }
         }
     }
@@ -736,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pageNumStr && resultsDropdown) {
             const pageNum = parseInt(pageNumStr);
             goToPage(pageNum, getPatternFromSearchInput());
-            updateResultsNav(); // Update navigation buttons when dropdown changes
+            // updateResultsNav is called within goToPage
         }
     }
     if (resultsDropdown) {
