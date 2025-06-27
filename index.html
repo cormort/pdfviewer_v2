@@ -14,10 +14,12 @@
       height: 100vh;
       overflow: hidden;
       overscroll-behavior-y: contain;
+      /* **MODIFICATION**: Added to prevent scrollbars from hidden menu */
       overflow-x: hidden;
     }
+    /* **NEW**: Add padding to body when bottom bar is visible */
     body.results-bar-visible {
-        padding-bottom: 60px; 
+        padding-bottom: 60px; /* Space for the bottom results bar */
     }
 
     #app-container {
@@ -25,10 +27,10 @@
       flex-direction: column;
       height: 100%;
       width: 100%;
-      position: relative;
     }
 
-    /* Desktop toolbar styles */
+    /* **REMOVED**: The old #toolbar-toggle style is no longer needed */
+    
     #toolbar {
       padding: 10px;
       background-color: #f8f9fa;
@@ -43,13 +45,21 @@
     #toolbar input, #toolbar select, #toolbar button { padding: 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
     #toolbar input[type="text"] { width: 150px; }
     #toolbar input[type="number"] { width: 60px; text-align: center;}
+    
+    /* **NEW**: Hide the new tab toggle on desktop by default */
+    #toolbar-toggle-tab { display: none; }
+    
+    /* Original styles are kept */
     #quality-control, #local-magnifier-zoom-controls { display: flex; align-items: center; gap: 5px; }
     #quality-control label, #local-magnifier-zoom-controls label { white-space: nowrap; font-size: 0.9em; }
+    #quality-control select, #local-magnifier-zoom-controls select { padding: 6px; }
     #page-navigation { display: flex; align-items: center; gap: 5px; margin-left: auto; }
-    
-    #toolbar-toggle-tab { display: none; }
+    #page-navigation button { padding: 6px 8px; }
+    #page-num-display { font-size: 0.9em; white-space: nowrap; padding: 0 3px; }
+    #page-slider { flex-grow: 1; min-width: 80px; margin: 0; height: 20px; }
 
     #pdf-container { position: relative; flex-grow: 1; overflow: auto; background-color: #e9ecef; padding: 10px; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
+    /* ... (original styles for pdf-canvas, text-layer etc. are kept) ... */
     #pdf-canvas { border: 1px solid #000; display: block; margin: 0 auto; }
     #text-layer { position: absolute; z-index: 5; pointer-events: none; }
     #drawing-canvas { position: absolute; z-index: 10; touch-action: none; pointer-events: none; }
@@ -57,54 +67,79 @@
     #magnifier-canvas { display: block; }
     #text-layer > div { color: transparent; position: absolute; line-height: 1; white-space: pre; user-select: none; }
     #text-layer.text-selection-active > div { color: initial !important; user-select: text !important; }
+    #text-layer.text-selection-active > div.wavy-underline { color: initial !important; }
+
     .wavy-underline { text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: sandybrown; text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
     .highlights-hidden .wavy-underline { text-decoration: none !important; }
-    #bottom-results-bar .wavy-underline { text-decoration: underline !important; text-decoration-style: wavy !important; text-decoration-color: sandybrown !important; }
+    /* **MODIFICATION**: Point to dropdown in the new bottom bar */
+    #bottom-results-bar .wavy-underline { text-decoration-line: underline !important; text-decoration-style: wavy !important; text-decoration-color: sandybrown !important; }
 
     #floating-action-buttons { position: fixed; bottom: 20px; right: 20px; z-index: 1003; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; transition: bottom 0.3s ease-in-out; }
+    /* **NEW**: Push up FABs when bottom bar is visible */
     body.results-bar-visible #floating-action-buttons { bottom: 80px; }
+    /* ... (original FAB styles are kept) ... */
     .fab-button-group { display: flex; flex-direction: row; gap: 10px; align-items: center; }
     #floating-action-buttons button { background-color: rgba(0, 0, 0, 0.5); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
     #floating-action-buttons button:hover { background-color: rgba(0, 0, 0, 0.7); }
     #floating-action-buttons button:disabled { opacity: 0.5; cursor: not-allowed; background-color: rgba(0,0,0,0.3); }
-
-    .hidden { display: none !important; }
-
-    #bottom-results-bar { position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(30, 30, 30, 0.9); backdrop-filter: blur(5px); padding: 10px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 1002; border-top: 1px solid rgba(255, 255, 255, 0.1); transition: transform 0.3s ease-in-out; }
-    #bottom-results-bar.hidden { transform: translateY(100%); }
-    #result-nav-wrapper { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 500px; }
-    #result-nav-wrapper button { flex-shrink: 0; padding: 8px 12px; background-color: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); }
-    #result-nav-wrapper select { flex-grow: 1; min-width: 120px; background-color: #333; color: white; border-color: #555; }
     
-    @media (max-width: 768px) {
-      #toolbar {
-        position: fixed; 
-        top: 0; 
+    /* **NEW**: Styles for the new bottom results bar */
+    #bottom-results-bar {
+        position: fixed;
+        bottom: 0;
         left: 0;
-        width: 280px; 
-        max-width: 80vw; 
-        height: 100vh;
-        background-color: #f0f0f0; 
-        border-right: 1px solid #ccc;
-        z-index: 1001;
+        width: 100%;
+        background-color: rgba(30, 30, 30, 0.9);
+        backdrop-filter: blur(5px);
+        padding: 10px;
+        box-sizing: border-box;
+        display: none; /* Hidden by default */
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        z-index: 1002;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    body.results-bar-visible #bottom-results-bar {
+        display: flex; /* Shown when class is added to body */
+    }
+    #result-nav-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        max-width: 500px;
+    }
+    #result-nav-wrapper button { flex-shrink: 0; padding: 8px 12px; background-color: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 4px; cursor: pointer; }
+    #result-nav-wrapper button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #result-nav-wrapper select { flex-grow: 1; min-width: 120px; background-color: #333; color: white; border-color: #555; padding: 8px; border-radius: 4px; }
+
+    /* Mobile Styles */
+    @media (max-width: 768px) {
+      /* **MODIFICATION**: Reverting mobile toolbar to original left-side slide-out style */
+      #toolbar {
+        position: fixed; top: 0; left: 0; width: 280px; max-width: 80vw; height: 100vh;
+        background-color: #f0f0f0; border-right: 1px solid #ccc; display: flex;
+        flex-direction: column; align-items: stretch; padding: 50px 15px 20px 15px;
+        box-sizing: border-box; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
         -webkit-transform: translateX(-100%);
         transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
-        padding: 50px 15px 20px 15px;
-        flex-direction: column; 
-        align-items: stretch;
-        gap: 15px;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        overflow-y: auto;
+        transition: transform 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
+        z-index: 1001; overflow-y: auto; overflow-x: hidden; gap: 15px;
+      }
+      #toolbar.active {
+        -webkit-transform: translateX(0);
+        transform: translateX(0);
       }
       
+      /* **NEW**: Styles for the tab-style toggle button, separate from toolbar */
       #toolbar-toggle-tab {
         display: flex;
         align-items: center;
         justify-content: center;
         position: fixed;
         top: 50%;
-        left: 0;
+        left: 0; /* Start at the edge */
         transform: translateY(-50%);
         width: 30px;
         height: 60px;
@@ -119,25 +154,42 @@
         transition: left 0.3s ease-in-out;
       }
       #toolbar-toggle-tab .icon { font-size: 20px; font-weight: bold; color: white; transition: transform 0.3s ease-in-out; }
+
+      /* **NEW**: Control tab position when menu is active */
+      #app-container.menu-active #toolbar-toggle-tab {
+        left: 280px; /* Moves with the toolbar's width */
+      }
+      #app-container.menu-active #toolbar-toggle-tab .icon {
+        transform: rotate(180deg);
+      }
       
-      #app-container.menu-active #toolbar { transform: translateX(0); }
-      #app-container.menu-active #toolbar-toggle-tab { left: 280px; }
-      #app-container.menu-active #toolbar-toggle-tab .icon { transform: rotate(180deg); }
+      /* Other mobile styles */
+      #toolbar > * { flex-shrink: 0; }
+      #toolbar input, #toolbar select, #toolbar button, #quality-control, #local-magnifier-zoom-controls { width: 100%; }
+      #page-navigation { margin-left: 0; flex-direction: column; width: 100%; gap: 8px; }
+      #pdf-container { padding: 5px; }
+      #floating-action-buttons { bottom: 15px; right: 15px; gap: 8px; }
+      #floating-action-buttons button { width: 45px; height: 45px; font-size: 20px; }
+      #bottom-results-bar { padding: 5px; gap: 5px; }
     }
   </style>
 </head>
 <body>
   <div id="app-container">
+    <!-- **MODIFICATION**: New Tab-style button is a SIBLING to toolbar -->
     <div id="toolbar-toggle-tab">
         <span class="icon">›</span>
     </div>
 
     <div id="toolbar">
+      <!-- **REMOVED**: Old #toolbar-toggle is gone -->
       <h2>多PDF檢索器</h2>
       <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇PDF檔案:</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正則" />
       <button id="search-action-button">搜尋</button>
+      
+      <!-- **REMOVED**: The <select id="resultsDropdown"> is MOVED to the bottom bar -->
       
       <div id="quality-control">
         <label for="quality-selector">画質:</label>
@@ -194,7 +246,8 @@
     </div>
   </div>
 
-  <div id="bottom-results-bar" class="hidden">
+  <!-- **NEW**: Bottom bar for search results -->
+  <div id="bottom-results-bar">
     <div id="result-nav-wrapper">
       <button id="prev-result-btn" title="上一個結果" disabled>◀</button>
       <select id="resultsDropdown">
