@@ -1088,67 +1088,66 @@ if (sharePageBtn) {
 
     initLocalMagnifier();
     updatePageControls();
-    // --- START: 滑動換頁功能 ---
+// --- START: 滑動換頁功能 (改良版) ---
 
+    // 將變數移至更高層級，確保它們在事件監聽器中可用
     let touchStartX = 0;
     let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
-    const MIN_SWIPE_DISTANCE = 75; // 最小滑動距離，單位為像素
+    const MIN_SWIPE_DISTANCE_X = 50; // 水平滑動的最小距離閾值
+    const MAX_SWIPE_DISTANCE_Y = 60; // 垂直滑動的最大容忍距離
 
+    // 確保在 DOM 完全載入後再附加事件監聽器
     if (pdfContainer) {
         pdfContainer.addEventListener('touchstart', (e) => {
-            // 只處理單指觸控
-            if (e.touches.length === 1) {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
+            // 如果任何工具啟用中，或者不是單指觸控，則忽略此次觸摸開始事件
+            if (highlighterEnabled || textSelectionModeActive || localMagnifierEnabled || e.touches.length !== 1) {
+                touchStartX = 0; // 重置起始點，防止後續誤判
+                return;
             }
-        }, { passive: true }); // 使用 passive: true 提升滾動性能
+            // 記錄單指觸控的起始點
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            console.log(`Touch Start: X=${touchStartX}, Y=${touchStartY}`); // 偵錯日誌
+        }, { passive: true });
 
         pdfContainer.addEventListener('touchend', (e) => {
-            // 只處理單指觸控結束
-            if (e.changedTouches.length === 1) {
-                touchEndX = e.changedTouches[0].clientX;
-                touchEndY = e.changedTouches[0].clientY;
-                handleSwipeGesture();
+            // 如果起始點未被記錄（例如因為多指或工具啟用），則直接返回
+            if (touchStartX === 0 || e.changedTouches.length !== 1) {
+                return;
             }
-        });
-    }
 
-    function handleSwipeGesture() {
-        // 如果任何工具（螢光筆、文字選取、放大鏡）正在使用，則不觸發滑動換頁
-        if (highlighterEnabled || textSelectionModeActive || localMagnifierEnabled) {
-            return;
-        }
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            console.log(`Touch End: X=${touchEndX}, Y=${touchEndY}`); // 偵錯日誌
 
-        // 如果沒有載入文件，也不執行
-        if (pdfDocs.length === 0) {
-            return;
-        }
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+            
+            console.log(`Swipe Diff: dX=${diffX}, dY=${diffY}`); // 偵錯日誌
 
-        const diffX = touchEndX - touchStartX;
-        const diffY = touchEndY - touchStartY;
-
-        // 確保是水平滑動，而不是垂直滾動
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            // 檢查滑動距離是否足夠
-            if (Math.abs(diffX) > MIN_SWIPE_DISTANCE) {
+            // 條件判斷：
+            // 1. 水平滑動距離必須大於閾值
+            // 2. 垂直滑動距離必須小於容忍值 (這是為了區分滾動和滑動)
+            if (Math.abs(diffX) > MIN_SWIPE_DISTANCE_X && Math.abs(diffY) < MAX_SWIPE_DISTANCE_Y) {
                 if (diffX < 0) {
                     // 向左滑動 -> 下一頁
-                    console.log("Swipe Left Detected - Next Page");
-                    if (nextPageBtn && !nextPageBtn.disabled) {
-                        nextPageBtn.click();
-                    }
+                    console.log("Action: Triggering Next Page"); // 偵錯日誌
+                    nextPageBtn.click(); // 直接使用按鈕的 click 事件
                 } else {
                     // 向右滑動 -> 上一頁
-                    console.log("Swipe Right Detected - Previous Page");
-                    if (prevPageBtn && !prevPageBtn.disabled) {
-                        prevPageBtn.click();
-                    }
+                    console.log("Action: Triggering Previous Page"); // 偵錯日誌
+                    prevPageBtn.click(); // 直接使用按鈕的 click 事件
                 }
+            } else {
+                console.log("Swipe gesture did not meet criteria."); // 偵錯日誌
             }
-        }
-    }
 
-    // --- END: 滑動換頁功能 ---
+            // 重置起始點，為下一次滑動做準備
+            touchStartX = 0;
+            touchStartY = 0;
+        });
+    } else {
+        console.error("PDF Container not found for swipe gesture attachment.");
+    }
+    // --- END: 滑動換頁功能 (改良版) ---
 });
