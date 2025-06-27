@@ -449,9 +449,19 @@
         gap: 0;
       }
       #bottom-results-bar select {
-        padding: 6px;
-        font-size: 0.9em;
-      }
+          /* [修正] 關鍵修正：強制寬度為100%並設定盒模型 */
+          width: 100%;
+          box-sizing: border-box;
+      
+          /* [修正] 再次明確定義文字溢出處理，確保生效 */
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          
+          /* 保留原有的樣式 */
+          padding: 8px; /* 稍微增加內距，更好看 */
+          font-size: 0.9em;
+        }
     }
     @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
       /* [修正] 當菜單開啟時，頁籤移動的距離需要適應 toolbar 的新寬度 */
