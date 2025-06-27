@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>多PDF智能檢索器</title>
+  <title>多PDF智能檢索器 (包夾式結果)</title>
   <style>
     body {
       font-family: sans-serif;
@@ -25,7 +25,7 @@
       flex-direction: column;
       height: 100%;
       width: 100%;
-      position: relative; /* Needed for child positioning */
+      position: relative;
     }
 
     /* Desktop toolbar styles */
@@ -39,7 +39,6 @@
       align-items: center;
       flex-shrink: 0;
     }
-    /* ... (other desktop styles are correct) ... */
     #toolbar h2 { margin: 0 10px 0 0; font-size: 1.2em; white-space: nowrap; }
     #toolbar input, #toolbar select, #toolbar button { padding: 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
     #toolbar input[type="text"] { width: 150px; }
@@ -48,21 +47,22 @@
     #quality-control label, #local-magnifier-zoom-controls label { white-space: nowrap; font-size: 0.9em; }
     #page-navigation { display: flex; align-items: center; gap: 5px; margin-left: auto; }
     
-    /* Hide tab toggle on desktop by default */
     #toolbar-toggle-tab { display: none; }
 
     #pdf-container { position: relative; flex-grow: 1; overflow: auto; background-color: #e9ecef; padding: 10px; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
-    /* ... (pdf canvas and other elements are correct) ... */
     #pdf-canvas { border: 1px solid #000; display: block; margin: 0 auto; }
     #text-layer { position: absolute; z-index: 5; pointer-events: none; }
     #drawing-canvas { position: absolute; z-index: 10; touch-action: none; pointer-events: none; }
+    #magnifier-glass { display: none; position: absolute; border: 2px solid #333; border-radius: 50%; overflow: hidden; z-index: 2000; pointer-events: none; background-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+    #magnifier-canvas { display: block; }
+    #text-layer > div { color: transparent; position: absolute; line-height: 1; white-space: pre; user-select: none; }
+    #text-layer.text-selection-active > div { color: initial !important; user-select: text !important; }
     .wavy-underline { text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: sandybrown; text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
     .highlights-hidden .wavy-underline { text-decoration: none !important; }
     #bottom-results-bar .wavy-underline { text-decoration: underline !important; text-decoration-style: wavy !important; text-decoration-color: sandybrown !important; }
 
     #floating-action-buttons { position: fixed; bottom: 20px; right: 20px; z-index: 1003; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; transition: bottom 0.3s ease-in-out; }
     body.results-bar-visible #floating-action-buttons { bottom: 80px; }
-    /* ... (fab styles are correct) ... */
     .fab-button-group { display: flex; flex-direction: row; gap: 10px; align-items: center; }
     #floating-action-buttons button { background-color: rgba(0, 0, 0, 0.5); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
     #floating-action-buttons button:hover { background-color: rgba(0, 0, 0, 0.7); }
@@ -73,13 +73,10 @@
     #bottom-results-bar { position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(30, 30, 30, 0.9); backdrop-filter: blur(5px); padding: 10px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 1002; border-top: 1px solid rgba(255, 255, 255, 0.1); transition: transform 0.3s ease-in-out; }
     #bottom-results-bar.hidden { transform: translateY(100%); }
     #result-nav-wrapper { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 500px; }
-    /* ... (bottom bar styles are correct) ... */
     #result-nav-wrapper button { flex-shrink: 0; padding: 8px 12px; background-color: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); }
     #result-nav-wrapper select { flex-grow: 1; min-width: 120px; background-color: #333; color: white; border-color: #555; }
     
-    /* Mobile Styles */
     @media (max-width: 768px) {
-      /* ** FIX: Main toolbar is now positioned and transformed ** */
       #toolbar {
         position: fixed; 
         top: 0; 
@@ -97,16 +94,17 @@
         flex-direction: column; 
         align-items: stretch;
         gap: 15px;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        overflow-y: auto;
       }
       
-      /* ** FIX: Tab is a separate fixed element ** */
       #toolbar-toggle-tab {
         display: flex;
         align-items: center;
         justify-content: center;
-        position: fixed; /* Fixed to the viewport */
+        position: fixed;
         top: 50%;
-        left: 0; /* Starts at the edge of the screen */
+        left: 0;
         transform: translateY(-50%);
         width: 30px;
         height: 60px;
@@ -118,61 +116,92 @@
         cursor: pointer;
         box-shadow: 2px 0 5px rgba(0,0,0,0.1);
         z-index: 1002;
-        transition: left 0.3s ease-in-out; /* Animate its position */
+        transition: left 0.3s ease-in-out;
       }
-      #toolbar-toggle-tab .icon {
-        font-size: 20px;
-        font-weight: bold;
-        color: white;
-        transition: transform 0.3s ease-in-out;
-      }
+      #toolbar-toggle-tab .icon { font-size: 20px; font-weight: bold; color: white; transition: transform 0.3s ease-in-out; }
       
-      /* ** FIX: Control both elements when the PARENT has the active class ** */
-      #app-container.menu-active #toolbar {
-        transform: translateX(0);
-      }
-      #app-container.menu-active #toolbar-toggle-tab {
-        left: 280px; /* Moves with the toolbar (width of toolbar) */
-      }
-      #app-container.menu-active #toolbar-toggle-tab .icon {
-        transform: rotate(180deg);
-      }
-
-      /* ... (other mobile styles are correct) ... */
+      #app-container.menu-active #toolbar { transform: translateX(0); }
+      #app-container.menu-active #toolbar-toggle-tab { left: 280px; }
+      #app-container.menu-active #toolbar-toggle-tab .icon { transform: rotate(180deg); }
     }
   </style>
 </head>
 <body>
   <div id="app-container">
-    <!-- ** FIX: Toggle tab is now a SIBLING to the toolbar, not a child. ** -->
     <div id="toolbar-toggle-tab">
         <span class="icon">›</span>
     </div>
 
     <div id="toolbar">
-      <!-- The toggle tab is no longer inside here -->
-      <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
+      <h2>多PDF檢索器</h2>
+      <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇PDF檔案:</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正則" />
       <button id="search-action-button">搜尋</button>
       
-      <!-- The rest of the toolbar content remains the same -->
-      <div id="quality-control">...</div>
-      <div id="local-magnifier-zoom-controls" style="display: none;">...</div>
-      <div id="page-navigation">...</div>
+      <div id="quality-control">
+        <label for="quality-selector">画質:</label>
+        <select id="quality-selector">
+            <option value="1.0">標準</option>
+            <option value="1.5" selected>高</option>
+            <option value="2.0">最高</option>
+        </select>
+      </div>
+      <div id="local-magnifier-zoom-controls" style="display: none;">
+        <label for="local-magnifier-zoom-selector">放大鏡倍率:</label>
+        <select id="local-magnifier-zoom-selector">
+            <option value="1.5">1.5x</option>
+            <option value="2.0">2.0x</option>
+            <option value="2.5" selected>2.5x</option>
+            <option value="3.0">3.0x</option>
+            <option value="3.5">3.5x</option>
+        </select>
+      </div>
+      <div id="page-navigation">
+        <button id="go-to-first-page">回首頁</button>
+        <button id="prev-page">上一頁</button>
+        <input type="range" id="page-slider" min="1" max="1" value="1" disabled>
+        <span id="page-num-display">- / -</span>
+        <button id="next-page">下一頁</button>
+        <div>
+            <input type="number" id="page-to-go" min="1" placeholder="頁">
+            <button id="go-to-page-btn">跳</button>
+        </div>
+      </div>
     </div>
 
     <div id="pdf-container">
-      <!-- PDF content -->
+      <canvas id="pdf-canvas"></canvas>
+      <div id="text-layer" class="textLayer"></div>
+      <canvas id="drawing-canvas"></canvas>
+      <div id="magnifier-glass">
+        <canvas id="magnifier-canvas"></canvas>
+      </div>
     </div>
   </div>
 
   <div id="floating-action-buttons">
-      <!-- FABs -->
+    <button id="toggle-underline-btn" title="切換搜尋結果底線"><span class="toggle-underline-icon">S</span></button>
+    <button id="toggle-text-selection-btn" title="啟用文字選取">TS</button>
+    <div class="fab-button-group">
+        <button id="toggle-highlighter-btn" title="啟用螢光筆">🖌️</button>
+        <button id="clear-highlighter-btn" title="清除螢光筆標記">🗑️</button>
+    </div>
+    <button id="toggle-local-magnifier-btn" title="切換放大鏡">🔍</button>
+    <div class="fab-button-group">
+        <button id="export-page-btn" title="將目前頁面匯出為圖片">📷</button>
+        <button id="share-page-btn" title="分享目前頁面">🔗</button>
+    </div>
   </div>
 
   <div id="bottom-results-bar" class="hidden">
-      <!-- Bottom bar -->
+    <div id="result-nav-wrapper">
+      <button id="prev-result-btn" title="上一個結果" disabled>◀</button>
+      <select id="resultsDropdown">
+        <option value="">搜尋結果</option>
+      </select>
+      <button id="next-result-btn" title="下一個結果" disabled>▶</button>
+    </div>
   </div>
 
   <script type="module" id="pdfjs-lib" src="./lib/pdfjs/pdf.mjs"></script>
