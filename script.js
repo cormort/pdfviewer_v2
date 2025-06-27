@@ -1158,21 +1158,33 @@ if (pdfContainer) {
 
         console.log(`[SWIPE] Swipe Diff: dX=${diffX}, dY=${diffY}`); // 偵錯日誌
 
-        // 最終判斷滑動條件：
+// 最終判斷滑動條件：
         // 1. 水平滑動距離必須大於閾值
         // 2. 垂直滑動距離必須小於容忍值 (這是為了區分滾動和滑動)
         if (Math.abs(diffX) > MIN_SWIPE_DISTANCE_X && Math.abs(diffY) < MAX_SWIPE_DISTANCE_Y) {
-            if (diffX < 0) {
-                // 向左滑動 -> 下一頁
-                console.log("[SWIPE] Action: Triggering Next Page"); // 偵錯日誌
-                nextPageBtn.click(); // 直接使用按鈕的 click 事件
-            } else {
-                // 向右滑動 -> 上一頁
-                console.log("[SWIPE] Action: Triggering Previous Page"); // 偵錯日誌
-                prevPageBtn.click(); // 直接使用按鈕的 click 事件
+            
+            // 檢查是否處於搜尋結果模式 (searchResults 陣列有內容)
+            const isSearchResultMode = searchResults.length > 0;
+
+            if (diffX < 0) { // 向左滑動
+                if (isSearchResultMode) {
+                    console.log("[SWIPE] Action: Triggering Next Search Result");
+                    navigateToNextResult();
+                } else {
+                    console.log("[SWIPE] Action: Triggering Next Page");
+                    nextPageBtn.click();
+                }
+            } else { // 向右滑動
+                if (isSearchResultMode) {
+                    console.log("[SWIPE] Action: Triggering Previous Search Result");
+                    navigateToPreviousResult();
+                } else {
+                    console.log("[SWIPE] Action: Triggering Previous Page");
+                    prevPageBtn.click();
+                }
             }
         } else {
-            console.log("[SWIPE] Swipe gesture did not meet final criteria."); // 偵錯日誌
+            console.log("[SWIPE] Swipe gesture did not meet final criteria.");
         }
 
         // 重置起始點和滑動狀態，為下一次滑動做準備
