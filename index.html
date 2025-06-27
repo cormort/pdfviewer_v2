@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>多PDF智能檢索器 (包夾式結果)</title>
+  <title>多PDF智能檢索器</title>
   <style>
     body {
       font-family: sans-serif;
@@ -14,10 +14,11 @@
       height: 100vh;
       overflow: hidden;
       overscroll-behavior-y: contain;
+      /* ** CORRECT: Keep this rule to prevent scrollbars from the hidden menu ** */
+      overflow-x: hidden;
     }
-    /* ** NEW: Adjust body padding when bottom bar is visible ** */
     body.results-bar-visible {
-        padding-bottom: 60px; /* Space for the bottom results bar */
+        padding-bottom: 60px; 
     }
 
     #app-container {
@@ -27,11 +28,13 @@
       width: 100%;
     }
 
+    /* ** FIX: Reverted toggle button to the LEFT side ** */
     #toolbar-toggle {
       display: none;
       position: fixed;
       top: 10px;
-      left: 10px;
+      left: 10px; /* Back to the left */
+      right: auto;
       z-index: 1003;
       pointer-events: auto;
       background-color: #f0f0f0;
@@ -42,6 +45,7 @@
       border-radius: 4px;
     }
 
+    /* Desktop toolbar styles are correct, no changes needed here */
     #toolbar {
       padding: 10px;
       background-color: #f8f9fa;
@@ -57,7 +61,7 @@
       font-size: 1.2em;
       white-space: nowrap;
     }
-
+    /* ... other general styles are correct ... */
     #toolbar input[type="file"],
     #toolbar input[type="text"],
     #toolbar input[type="number"],
@@ -178,7 +182,6 @@
     .highlights-hidden .wavy-underline {
       text-decoration: none !important;
     }
-    /* ** CHANGED: Target dropdown in its new location ** */
     #bottom-results-bar .wavy-underline {
         text-decoration-line: underline !important;
         text-decoration-style: wavy !important;
@@ -194,9 +197,8 @@
         flex-direction: column;
         gap: 10px;
         align-items: flex-end;
-        transition: bottom 0.3s ease-in-out; /* ** NEW: Smooth transition ** */
+        transition: bottom 0.3s ease-in-out;
     }
-    /* ** NEW: Push FABs up when bottom bar is visible ** */
     body.results-bar-visible #floating-action-buttons {
         bottom: 80px;
     }
@@ -257,7 +259,6 @@
         display: none !important;
     }
 
-    /* ** NEW/MODIFIED STYLES for the bottom results bar ** */
     #bottom-results-bar {
         position: fixed;
         bottom: 0;
@@ -310,21 +311,40 @@
       body.results-bar-visible { padding-bottom: 50px; }
       body.results-bar-visible #floating-action-buttons { bottom: 65px; }
 
+      /* ** FIX: Reverted mobile toolbar to the original LEFT-side slide-out style ** */
       #toolbar {
-        position: fixed; top: 0; left: 0; width: 280px; max-width: 80vw; height: 100vh;
-        background-color: #f0f0f0; border-right: 1px solid #ccc; display: flex;
-        flex-direction: column; align-items: stretch; padding: 50px 15px 20px 15px;
-        box-sizing: border-box; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        position: fixed; 
+        top: 0; 
+        left: 0; /* Positioned on the left */
+        right: auto;
+        width: 280px; 
+        max-width: 80vw; 
+        height: 100vh;
+        background-color: #f0f0f0; 
+        border-right: 1px solid #ccc; /* Border on the right */
+        border-left: none;
+        display: flex;
+        flex-direction: column; 
+        align-items: stretch; 
+        padding: 50px 15px 20px 15px;
+        box-sizing: border-box; 
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Shadow on the right */
+        /* By default, move it 100% to the LEFT to hide it */
         -webkit-transform: translateX(-100%);
         transform: translateX(-100%);
         transition: transform 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
-        z-index: 1001; overflow-y: auto; overflow-x: hidden; gap: 15px;
+        z-index: 1001; 
+        overflow-y: auto; 
+        overflow-x: hidden; 
+        gap: 15px;
       }
       #toolbar.active {
+        /* When active, bring it back to its original position (0) */
         -webkit-transform: translateX(0);
         transform: translateX(0);
       }
       #toolbar-toggle { display: block; }
+      /* ... rest of the mobile styles are correct ... */
       #toolbar > * { flex-shrink: 0; }
       #toolbar input[type="text"], #toolbar input[type="number"], #toolbar select, #toolbar button, #quality-control, #local-magnifier-zoom-controls {
          width: 100%;
@@ -355,19 +375,17 @@
   </style>
 </head>
 <body>
+  <!-- The HTML body does not need any changes. It is correct. -->
   <div id="app-container">
     <button id="toolbar-toggle">☰</button>
     <div id="toolbar">
-      <h2>多PDF檢索器</h2> <!-- Title simplified -->
       <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正則" />
       <button id="search-action-button">搜尋</button>
-
-      <!-- ** MOVED: The entire result-nav-wrapper is now in #bottom-results-bar ** -->
       
       <div id="quality-control">
-        <label for="quality-selector">畫質:</label>
+        <label for="quality-selector">画質:</label>
         <select id="quality-selector">
             <option value="1.0">標準</option>
             <option value="1.5" selected>高</option>
@@ -408,8 +426,6 @@
   </div>
 
   <div id="floating-action-buttons">
-    <!-- ** REMOVED: fab-result-nav-group is no longer needed ** -->
-
     <button id="toggle-underline-btn" title="切換搜尋結果底線">
         <span class="toggle-underline-icon">S</span>
     </button>
@@ -425,7 +441,6 @@
     </div>
   </div>
 
-  <!-- ** NEW: Bottom bar for search results ** -->
   <div id="bottom-results-bar" class="hidden">
     <div id="result-nav-wrapper">
       <button id="prev-result-btn" title="上一個結果" disabled>◀</button>
