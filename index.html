@@ -2,18 +2,9 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>多PDF智能檢索器 (滑出式選單)</title>
-  <!-- 引入 Font Awesome 的圖示庫 -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>多PDF智能檢索器</title>
   <style>
-    /* --- 全新的 CSS 樣式 --- */
-    :root {
-      --sidebar-width: 280px;
-      --sidebar-handle-width: 35px;
-      --sidebar-handle-height: 80px;
-    }
-
     body {
       font-family: sans-serif;
       margin: 0;
@@ -23,207 +14,376 @@
       height: 100vh;
       overflow: hidden;
       overscroll-behavior-y: contain;
-      background-color: #e9ecef; /* 背景色移到 body */
     }
 
     #app-container {
       display: flex;
-      flex-direction: row; /* 主要方向改為橫向 */
+      flex-direction: column;
       height: 100%;
       width: 100%;
     }
 
-    /* 新的側邊欄樣式 (取代舊的 #toolbar) */
-    #sidebar {
+    #toolbar-toggle {
+      display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      width: var(--sidebar-width);
+      top: 10px;
+      left: 10px;
+      z-index: 1003;
+      pointer-events: auto;
       background-color: #f0f0f0;
-      border-right: 1px solid #ccc;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-      z-index: 1002;
-      display: flex;
-      flex-direction: column;
-      transform: translateX(calc(-1 * var(--sidebar-width)));
-      transition: transform 0.3s ease-in-out;
-      padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0); /* 適配安全區域 */
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 1.2em;
+      border-radius: 4px;
     }
 
-    #sidebar.open {
-      transform: translateX(0);
-    }
-    
-    #sidebar-content {
-      padding: 20px 15px;
-      overflow-y: auto;
-      flex-grow: 1;
+    #toolbar {
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
       display: flex;
-      flex-direction: column;
-      gap: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
     }
-
-    #sidebar h2 {
-      margin: 0 0 10px 0;
+    #toolbar h2 {
+      margin: 0 10px 0 0;
       font-size: 1.2em;
       white-space: nowrap;
-      color: #333;
     }
 
-    /* 側邊欄內的控制項樣式 */
-    #sidebar-content input,
-    #sidebar-content select,
-    #sidebar-content button {
-      width: 100%;
+    #toolbar input[type="file"],
+    #toolbar input[type="text"],
+    #toolbar input[type="number"],
+    #toolbar select,
+    #toolbar button {
       padding: 8px;
       border: 1px solid #ced4da;
       border-radius: 4px;
       font-size: 1em;
       box-sizing: border-box;
     }
-    #sidebar-content input[type="number"] { text-align: center; }
+    #toolbar input[type="text"] { width: 150px; }
+    #toolbar input[type="number"] { width: 60px; text-align: center;}
+
+    /* ** NEW/MODIFIED STYLES FOR RESULT NAVIGATION ** */
+    #result-nav-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    #result-nav-wrapper button {
+        flex-shrink: 0;
+        padding: 8px 10px; /* Adjust padding for arrows */
+    }
+    #result-nav-wrapper select {
+        flex-grow: 1;
+        min-width: 120px;
+    }
+    /* ** END OF NEW STYLES ** */
+
+
+    #quality-control, #local-magnifier-zoom-controls {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+     #quality-control label, #local-magnifier-zoom-controls label {
+        white-space: nowrap;
+        font-size: 0.9em;
+     }
+     #quality-control select, #local-magnifier-zoom-controls select {
+        padding: 6px;
+     }
 
     #page-navigation {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-left: auto;
     }
-    #page-navigation .page-controls {
-      display: flex;
-      align-items: center;
-      gap: 5px;
+    #page-navigation button {
+        padding: 6px 8px;
     }
-     #page-navigation .page-controls input[type="number"] { flex-grow: 1; }
-     
-    /* 滑出把手按鈕 */
-    #sidebar-handle {
-      position: absolute;
-      top: 50%;
-      left: 100%;
-      transform: translateY(-50%);
-      width: var(--sidebar-handle-width);
-      height: var(--sidebar-handle-height);
-      background-color: #ff9a15;
-      border: none;
-      border-radius: 0 10px 10px 0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+    #page-num-display {
+        font-size: 0.9em;
+        white-space: nowrap;
+        padding: 0 3px;
     }
-    
-    #sidebar-handle .fa-chevron-right {
-      transition: transform 0.3s ease-in-out;
+    #page-slider {
+        flex-grow: 1;
+        min-width: 80px;
+        margin: 0;
+        height: 20px;
     }
-    
-    #sidebar.open #sidebar-handle .fa-chevron-right {
-       transform: rotate(180deg);
-    }
+
 
     #pdf-container {
       position: relative;
       flex-grow: 1;
       overflow: auto;
+      background-color: #e9ecef;
       padding: 10px;
       box-sizing: border-box;
       -webkit-overflow-scrolling: touch;
     }
 
-    /* ... 其他 PDF、FAB 按鈕等樣式保持不變 ... */
-    #pdf-canvas { border: 1px solid #000; display: block; margin: 0 auto; }
-    #text-layer { position: absolute; z-index: 5; pointer-events: none; }
-    #drawing-canvas { position: absolute; z-index: 10; touch-action: none; pointer-events: none; }
-    #magnifier-glass { display: none; position: absolute; border: 2px solid #333; border-radius: 50%; overflow: hidden; z-index: 2000; pointer-events: none; background-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
-    #magnifier-canvas { display: block; }
-    #text-layer > div { color: transparent; position: absolute; line-height: 1; white-space: pre; user-select: none; }
-    #text-layer.text-selection-active > div { color: initial !important; user-select: text !important; }
-    #text-layer.text-selection-active > div.wavy-underline { color: initial !important; }
-    .wavy-underline { text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: sandybrown; text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
-    .highlights-hidden .wavy-underline { text-decoration: none !important; }
-    #resultsDropdown .wavy-underline { text-decoration-line: underline !important; text-decoration-style: wavy !important; text-decoration-color: sandybrown !important; }
-    #floating-action-buttons { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); right: calc(20px + env(safe-area-inset-right, 0px)); z-index: 1003; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
-    .fab-button-group { display: flex; flex-direction: row; gap: 10px; align-items: center; }
-    #floating-action-buttons button { background-color: rgba(0, 0, 0, 0.5); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
-    #floating-action-buttons button:hover { background-color: rgba(0, 0, 0, 0.7); }
-    #floating-action-buttons button:disabled { opacity: 0.5; cursor: not-allowed; background-color: rgba(0,0,0,0.3); }
-    .toggle-underline-icon { font-size: 1.1em; font-weight: bold; display: inline-block; }
-    #toggle-underline-btn.active .toggle-underline-icon { text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: sandybrown; text-decoration-thickness: 2px; text-underline-offset: 0.15em; }
-    #toggle-highlighter-btn.active { background-color: rgba(0, 100, 0, 0.7); }
-    #toggle-text-selection-btn.active { background-color: rgba(0, 0, 100, 0.7); }
-    #toggle-local-magnifier-btn.active { background-color: rgba(100, 0, 100, 0.7); }
+    #pdf-canvas {
+      border: 1px solid #000;
+      display: block;
+      margin: 0 auto;
+    }
 
+    #text-layer {
+      position: absolute;
+      z-index: 5;
+      pointer-events: none;
+    }
+    #drawing-canvas {
+        position: absolute;
+        z-index: 10;
+        touch-action: none;
+        pointer-events: none;
+    }
+
+    #magnifier-glass {
+        display: none;
+        position: absolute;
+        border: 2px solid #333;
+        border-radius: 50%;
+        overflow: hidden;
+        z-index: 2000;
+        pointer-events: none;
+        background-color: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    #magnifier-canvas {
+        display: block;
+    }
+
+
+    #text-layer > div {
+      color: transparent;
+      position: absolute;
+      line-height: 1;
+      white-space: pre;
+      user-select: none;
+    }
+
+    #text-layer.text-selection-active > div {
+      color: initial !important;
+      user-select: text !important;
+    }
+    #text-layer.text-selection-active > div.wavy-underline {
+        color: initial !important;
+    }
+
+
+    .wavy-underline {
+      text-decoration-line: underline;
+      text-decoration-style: wavy;
+      text-decoration-color: sandybrown;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 0.2em;
+    }
+    .highlights-hidden .wavy-underline {
+      text-decoration: none !important;
+    }
+    #resultsDropdown .wavy-underline {
+        text-decoration-line: underline !important;
+        text-decoration-style: wavy !important;
+        text-decoration-color: sandybrown !important;
+    }
+
+    #floating-action-buttons {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1003;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-end;
+    }
+    .fab-button-group {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        align-items: center;
+    }
+
+    #floating-action-buttons button {
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #floating-action-buttons button:hover {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+     #floating-action-buttons button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background-color: rgba(0,0,0,0.3);
+    }
+
+    .toggle-underline-icon {
+        font-size: 1.1em;
+        font-weight: bold;
+        display: inline-block;
+    }
+    #toggle-underline-btn.active .toggle-underline-icon {
+        text-decoration-line: underline;
+        text-decoration-style: wavy;
+        text-decoration-color: sandybrown;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.15em;
+    }
+    #toggle-highlighter-btn.active {
+        background-color: rgba(0, 100, 0, 0.7);
+    }
+    #toggle-text-selection-btn.active {
+        background-color: rgba(0, 0, 100, 0.7);
+    }
+    #toggle-local-magnifier-btn.active {
+        background-color: rgba(100, 0, 100, 0.7);
+    }
+
+    /* Mobile Styles */
+    @media (max-width: 768px) {
+      #toolbar {
+        position: fixed; top: 0; left: 0; width: 280px; max-width: 80vw; height: 100vh;
+        background-color: #f0f0f0; border-right: 1px solid #ccc; display: flex;
+        flex-direction: column; align-items: stretch; padding: 50px 15px 20px 15px;
+        box-sizing: border-box; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        -webkit-transform: translateX(-100%);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
+        z-index: 1001; overflow-y: auto; overflow-x: hidden; gap: 15px;
+      }
+      #toolbar.active {
+        -webkit-transform: translateX(0);
+        transform: translateX(0);
+      }
+      #toolbar-toggle { display: block; }
+      #toolbar > * { flex-shrink: 0; }
+      #toolbar input[type="text"], #toolbar input[type="number"], #toolbar select, #toolbar button, #quality-control, #local-magnifier-zoom-controls, #result-nav-wrapper {
+         width: 100%;
+      }
+      /* ** NEW/MODIFIED STYLES FOR MOBILE RESULT NAVIGATION ** */
+      #result-nav-wrapper button {
+          width: auto !important; /* Prevent buttons from taking full width */
+      }
+      #result-nav-wrapper select {
+          width: 100%; /* Allow select to fill space */
+      }
+
+       #quality-control, #local-magnifier-zoom-controls { justify-content: space-between; }
+      #quality-control select, #local-magnifier-zoom-controls select { flex-grow: 1; }
+
+      #page-navigation { margin-left: 0; flex-direction: column; width: 100%; gap: 8px; }
+       #page-navigation > div { display: flex; width: 100%; gap: 5px; }
+        #page-navigation input[type="number"] { flex-grow: 1; }
+      #page-navigation #page-slider {
+          width: 100%;
+          box-sizing: border-box;
+          margin: 0;
+      }
+      #pdf-container { padding: 5px; }
+      #floating-action-buttons { bottom: 15px; right: 15px; gap: 8px; }
+      #floating-action-buttons button { width: 45px; height: 45px; font-size: 20px; }
+      .toggle-underline-icon { font-size: 1em; }
+    }
+    @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
+        #toolbar {
+            width: 240px; max-width: 70vw;
+            padding: 50px 5px 5px 5px !important; gap: 3px !important;
+        }
+        #toolbar > * {
+            overflow-x: hidden !important; text-overflow: ellipsis !important;
+            padding-left: 2px !important; padding-right: 2px !important;
+            margin-left: 0 !important; margin-right: 0 !important;
+        }
+        #toolbar h2 {
+            font-size: 0.85em !important; margin-bottom: 2px !important;
+        }
+        #toolbar input, #toolbar select, #toolbar button {
+            padding: 3px !important; font-size: 0.75em !important;
+        }
+        #toolbar input[type="file"] { font-size: 0.7em !important; }
+        #quality-control label, #local-magnifier-zoom-controls label { font-size: 0.7em !important; margin-right: 3px !important; padding: 1px !important; }
+        #quality-control select, #local-magnifier-zoom-controls select { font-size: 0.7em !important; padding: 1px !important; }
+        #page-navigation { gap: 3px !important; padding: 1px !important; }
+        #page-navigation > * { padding-left: 1px !important; padding-right: 1px !important; }
+        #page-navigation button { padding: 2px 4px !important; font-size: 0.7em !important; text-align: left; }
+        #page-navigation span#page-num-display { padding: 1px 0 !important; font-size: 0.7em !important; }
+        #page-navigation #page-slider { margin: 1px 0 !important; height: 14px !important; }
+        #page-navigation input[type="number"] { padding: 2px !important; font-size: 0.75em !important; }
+    }
+    @media (max-width: 480px) { #toolbar h2 { font-size: 1.1em; } }
   </style>
 </head>
 <body>
   <div id="app-container">
-    
-    <!-- 全新的側邊欄結構 -->
-    <div id="sidebar">
-      <div id="sidebar-content">
-        <!-- ** MODIFIED PART: Added a link to the instructions.html ** -->
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h2>PDF 工具</h2>
-          <a href="./instructions.html" title="查看使用說明" target="_blank" style="font-size: 1.2em; color: #6c757d; text-decoration: none;">
-            <i class="fas fa-question-circle"></i>
-          </a>
-        </div>
-        
-        <label for="fileInput" style="display: block; font-size: 0.9em;">選擇一個或多個PDF檔案:</label>
-        <input type="file" id="fileInput" accept="application/pdf" multiple />
-        
-        <input type="text" id="searchInput" placeholder="關鍵字或正則" />
-        <button id="search-action-button">搜尋</button>
+    <button id="toolbar-toggle">☰</button>
+    <div id="toolbar">
+      <h2>多PDF檢索器 (包夾式結果)</h2>
+      <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
+      <input type="file" id="fileInput" accept="application/pdf" multiple />
+      <input type="text" id="searchInput" placeholder="關鍵字或正則" />
+      <button id="search-action-button">搜尋</button>
+
+      <!-- ** CHANGE: Replaced select with a div containing nav buttons and select ** -->
+      <div id="result-nav-wrapper">
+        <button id="prev-result-btn" title="上一個結果" disabled>◀</button>
         <select id="resultsDropdown">
           <option value="">搜尋結果</option>
         </select>
-
-        <div id="quality-control" style="display: flex; align-items: center; gap: 5px; justify-content: space-between;">
-          <label for="quality-selector">畫質:</label>
-          <select id="quality-selector" style="flex-grow: 1;">
-              <option value="1.0">標準</option>
-              <option value="1.5" selected>高</option>
-              <option value="2.0">最高</option>
-          </select>
-        </div>
-        
-        <div id="local-magnifier-zoom-controls" style="display: none; align-items: center; gap: 5px; justify-content: space-between;">
-          <label for="local-magnifier-zoom-selector">放大鏡倍率:</label>
-          <select id="local-magnifier-zoom-selector" style="flex-grow: 1;">
-              <option value="1.5">1.5x</option>
-              <option value="2.0">2.0x</option>
-              <option value="2.5" selected>2.5x</option>
-              <option value="3.0">3.0x</option>
-              <option value="3.5">3.5x</option>
-          </select>
-        </div>
-        
-        <hr>
-
-        <div id="page-navigation">
-          <div class="page-controls">
-            <button id="go-to-first-page">回首頁</button>
-            <button id="prev-page">上一頁</button>
-            <span id="page-num-display">- / -</span>
-            <button id="next-page">下一頁</button>
-          </div>
-          <input type="range" id="page-slider" min="1" max="1" value="1" disabled>
-          <div class="page-controls">
-              <input type="number" id="page-to-go" min="1" placeholder="頁">
-              <button id="go-to-page-btn">跳</button>
-          </div>
-        </div>
+        <button id="next-result-btn" title="下一個結果" disabled>▶</button>
       </div>
       
-      <!-- 滑出把手 -->
-      <button id="sidebar-handle">
-        <i class="fas fa-chevron-right fa-lg"></i>
-      </button>
+      <div id="quality-control">
+        <label for="quality-selector">畫質:</label>
+        <select id="quality-selector">
+            <option value="1.0">標準</option>
+            <option value="1.5" selected>高</option>
+            <option value="2.0">最高</option>
+        </select>
+      </div>
+      <div id="local-magnifier-zoom-controls" style="display: none; align-items: center; gap: 5px;">
+        <label for="local-magnifier-zoom-selector" style="white-space: nowrap; font-size: 0.9em;">放大鏡倍率:</label>
+        <select id="local-magnifier-zoom-selector" style="padding: 6px;">
+            <option value="1.5">1.5x</option>
+            <option value="2.0">2.0x</option>
+            <option value="2.5" selected>2.5x</option>
+            <option value="3.0">3.0x</option>
+            <option value="3.5">3.5x</option>
+        </select>
+      </div>
+      <div id="page-navigation">
+        <button id="go-to-first-page">回首頁</button>
+        <button id="prev-page">上一頁</button>
+        <input type="range" id="page-slider" min="1" max="1" value="1" disabled>
+        <span id="page-num-display">- / -</span>
+        <button id="next-page">下一頁</button>
+        <div>
+            <input type="number" id="page-to-go" min="1" placeholder="頁">
+            <button id="go-to-page-btn">跳</button>
+        </div>
+      </div>
     </div>
 
-    <!-- PDF 內容顯示區 -->
     <div id="pdf-container">
       <canvas id="pdf-canvas"></canvas>
       <div id="text-layer" class="textLayer"></div>
@@ -234,7 +394,6 @@
     </div>
   </div>
 
-  <!-- 浮動按鈕區 -->
   <div id="floating-action-buttons">
     <button id="toggle-underline-btn" title="切換搜尋結果底線">
         <span class="toggle-underline-icon">S</span>
