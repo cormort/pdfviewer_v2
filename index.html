@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF關鍵字查詢平台</title>
   <style>
-    body {
+body {
   font-family: sans-serif;
   margin: 0;
   padding: 0;
@@ -278,7 +278,6 @@ body.results-bar-visible #bottom-results-bar {
   flex-grow: 1;
   max-width: 600px; /* Limit width on larger screens */
 }
-/* Removed styles for #bottom-results-bar button as buttons are removed */
 
 #bottom-results-bar select {
   flex-grow: 1; /* Allow select to take up all available space */
@@ -304,8 +303,11 @@ body.results-bar-visible #bottom-results-bar {
   #toolbar-toggle-tab {
     display: flex;
     position: fixed;
-    top: 50%;
-    transform: translateY(-50%);
+    /* --- START: Vertical centering for the tab --- */
+    top: 50%; /* Position element's top edge at 50% of viewport height */
+    transform: translateY(-50%); /* Move element up by half its own height */
+    transition: left 0.3s ease-in-out, transform 0.3s ease-in-out; /* Add transform to transition */
+    /* --- END: Vertical centering for the tab --- */
     left: 0; /* Changed to 0 for the tab */
     z-index: 1003;
     pointer-events: auto;
@@ -316,7 +318,6 @@ body.results-bar-visible #bottom-results-bar {
     cursor: pointer;
     font-size: 1.2em;
     border-radius: 0 4px 4px 0; /* Rounded on the right */
-    transition: left 0.3s ease-in-out;
     height: 40px; /* Adjust height to match toolbar elements */
     align-items: center;
     justify-content: center;
@@ -343,6 +344,9 @@ body.results-bar-visible #bottom-results-bar {
     border-right: 1px solid #ccc;
     display: flex;
     flex-direction: column;
+    /* --- START: Vertical centering for toolbar content --- */
+    justify-content: center; /* Align content vertically in the center */
+    /* --- END: Vertical centering for toolbar content --- */
     align-items: stretch;
     padding: 50px 15px 20px 15px;
     box-sizing: border-box;
@@ -420,7 +424,6 @@ body.results-bar-visible #bottom-results-bar {
     padding: 8px;
     gap: 0; /* Now only select, no need for gap */
   }
-  /* Removed button specific styles under mobile media query */
   #bottom-results-bar select {
     padding: 6px;
     font-size: 0.9em;
@@ -502,17 +505,6 @@ body.results-bar-visible #bottom-results-bar {
   #toolbar h2 {
     font-size: 1.1em;
   }
-  /* For very small screens, if the select still overflows,
-     we can consider making the bottom bar itself use a column layout,
-     though for just one select, it might not be necessary. */
-  /* #bottom-results-bar #result-nav-wrapper {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-    }
-    #bottom-results-bar select {
-        width: 100%;
-    } */
 }
   </style>
 </head>
