@@ -14,8 +14,7 @@
       height: 100vh;
       overflow: hidden;
       overscroll-behavior-y: contain;
-      /* ** CORRECT: Keep this rule to prevent scrollbars from the hidden menu ** */
-      overflow-x: hidden;
+      overflow-x: hidden; /* Prevent horizontal scrollbar */
     }
     body.results-bar-visible {
         padding-bottom: 60px; 
@@ -28,24 +27,7 @@
       width: 100%;
     }
 
-    /* ** FIX: Reverted toggle button to the LEFT side ** */
-    #toolbar-toggle {
-      display: none;
-      position: fixed;
-      top: 10px;
-      left: 10px; /* Back to the left */
-      right: auto;
-      z-index: 1003;
-      pointer-events: auto;
-      background-color: #f0f0f0;
-      border: 1px solid #ccc;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 1.2em;
-      border-radius: 4px;
-    }
-
-    /* Desktop toolbar styles are correct, no changes needed here */
+    /* Desktop toolbar styles (always visible) */
     #toolbar {
       padding: 10px;
       background-color: #f8f9fa;
@@ -56,280 +38,83 @@
       align-items: center;
       flex-shrink: 0;
     }
-    #toolbar h2 {
-      margin: 0 10px 0 0;
-      font-size: 1.2em;
-      white-space: nowrap;
-    }
-    /* ... other general styles are correct ... */
+    #toolbar h2 { margin: 0 10px 0 0; font-size: 1.2em; white-space: nowrap; }
     #toolbar input[type="file"],
     #toolbar input[type="text"],
     #toolbar input[type="number"],
     #toolbar select,
-    #toolbar button {
-      padding: 8px;
-      border: 1px solid #ced4da;
-      border-radius: 4px;
-      font-size: 1em;
-      box-sizing: border-box;
-    }
+    #toolbar button { padding: 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 1em; box-sizing: border-box; }
     #toolbar input[type="text"] { width: 150px; }
     #toolbar input[type="number"] { width: 60px; text-align: center;}
     
-    #quality-control, #local-magnifier-zoom-controls {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-     #quality-control label, #local-magnifier-zoom-controls label {
-        white-space: nowrap;
-        font-size: 0.9em;
-     }
-     #quality-control select, #local-magnifier-zoom-controls select {
-        padding: 6px;
-     }
+    #quality-control, #local-magnifier-zoom-controls { display: flex; align-items: center; gap: 5px; }
+    #quality-control label, #local-magnifier-zoom-controls label { white-space: nowrap; font-size: 0.9em; }
+    #quality-control select, #local-magnifier-zoom-controls select { padding: 6px; }
 
-    #page-navigation {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        margin-left: auto;
-    }
-    #page-navigation button {
-        padding: 6px 8px;
-    }
-    #page-num-display {
-        font-size: 0.9em;
-        white-space: nowrap;
-        padding: 0 3px;
-    }
-    #page-slider {
-        flex-grow: 1;
-        min-width: 80px;
-        margin: 0;
-        height: 20px;
-    }
+    #page-navigation { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+    #page-navigation button { padding: 6px 8px; }
+    #page-num-display { font-size: 0.9em; white-space: nowrap; padding: 0 3px; }
+    #page-slider { flex-grow: 1; min-width: 80px; margin: 0; height: 20px; }
 
+    /* ** NEW: Hide the tab-style toggle on desktop ** */
+    #toolbar-toggle-tab { display: none; }
 
-    #pdf-container {
-      position: relative;
-      flex-grow: 1;
-      overflow: auto;
-      background-color: #e9ecef;
-      padding: 10px;
-      box-sizing: border-box;
-      -webkit-overflow-scrolling: touch;
-    }
+    #pdf-container { position: relative; flex-grow: 1; overflow: auto; background-color: #e9ecef; padding: 10px; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
+    #pdf-canvas { border: 1px solid #000; display: block; margin: 0 auto; }
+    #text-layer { position: absolute; z-index: 5; pointer-events: none; }
+    #drawing-canvas { position: absolute; z-index: 10; touch-action: none; pointer-events: none; }
+    #magnifier-glass { display: none; position: absolute; border: 2px solid #333; border-radius: 50%; overflow: hidden; z-index: 2000; pointer-events: none; background-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+    #magnifier-canvas { display: block; }
 
-    #pdf-canvas {
-      border: 1px solid #000;
-      display: block;
-      margin: 0 auto;
-    }
+    #text-layer > div { color: transparent; position: absolute; line-height: 1; white-space: pre; user-select: none; }
+    #text-layer.text-selection-active > div { color: initial !important; user-select: text !important; }
+    #text-layer.text-selection-active > div.wavy-underline { color: initial !important; }
 
-    #text-layer {
-      position: absolute;
-      z-index: 5;
-      pointer-events: none;
-    }
-    #drawing-canvas {
-        position: absolute;
-        z-index: 10;
-        touch-action: none;
-        pointer-events: none;
-    }
+    .wavy-underline { text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: sandybrown; text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+    .highlights-hidden .wavy-underline { text-decoration: none !important; }
+    #bottom-results-bar .wavy-underline { text-decoration-line: underline !important; text-decoration-style: wavy !important; text-decoration-color: sandybrown !important; }
 
-    #magnifier-glass {
-        display: none;
-        position: absolute;
-        border: 2px solid #333;
-        border-radius: 50%;
-        overflow: hidden;
-        z-index: 2000;
-        pointer-events: none;
-        background-color: white;
-        box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    }
-    #magnifier-canvas {
-        display: block;
-    }
+    #floating-action-buttons { position: fixed; bottom: 20px; right: 20px; z-index: 1003; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; transition: bottom 0.3s ease-in-out; }
+    body.results-bar-visible #floating-action-buttons { bottom: 80px; }
+    .fab-button-group { display: flex; flex-direction: row; gap: 10px; align-items: center; }
+    #floating-action-buttons button { background-color: rgba(0, 0, 0, 0.5); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
+    #floating-action-buttons button:hover { background-color: rgba(0, 0, 0, 0.7); }
+    #floating-action-buttons button:disabled { opacity: 0.5; cursor: not-allowed; background-color: rgba(0,0,0,0.3); }
+    .toggle-underline-icon { font-size: 1.1em; font-weight: bold; display: inline-block; }
+    #toggle-underline-btn.active .toggle-underline-icon { text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: sandybrown; text-decoration-thickness: 2px; text-underline-offset: 0.15em; }
+    #toggle-highlighter-btn.active { background-color: rgba(0, 100, 0, 0.7); }
+    #toggle-text-selection-btn.active { background-color: rgba(0, 0, 100, 0.7); }
+    #toggle-local-magnifier-btn.active { background-color: rgba(100, 0, 100, 0.7); }
+    
+    .hidden { display: none !important; }
 
-
-    #text-layer > div {
-      color: transparent;
-      position: absolute;
-      line-height: 1;
-      white-space: pre;
-      user-select: none;
-    }
-
-    #text-layer.text-selection-active > div {
-      color: initial !important;
-      user-select: text !important;
-    }
-    #text-layer.text-selection-active > div.wavy-underline {
-        color: initial !important;
-    }
-
-
-    .wavy-underline {
-      text-decoration-line: underline;
-      text-decoration-style: wavy;
-      text-decoration-color: sandybrown;
-      text-decoration-thickness: 2px;
-      text-underline-offset: 0.2em;
-    }
-    .highlights-hidden .wavy-underline {
-      text-decoration: none !important;
-    }
-    #bottom-results-bar .wavy-underline {
-        text-decoration-line: underline !important;
-        text-decoration-style: wavy !important;
-        text-decoration-color: sandybrown !important;
-    }
-
-    #floating-action-buttons {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1003;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-end;
-        transition: bottom 0.3s ease-in-out;
-    }
-    body.results-bar-visible #floating-action-buttons {
-        bottom: 80px;
-    }
-
-    .fab-button-group {
-        display: flex;
-        flex-direction: row;
-        gap: 10px;
-        align-items: center;
-    }
-
-    #floating-action-buttons button {
-        background-color: rgba(0, 0, 0, 0.5);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-        cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transition: background-color 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    #floating-action-buttons button:hover {
-        background-color: rgba(0, 0, 0, 0.7);
-    }
-     #floating-action-buttons button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        background-color: rgba(0,0,0,0.3);
-    }
-
-    .toggle-underline-icon {
-        font-size: 1.1em;
-        font-weight: bold;
-        display: inline-block;
-    }
-    #toggle-underline-btn.active .toggle-underline-icon {
-        text-decoration-line: underline;
-        text-decoration-style: wavy;
-        text-decoration-color: sandybrown;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.15em;
-    }
-    #toggle-highlighter-btn.active {
-        background-color: rgba(0, 100, 0, 0.7);
-    }
-    #toggle-text-selection-btn.active {
-        background-color: rgba(0, 0, 100, 0.7);
-    }
-    #toggle-local-magnifier-btn.active {
-        background-color: rgba(100, 0, 100, 0.7);
-    }
-    .hidden {
-        display: none !important;
-    }
-
-    #bottom-results-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: rgba(30, 30, 30, 0.9);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
-        padding: 10px;
-        box-sizing: border-box;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 15px;
-        z-index: 1002;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        transition: transform 0.3s ease-in-out;
-    }
-    #bottom-results-bar.hidden {
-        transform: translateY(100%);
-    }
-    #result-nav-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-        max-width: 500px;
-    }
-    #result-nav-wrapper button {
-        flex-shrink: 0;
-        padding: 8px 12px;
-        background-color: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-    #result-nav-wrapper button:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-    #result-nav-wrapper select {
-        flex-grow: 1;
-        min-width: 120px;
-        background-color: #333;
-        color: white;
-        border-color: #555;
-    }
+    #bottom-results-bar { position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(30, 30, 30, 0.9); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); padding: 10px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 1002; border-top: 1px solid rgba(255, 255, 255, 0.1); transition: transform 0.3s ease-in-out; }
+    #bottom-results-bar.hidden { transform: translateY(100%); }
+    #result-nav-wrapper { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 500px; }
+    #result-nav-wrapper button { flex-shrink: 0; padding: 8px 12px; background-color: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); }
+    #result-nav-wrapper button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #result-nav-wrapper select { flex-grow: 1; min-width: 120px; background-color: #333; color: white; border-color: #555; }
 
     /* Mobile Styles */
     @media (max-width: 768px) {
       body.results-bar-visible { padding-bottom: 50px; }
       body.results-bar-visible #floating-action-buttons { bottom: 65px; }
 
-      /* ** FIX: Reverted mobile toolbar to the original LEFT-side slide-out style ** */
       #toolbar {
         position: fixed; 
         top: 0; 
-        left: 0; /* Positioned on the left */
-        right: auto;
+        left: 0;
         width: 280px; 
         max-width: 80vw; 
         height: 100vh;
         background-color: #f0f0f0; 
-        border-right: 1px solid #ccc; /* Border on the right */
-        border-left: none;
+        border-right: 1px solid #ccc;
         display: flex;
         flex-direction: column; 
         align-items: stretch; 
         padding: 50px 15px 20px 15px;
         box-sizing: border-box; 
-        box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Shadow on the right */
-        /* By default, move it 100% to the LEFT to hide it */
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
         -webkit-transform: translateX(-100%);
         transform: translateX(-100%);
         transition: transform 0.3s ease-in-out, -webkit-transform 0.3s ease-in-out;
@@ -339,25 +124,48 @@
         gap: 15px;
       }
       #toolbar.active {
-        /* When active, bring it back to its original position (0) */
         -webkit-transform: translateX(0);
         transform: translateX(0);
       }
-      #toolbar-toggle { display: block; }
-      /* ... rest of the mobile styles are correct ... */
-      #toolbar > * { flex-shrink: 0; }
-      #toolbar input[type="text"], #toolbar input[type="number"], #toolbar select, #toolbar button, #quality-control, #local-magnifier-zoom-controls {
-         width: 100%;
+      
+      /* ** NEW: Styles for the tab-style toggle button ** */
+      #toolbar-toggle-tab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 50%;
+        left: 100%; /* Position it at the right edge of the toolbar */
+        transform: translateY(-50%);
+        width: 30px;
+        height: 60px;
+        background-color: #ff9a15;
+        border: 1px solid #ccc;
+        border-left: none;
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+        cursor: pointer;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
       }
+      #toolbar-toggle-tab .icon {
+        font-size: 20px;
+        font-weight: bold;
+        color: white;
+        transition: transform 0.3s ease-in-out;
+      }
+      #toolbar-toggle-tab .icon.rotate {
+        transform: rotate(180deg);
+      }
+      
+      #toolbar > * { flex-shrink: 0; }
+      #toolbar input, #toolbar select, #toolbar button, #quality-control, #local-magnifier-zoom-controls { width: 100%; }
       #quality-control, #local-magnifier-zoom-controls { justify-content: space-between; }
       #quality-control select, #local-magnifier-zoom-controls select { flex-grow: 1; }
 
       #page-navigation { margin-left: 0; flex-direction: column; width: 100%; gap: 8px; }
       #page-navigation > div { display: flex; width: 100%; gap: 5px; }
       #page-navigation input[type="number"] { flex-grow: 1; }
-      #page-navigation #page-slider {
-          width: 100%; box-sizing: border-box; margin: 0;
-      }
+      #page-navigation #page-slider { width: 100%; box-sizing: border-box; margin: 0; }
       #pdf-container { padding: 5px; }
       #floating-action-buttons { bottom: 15px; right: 15px; gap: 8px; }
       #floating-action-buttons button { width: 45px; height: 45px; font-size: 20px; }
@@ -366,19 +174,18 @@
       #bottom-results-bar { padding: 5px; gap: 5px; }
       #result-nav-wrapper { gap: 5px; }
     }
-    @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
-        #toolbar {
-            width: 240px; max-width: 70vw;
-            padding: 50px 5px 5px 5px !important; gap: 3px !important;
-        }
-    }
   </style>
 </head>
 <body>
-  <!-- The HTML body does not need any changes. It is correct. -->
   <div id="app-container">
-    <button id="toolbar-toggle">☰</button>
+    <!-- ** REMOVED: The old `☰` button is gone. ** -->
+    
     <div id="toolbar">
+      <!-- ** NEW: The tab-style button is now INSIDE the toolbar ** -->
+      <div id="toolbar-toggle-tab">
+          <span class="icon">›</span>
+      </div>
+
       <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正則" />
@@ -392,9 +199,9 @@
             <option value="2.0">最高</option>
         </select>
       </div>
-      <div id="local-magnifier-zoom-controls" style="display: none; align-items: center; gap: 5px;">
-        <label for="local-magnifier-zoom-selector" style="white-space: nowrap; font-size: 0.9em;">放大鏡倍率:</label>
-        <select id="local-magnifier-zoom-selector" style="padding: 6px;">
+      <div id="local-magnifier-zoom-controls" style="display: none;">
+        <label for="local-magnifier-zoom-selector">放大鏡倍率:</label>
+        <select id="local-magnifier-zoom-selector">
             <option value="1.5">1.5x</option>
             <option value="2.0">2.0x</option>
             <option value="2.5" selected>2.5x</option>
