@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if pdfjsLib is defined. The inline script in HTML now handles GlobalWorkerOptions
     // to ensure it's set before pdf.mjs fully initializes.
     if (typeof pdfjsLib === 'undefined') {
-        console.error("pdfjsLib is not defined. Ensure pdf.mjs is loaded before script.js.");
-        alert("PDF 程式庫載入失敗，請刷新頁面或檢查網路連線。");
+        console.error('pdfjsLib is not defined. Ensure pdf.mjs is loaded before script.js.');
+        alert('PDF 程式庫載入失敗，請刷新頁面或檢查網路連線。');
         return;
     }
 
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) {
-            console.error(`Invalid globalPage: ${globalPage}, globalTotalPages: ${globalTotalPages}, pageMap.length: ${pageMap.length}`);
+            console.error(`Invalid globalPage ${globalPage}, globalTotalPages ${globalTotalPages}, pageMap.length ${pageMap.length}`);
             return null;
         }
         const mapping = pageMap[globalPage - 1];
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
              return null;
         }
         if (pdfDocs[mapping.docIndex] === undefined) {
-             console.error(`pdfDocs[${mapping.docIndex}] is undefined for global page ${globalPage}. Mapping:`, mapping, "pdfDocs:", pdfDocs);
+             console.error(`pdfDocs[${mapping.docIndex}] is undefined for global page ${globalPage}. Mapping:`, mapping, 'pdfDocs:', pdfDocs);
              return null;
         }
         return {
@@ -205,15 +205,15 @@ document.addEventListener('DOMContentLoaded', () => {
             pageToGoInput.max = globalTotalPages;
             pageToGoInput.disabled = false;
         }
-        if (goToFirstPageBtn) goToFirstPageBtn.disabled = (currentPage <= 1);
-        if (prevPageBtn) prevPageBtn.disabled = (currentPage <= 1);
-        if (nextPageBtn) nextPageBtn.disabled = (currentPage >= globalTotalPages);
+        if (goToFirstPageBtn) goToFirstPageBtn.disabled = (currentPage === 1);
+        if (prevPageBtn) prevPageBtn.disabled = (currentPage === 1);
+        if (nextPageBtn) nextPageBtn.disabled = (currentPage === globalTotalPages);
         if (goToPageBtn) goToPageBtn.disabled = false;
 
         if (pageSlider) {
             pageSlider.max = globalTotalPages;
             pageSlider.value = currentPage;
-            pageSlider.disabled = (globalTotalPages <= 1);
+            pageSlider.disabled = (globalTotalPages === 1);
         }
 
         if (fabContainer) fabContainer.style.display = 'flex';
@@ -224,18 +224,18 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleHighlighterBtn.disabled = false;
         clearHighlighterBtn.disabled = false;
         highlighterEnabled ? toggleHighlighterBtn.classList.add('active') : toggleHighlighterBtn.classList.remove('active');
-        toggleHighlighterBtn.title = highlighterEnabled ? "停用螢光筆" : "啟用螢光筆";
+        toggleHighlighterBtn.title = highlighterEnabled ? '停用螢光筆' : '啟用螢光筆';
 
         toggleTextSelectionBtn.disabled = !hasDocs;
         textSelectionModeActive ? toggleTextSelectionBtn.classList.add('active') : toggleTextSelectionBtn.classList.remove('active');
-        toggleTextSelectionBtn.title = textSelectionModeActive ? "停用文字選取" : "啟用文字選取";
+        toggleTextSelectionBtn.title = textSelectionModeActive ? '停用文字選取' : '啟用文字選取';
 
         if (sharePageBtn) sharePageBtn.disabled = !navigator.share;
 
         if (toggleLocalMagnifierBtn) {
             toggleLocalMagnifierBtn.disabled = !hasDocs;
             localMagnifierEnabled ? toggleLocalMagnifierBtn.classList.add('active') : toggleLocalMagnifierBtn.classList.remove('active');
-            toggleLocalMagnifierBtn.title = localMagnifierEnabled ? "停用放大鏡" : "啟用放大鏡";
+            toggleLocalMagnifierBtn.title = localMagnifierEnabled ? '停用放大鏡' : '啟用放大鏡';
         }
         if (localMagnifierZoomControlsDiv) localMagnifierZoomControlsDiv.style.display = (hasDocs && localMagnifierEnabled) ? 'flex' : 'none';
         if (localMagnifierZoomSelector) localMagnifierZoomSelector.disabled = !hasDocs;
@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (typeof pdfjsLib === 'undefined') {
-            alert("PDF 程式庫未能正確載入，無法開啟檔案。");
+            alert('PDF 程式庫未能正確載入，無法開啟檔案。');
             return;
         }
 
@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Promise.all(loadingPromises).then(results => {
             const loadedPdfs = results.filter(r => r !== null);
             if (loadedPdfs.length === 0) {
-                alert("未選擇任何有效的PDF檔案。");
+                alert('未選擇任何有效的PDF檔案。');
                 pdfDocs = [];
                 updatePageControls();
                 return;
@@ -334,8 +334,8 @@ document.addEventListener('DOMContentLoaded', () => {
             globalTotalPages = pageMap.length;
             renderPage(1);
         }).catch(error => {
-            alert("讀取PDF文件時發生錯誤: " + error);
-            console.error("Error during Promise.all or subsequent processing:", error);
+            alert('讀取PDF文件時發生錯誤: ' + error);
+            console.error('Error during Promise.all or subsequent processing:', error);
             pdfDocs = [];
             updatePageControls();
         });
@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const viewportRender = page.getViewport({ scale: renderScale });
 
           canvas.width = viewportRender.width; canvas.height = viewportRender.height;
-          canvas.style.width = viewportCss.width + "px"; canvas.style.height = viewportCss.height + "px";
+          canvas.style.width = viewportCss.width + 'px'; canvas.style.height = viewportCss.height + 'px';
 
           const renderContext = { canvasContext: ctx, viewport: viewportRender };
 
@@ -391,15 +391,15 @@ document.addEventListener('DOMContentLoaded', () => {
               pageRendering = false;
               updatePageControls();
 
-              textLayerDivGlobal.style.width = viewportCss.width + "px";
-              textLayerDivGlobal.style.height = viewportCss.height + "px";
-              textLayerDivGlobal.style.top = canvas.offsetTop + "px";
-              textLayerDivGlobal.style.left = canvas.offsetLeft + "px";
+              textLayerDivGlobal.style.width = viewportCss.width + 'px';
+              textLayerDivGlobal.style.height = viewportCss.height + 'px';
+              textLayerDivGlobal.style.top = canvas.offsetTop + 'px';
+              textLayerDivGlobal.style.left = canvas.offsetLeft + 'px';
 
               drawingCanvas.width = viewportCss.width;
               drawingCanvas.height = viewportCss.height;
-              drawingCanvas.style.top = canvas.offsetTop + "px";
-              drawingCanvas.style.left = canvas.offsetLeft + "px";
+              drawingCanvas.style.top = canvas.offsetTop + 'px';
+              drawingCanvas.style.left = canvas.offsetLeft + 'px';
 
               drawingCtx.strokeStyle = 'rgba(255, 255, 0, 0.02)';
               drawingCtx.lineWidth = 15;
@@ -427,20 +427,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return page.getTextContent().then(function(textContent) {
             textLayerDivGlobal.innerHTML = '';
             textContent.items.forEach(function(item) {
-                const textDiv = document.createElement("div");
+                const textDiv = document.createElement('div');
                 const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
                 let defaultFontSize = item.height * viewport.scale;
                 if (defaultFontSize <= 0) defaultFontSize = 10;
                 const style = `position:absolute; left:${tx[4]}px; top:${tx[5] - (item.height * viewport.scale)}px; height:${item.height * viewport.scale}px; width:${item.width * viewport.scale}px; font-size:${defaultFontSize}px; line-height: 1; white-space: pre; font-family: ${item.fontName ? item.fontName.split(',')[0] : 'sans-serif'};`;
-                textDiv.setAttribute("style", style);
+                textDiv.setAttribute('style', style);
                 textDiv.textContent = item.str;
 
                 if (highlightPattern && highlightPattern.test(item.str)) {
-                    textDiv.classList.add("wavy-underline");
+                    textDiv.classList.add('wavy-underline');
                 }
                 textLayerDivGlobal.appendChild(textDiv);
             });
-        }).catch(reason => console.error("Error rendering text layer: " + reason));
+        }).catch(reason => console.error('Error rendering text layer: ' + reason));
     }
 
     function getEventPosition(canvasElem, evt) {
@@ -516,15 +516,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const lastSlashIndex = input.lastIndexOf('/');
                 pattern = new RegExp(input.slice(1, lastSlashIndex), input.slice(lastSlashIndex + 1));
             } else {
-                const escapedInput = input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const keywords = escapedInput.split(/\s+|\|/).filter(k => k.length > 0);
+                const escapedInput = input.replace(/[/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const keywords = escapedInput.split(/\s+/).filter(k => k.length > 0);
                 if (keywords.length === 0) {
                     if (pdfDocs.length > 0) renderPage(currentPage, null);
                     resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
                     updateResultsNav();
                     return;
                 }
-                pattern = new RegExp(keywords.join('|'), 'gi');
+                pattern = new RegExp(keywords.join('.*?'), 'gi');
             }
         } catch (e) {
             alert('正則表達式格式錯誤: ' + e.message);
@@ -538,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let globalPageOffset = 0;
 
         pdfDocs.forEach((doc, docIndex) => {
-            const docName = pageMap.find(p => p.docIndex === docIndex)?.docName || `文件 ${docIndex + 1}`;
+            const docName = pageMap.find(p => p.docIndex === docIndex).docName || `文件 ${docIndex + 1}`;
             for (let i = 1; i <= doc.numPages; i++) {
                 const currentGlobalPageForSearch = globalPageOffset + i;
                 promises.push(
@@ -558,16 +558,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const startIndex = Math.max(0, matchIndex - contextLength);
                                     const endIndex = Math.min(pageText.length, matchIndex + matchedText.length + contextLength);
 
-                                    const preMatch = pageText.substring(startIndex, matchIndex).replace(/</g, "<");
-                                    const highlightedMatch = matchedText.replace(/</g, "<");
-                                    const postMatch = pageText.substring(matchIndex + matchedText.length, endIndex).replace(/</g, "<");
+                                    const preMatch = pageText.substring(startIndex, matchIndex).replace(/\n/g, ' ');
+                                    const highlightedMatch = matchedText.replace(/\n/g, ' ');
+                                    const postMatch = pageText.substring(matchIndex + matchedText.length, endIndex).replace(/\n/g, ' ');
 
                                     foundMatchSummary =
-                                        (startIndex > 0 ? "..." : "") +
+                                        (startIndex > 0 ? '... ' : '') +
                                         preMatch +
                                         `<span class="wavy-underline">${highlightedMatch}</span>` +
                                         postMatch +
-                                        (endIndex < pageText.length ? "..." : "");
+                                        (endIndex < pageText.length ? ' ...' : '');
                                 }
                                 return { page: currentGlobalPageForSearch, summary: foundMatchSummary, docName: docName };
                             }
@@ -644,9 +644,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         }).catch(err => {
-            console.error("搜尋過程發生意外失敗:", err);
+            console.error('搜尋過程發生意外失敗:', err);
             resultsDropdown.innerHTML = '<option value="">搜尋錯誤</option>';
-            alert("搜尋過程發生未知錯誤，請檢查主控台。");
+            alert('搜尋過程發生未知錯誤，請檢查主控台。');
             renderPage(currentPage, null);
             updateResultsNav();
         });
@@ -698,12 +698,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ls = i.lastIndexOf('/');
                 return new RegExp(i.slice(1, ls), i.slice(ls + 1));
             } else {
-                const es = i.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const k = es.split(/\s+|\|/).filter(ky => ky.length > 0);
-                if (k.length > 0) return new RegExp(k.join('|'), 'gi');
+                const es = i.replace(/[/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const k = es.split(/\s+/).filter(ky => ky.length > 0);
+                if (k.length > 0) return new RegExp(k.join('.*?'), 'gi');
             }
         } catch (e) {
-            console.warn("Could not create regex from input", e);
+            console.warn('Could not create regex from input:', e);
             return null;
         }
         return null;
@@ -772,8 +772,8 @@ document.addEventListener('DOMContentLoaded', () => {
             l.click();
             document.body.removeChild(l);
         } catch (er) {
-            console.error("Export err:", er);
-            alert("匯出圖片失敗: " + er.message);
+            console.error('Export err:', er);
+            alert('匯出圖片失敗: ' + er.message);
         } finally {
             if (wasCanvasHidden) canvas.style.visibility = 'hidden';
         }
@@ -885,8 +885,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             } catch (er) {
-                console.error("Share err:", er);
-                if (er.name !== 'AbortError') { alert("分享失敗: " + er.message); }
+                console.error('Share err:', er);
+                if (er.name !== 'AbortError') { alert('分享失敗: ' + er.message); }
             } finally {
                 if (wasCanvasHidden) { canvas.style.visibility = 'hidden'; }
             }
@@ -962,7 +962,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 250);
     });
 
-    // --- START: 搜尋結果導航函式 ---
     function navigateToNextResult() {
         if (searchResults.length === 0 || !resultsDropdown) return;
         let nextResult = null;
@@ -977,8 +976,8 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsDropdown.value = nextPage;
             goToPageDropdown(nextPage.toString());
         } else {
-            console.log("Already at the last search result.");
-            showFeedback("已是最後一個結果");
+            console.log('Already at the last search result.');
+            showFeedback('已是最後一個結果');
         }
     }
 
@@ -996,8 +995,8 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsDropdown.value = prevPage;
             goToPageDropdown(prevPage.toString());
         } else {
-            console.log("Already at the first search result.");
-            showFeedback("已是第一個結果");
+            console.log('Already at the first search result.');
+            showFeedback('已是第一個結果');
         }
     }
 
@@ -1024,9 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
         feedbackDiv.style.opacity = '1';
         setTimeout(() => { feedbackDiv.style.opacity = '0'; }, 1500);
     }
-    // --- END: 搜尋結果導航函式 ---
 
-    // --- START: 滑動換頁功能 (改良版) ---
     let touchStartX = 0;
     let touchStartY = 0;
     let isSwiping = false;
@@ -1087,17 +1084,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     } else {
-        console.error("PDF Container not found for swipe gesture attachment.");
+        console.error('PDF Container not found for swipe gesture attachment.');
     }
-    // --- END: 滑動換頁功能 (改良版) ---
 
     initLocalMagnifier();
     
-        // --- START: 手機版預設展開選單 ---
     if (window.innerWidth <= 768 && appContainer) {
         appContainer.classList.add('menu-active');
     }
-    // --- END: 手機版預設展開選單 ---
     
     updatePageControls();
 });
