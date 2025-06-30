@@ -21,11 +21,9 @@
       flex-direction: column;
       height: 100%;
       width: 100%;
-      /* [修正] 新增 position: relative，這是讓手機版頁籤正確定位的關鍵 */
       position: relative; 
     }
 
-    /* toolbar-toggle is deprecated, but keep for compatibility if used elsewhere */
     #toolbar-toggle {
       display: none;
       position: fixed;
@@ -41,7 +39,6 @@
       border-radius: 4px;
     }
     
-    /* [修正] 預設隱藏手機版頁籤，只在手機模式下顯示 */
     #toolbar-toggle-tab {
         display: none;
     }
@@ -56,8 +53,13 @@
       align-items: center;
       flex-shrink: 0;
     }
-    #toolbar h2 {
+    #toolbar .title-container {
+      display: flex;
+      align-items: center;
       margin: 0 10px 0 0;
+    }
+    #toolbar h2 {
+      margin: 0;
       font-size: 1.2em;
       white-space: nowrap;
       color: initial;
@@ -325,11 +327,10 @@
 
     /* Mobile Styles */
     @media (max-width: 768px) {
-      /* [修正] 顯示頁籤並設定其基本樣式 */
       #toolbar-toggle-tab {
-        display: flex; /* 改為flex以方便內容置中 */
+        display: flex;
         position: absolute;
-        top: 30%; /* 您可以調整這個值，例如 200px, 300px 等 */
+        top: 30%;
         left: 0; 
         transition: left 0.3s ease-in-out; 
         z-index: 1003;
@@ -351,20 +352,17 @@
         transition: transform 0.3s ease-in-out;
         transform: rotate(0deg);
       }
-      /* 當菜單開啟時，旋轉圖標 */
       #app-container.menu-active #toolbar-toggle-tab .icon {
         transform: rotate(180deg);
       }
-      /* [修正] 當菜單開啟時，移動頁籤 */
       #app-container.menu-active #toolbar-toggle-tab {
-        left: 280px; /* 這個值必須和 #toolbar 的 width 一致 */
+        left: 280px;
       }
 
-      /* [修正] 修改 toolbar 的隱藏/顯示方式 */
       #toolbar {
         position: fixed;
         top: 0;
-        left: -280px; /* 使用 left 定位來隱藏 */
+        left: -280px;
         width: 280px;
         max-width: 80vw;
         height: 100vh;
@@ -377,17 +375,22 @@
         flex-direction: column;
         align-items: stretch;
         justify-content: flex-start;
-        transition: left 0.3s ease-in-out; /* 動畫 left 屬性 */
+        transition: left 0.3s ease-in-out;
         z-index: 1001;
         overflow-y: auto;
         overflow-x: hidden;
         gap: 15px;
       }
       #app-container.menu-active #toolbar {
-        left: 0; /* 滑入畫面 */
+        left: 0;
       }
       #toolbar > * {
         flex-shrink: 0;
+      }
+      #toolbar .title-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
       }
       #toolbar input[type="text"],
       #toolbar input[type="number"],
@@ -448,29 +451,23 @@
         gap: 0;
       }
       #bottom-results-bar select {
-          /* [修正] 關鍵修正：強制寬度為100%並設定盒模型 */
           width: 100%;
           box-sizing: border-box;
-      
-          /* [修正] 再次明確定義文字溢出處理，確保生效 */
           overflow: hidden;
           white-space: nowrap;
           text-overflow: ellipsis;
-          
-          /* 保留原有的樣式 */
-          padding: 8px; /* 稍微增加內距，更好看 */
+          padding: 8px;
           font-size: 0.9em;
         }
     }
     @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
-      /* [修正] 當菜單開啟時，頁籤移動的距離需要適應 toolbar 的新寬度 */
       #app-container.menu-active #toolbar-toggle-tab {
         left: 240px;
       }
       #toolbar {
         width: 240px;
         max-width: 70vw;
-        left: -240px; /* 匹配新的寬度 */
+        left: -240px;
         padding: 50px 5px 5px 5px !important;
         gap: 3px !important;
       }
@@ -537,6 +534,9 @@
       }
     }
     @media (max-width: 480px) {
+      #toolbar .title-container {
+        width: 100%;
+      }
       #toolbar h2 {
         font-size: 1.1em;
       }
@@ -545,14 +545,15 @@
 </head>
 <body>
   <div id="app-container">
-    <!-- [修正] 頁籤現在是 toolbar 的兄弟元素，位於其上方 -->
     <div id="toolbar-toggle-tab">
         <span class="icon">›</span>
     </div>
 
     <div id="toolbar">
-      <!-- 頁籤已從此處移除 -->
-      <h2>PDF關鍵字查詢平台</h2>
+      <div class="title-container">
+        <!-- [新增] 前往使用說明的連結 -->
+        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁開啟使用說明" style="margin-left: 10px; font-size: 0.9em;">(使用說明)</a>
+      </div>
       <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正則" />
