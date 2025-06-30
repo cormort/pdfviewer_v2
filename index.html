@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF關鍵字查詢平台</title>
   <style>
+    /* [新增] 問號圖示連結的樣式 */
+    #help-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 10px;
+      color: #6c757d; /* 預設為灰色 */
+      transition: color 0.2s ease-in-out;
+    }
+    #help-link:hover {
+      color: #007bff; /* 滑鼠懸停時變為藍色 */
+      text-decoration: none;
+    }
+    #help-link svg {
+      width: 20px;
+      height: 20px;
+    }
+
     body {
       font-family: sans-serif;
       margin: 0;
@@ -388,9 +406,9 @@
         flex-shrink: 0;
       }
       #toolbar .title-container {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
+        flex-direction: row; /* 在手機上標題和問號圖示也保持同一行 */
+        align-items: center;
+        width: 100%;
       }
       #toolbar input[type="text"],
       #toolbar input[type="number"],
@@ -550,9 +568,15 @@
     </div>
 
     <div id="toolbar">
+      <!-- [修改] 將原本的文字連結換成 SVG 圖示 -->
       <div class="title-container">
-        <!-- [新增] 前往使用說明的連結 -->
-        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁開啟使用說明" style="margin-left: 10px; font-size: 0.9em;">(使用說明)</a>
+        <h2>PDF關鍵字查詢平台</h2>
+        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁開啟使用說明" id="help-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+          </svg>
+        </a>
       </div>
       <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
