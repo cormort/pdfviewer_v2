@@ -10,7 +10,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      margin-left: 10px;
+      margin-right: 10px; /* 與右側元素間隔 */
       color: #6c757d; /* 預設為灰色 */
       transition: color 0.2s ease-in-out;
     }
@@ -39,7 +39,7 @@
       flex-direction: column;
       height: 100%;
       width: 100%;
-      position: relative; 
+      position: relative;
     }
 
     #toolbar-toggle {
@@ -56,7 +56,7 @@
       font-size: 1.2em;
       border-radius: 4px;
     }
-    
+
     #toolbar-toggle-tab {
         display: none;
     }
@@ -66,15 +66,32 @@
       background-color: #f8f9fa;
       border-bottom: 1px solid #dee2e6;
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap; /* [修改] 改為不換行，由子容器處理 */
       gap: 10px;
       align-items: center;
       flex-shrink: 0;
+      justify-content: space-between; /* [修改] 將左右兩大區塊分開 */
     }
+
+    /* [新增] 左側主要控制項的容器 */
+    #toolbar-controls-left {
+      display: flex;
+      align-items: center;
+      gap: 15px; /* [修改] 調整大群組間的距離 */
+      flex-wrap: wrap;
+    }
+    
+    /* [新增] 用於將標籤和輸入框等小元件群組化 */
+    .toolbar-item-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     #toolbar .title-container {
       display: flex;
       align-items: center;
-      margin: 0 10px 0 0;
+      margin: 0; /* [修改] 移除 margin */
     }
     #toolbar h2 {
       margin: 0;
@@ -142,7 +159,7 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      margin-left: auto;
+      /* [移除] margin-left: auto; 因為父層已有 justify-content: space-between */
     }
     #page-navigation button {
       padding: 6px 8px;
@@ -345,12 +362,26 @@
 
     /* Mobile Styles */
     @media (max-width: 768px) {
+      #toolbar {
+        justify-content: flex-start; /* 手機版恢復預設對齊 */
+      }
+      #toolbar-controls-left {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 15px;
+      }
+      .toolbar-item-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+      }
       #toolbar-toggle-tab {
         display: flex;
         position: absolute;
         top: 30%;
-        left: 0; 
-        transition: left 0.3s ease-in-out; 
+        left: 0;
+        transition: left 0.3s ease-in-out;
         z-index: 1003;
         pointer-events: auto;
         background-color: #ff9a15;
@@ -409,6 +440,7 @@
         flex-direction: row; /* 在手機上標題和問號圖示也保持同一行 */
         align-items: center;
         width: 100%;
+        margin-right: 0;
       }
       #toolbar input[type="text"],
       #toolbar input[type="number"],
@@ -568,38 +600,51 @@
     </div>
 
     <div id="toolbar">
-      <!-- [修改] 將原本的文字連結換成 SVG 圖示 -->
-      <div class="title-container">
-        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁開啟使用說明" id="help-link">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
-          </svg>
-        </a>
+      <!-- [修改] 將左側的主要控制項包裹起來 -->
+      <div id="toolbar-controls-left">
+        <div class="title-container">
+          <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁開啟使用說明" id="help-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+              <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+            </svg>
+          </a>
+        </div>
+        
+        <!-- [修改] 將檔案選擇相關元件群組 -->
+        <div class="toolbar-item-group">
+          <label for="fileInput" style="font-size: 0.9em; white-space: nowrap;">選擇PDF檔案:</label>
+          <input type="file" id="fileInput" accept="application/pdf" multiple />
+        </div>
+        
+        <!-- [修改] 將搜尋相關元件群組 -->
+        <div class="toolbar-item-group">
+          <input type="text" id="searchInput" placeholder="關鍵字或正則" />
+          <button id="search-action-button">搜尋</button>
+        </div>
+        
+        <div id="quality-control">
+          <label for="quality-selector">畫質:</label>
+          <select id="quality-selector">
+              <option value="1.0">標準</option>
+              <option value="1.5" selected>高</option>
+              <option value="2.0">最高</option>
+          </select>
+        </div>
+
+        <div id="local-magnifier-zoom-controls" style="display: none; align-items: center; gap: 5px;">
+          <label for="local-magnifier-zoom-selector" style="white-space: nowrap; font-size: 0.9em;">放大鏡倍率:</label>
+          <select id="local-magnifier-zoom-selector" style="padding: 6px;">
+              <option value="1.5">1.5x</option>
+              <option value="2.0">2.0x</option>
+              <option value="2.5" selected>2.5x</option>
+              <option value="3.0">3.0x</option>
+              <option value="3.5">3.5x</option>
+          </select>
+        </div>
       </div>
-      <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
-      <input type="file" id="fileInput" accept="application/pdf" multiple />
-      <input type="text" id="searchInput" placeholder="關鍵字或正則" />
-      <button id="search-action-button">搜尋</button>
       
-      <div id="quality-control">
-        <label for="quality-selector">畫質:</label>
-        <select id="quality-selector">
-            <option value="1.0">標準</option>
-            <option value="1.5" selected>高</option>
-            <option value="2.0">最高</option>
-        </select>
-      </div>
-      <div id="local-magnifier-zoom-controls" style="display: none; align-items: center; gap: 5px;">
-        <label for="local-magnifier-zoom-selector" style="white-space: nowrap; font-size: 0.9em;">放大鏡倍率:</label>
-        <select id="local-magnifier-zoom-selector" style="padding: 6px;">
-            <option value="1.5">1.5x</option>
-            <option value="2.0">2.0x</option>
-            <option value="2.5" selected>2.5x</option>
-            <option value="3.0">3.0x</option>
-            <option value="3.5">3.5x</option>
-        </select>
-      </div>
+      <!-- [修改] 頁面導覽區維持不變，它會被推到右邊 -->
       <div id="page-navigation">
         <button id="go-to-first-page">回首頁</button>
         <button id="prev-page">上一頁</button>
@@ -649,7 +694,7 @@
 
   <script type="module">
     // This script should be placed before the main script.js
-    import { GlobalWorkerOptions } from './lib/pdfjs/pdf.mjs'; 
+    import { GlobalWorkerOptions } from './lib/pdfjs/pdf.mjs';
     GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
   </script>
   <script type="module" src="./script.js"></script>
