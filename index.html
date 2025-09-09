@@ -66,7 +66,8 @@
       background-color: #f8f9fa;
       border-bottom: 1px solid #dee2e6;
       display: flex;
-      flex-wrap: wrap;
+      /* [關鍵修正] 將 wrap 改為 nowrap，強制所有元件保持在同一行 */
+      flex-wrap: nowrap; 
       gap: 10px;
       align-items: center;
       flex-shrink: 0;
