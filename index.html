@@ -84,7 +84,15 @@
       color: initial;
     }
 
-    #toolbar input[type="file"],
+    #toolbar input[type="file"]{
+      /* 設定一個最大寬度，防止它無限變寬 */
+      max-width: 250px; 
+
+      /* 以下三行是為了讓超出的檔名顯示為 ... */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    },
     #toolbar input[type="text"],
     #toolbar input[type="number"],
     #toolbar select,
