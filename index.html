@@ -744,7 +744,6 @@
         <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">還原上次的工作階段</button>
       </div>
       
-      <!-- FIX: Removed inline style="display: block;" which broke the flexbox layout -->
       <label for="fileInput">選擇 PDF 檔案：</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正規表示式" />
@@ -839,6 +838,8 @@
   </div>
 </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+  
   <script type="module">
     import { GlobalWorkerOptions } from './lib/pdfjs/pdf.mjs'; 
     GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
