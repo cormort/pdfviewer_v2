@@ -1,199 +1,3 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF 關鍵字搜尋平台</title>
-  <style>
-    /* Styles for the help icon link */
-    #help-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-left: 10px;
-      color: #6c757d; /* Default gray */
-      transition: color 0.2s ease-in-out;
-    }
-    #help-link:hover {
-      color: #007bff; /* Becomes blue on hover */
-      text-decoration: none;
-    }
-    #help-link svg {
-      width: 20px;
-      height: 20px;
-    }
-
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-      overscroll-behavior-y: contain;
-    }
-
-    #app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-      position: relative; 
-    }
-
-    /* --- Main content area for split view --- */
-    #main-content {
-      display: flex;
-      flex: 1; /* Take remaining height */
-      overflow: hidden; /* Prevent inner scrolling */
-    }
-    
-    #pdf-container {
-      flex: 1; /* Grow to fill available space */
-      position: relative;
-      overflow: auto;
-      background-color: #e9ecef;
-      padding: 10px;
-      box-sizing: border-box;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 60px;
-    }
-    
-    /* --- Search results side panel --- */
-    #search-results-panel {
-      display: none; /* Hidden by default */
-      width: 320px;
-      flex-shrink: 0;
-      background-color: #f1f3f5;
-      border-left: 1px solid #dee2e6;
-      box-sizing: border-box;
-    }
-
-    #app-container.results-panel-visible #search-results-panel {
-      display: flex;
-      flex-direction: column;
-    }
-
-    #search-results-panel h3 {
-      margin: 0;
-      padding: 15px;
-      border-bottom: 1px solid #ccc;
-      font-size: 1.1em;
-      color: #333;
-      background-color: #f8f9fa;
-      flex-shrink: 0; /* Prevent shrinking */
-    }
-
-    #panel-dropdown-container {
-        padding: 10px;
-        border-bottom: 1px solid #ccc;
-        background-color: #f8f9fa;
-        flex-shrink: 0; /* Prevent shrinking */
-    }
-    #panelResultsDropdown {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        font-size: 1em;
-    }
-
-    #results-list {
-      padding: 10px;
-      flex-grow: 1; /* Fill available space */
-      overflow-y: auto; /* Enable scrolling */
-    }
-
-    .result-item {
-      margin-bottom: 15px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: #fff;
-      cursor: pointer;
-      transition: box-shadow 0.2s, border-color 0.2s;
-    }
-    .result-item:hover {
-      border-color: #007bff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .result-item .thumbnail-canvas {
-      width: 100%;
-      height: auto;
-      border: 1px solid #e9ecef;
-      margin-bottom: 8px;
-    }
-    .result-item .page-info {
-      font-weight: bold;
-      font-size: 0.9em;
-      margin-bottom: 5px;
-      color: #495057;
-    }
-    .result-item .context-snippet {
-      font-size: 0.85em;
-      line-height: 1.4;
-      color: #212529;
-      word-wrap: break-word;
-    }
-    .result-item .wavy-underline {
-      text-decoration-line: underline !important;
-      text-decoration-style: wavy !important;
-      text-decoration-color: sandybrown !important;
-      background-color: rgba(244, 164, 96, 0.2);
-      border-radius: 2px;
-      padding: 0 2px;
-    }
-
-    #toolbar-toggle-tab {
-        display: none;
-    }
-
-    #toolbar {
-      padding: 10px;
-      background-color: #f8f9fa;
-      border-bottom: 1px solid #dee2e6;
-      display: flex;
-      flex-wrap: nowrap; 
-      gap: 10px;
-      align-items: center;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-    #toolbar .title-container {
-      display: flex;
-      align-items: center;
-      margin: 0 10px 0 0;
-    }
-    #toolbar h2 {
-      margin: 0;
-      font-size: 1.2em;
-      white-space: nowrap;
-      color: initial;
-    }
-
-    #toolbar input[type="file"]{
-      max-width: 250px; 
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex-shrink: 1;
-      min-width: 100px;
-    }
-    #toolbar input[type="text"],
-    #toolbar input[type="number"],
-    #toolbar select,
-    #toolbar button {
-      padding: 8px;
-      border: 1px solid #ced4da;
-      border-radius: 4px;
-      font-size: 1em;
-      box-sizing: border-box;
-      color: initial;
-    }
-    #toolbar input[type="text"] {
-      flex: 1 1 150px;
-      min-width: 120px;
       background-color: initial;
       border-color: initial;
       color: initial;
@@ -745,7 +549,7 @@
 
     <div id="toolbar">
       <div class="title-container">
-        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁中開啟使用指南" id="help-link">
+        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁中開啟使用說明" id="help-link">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
             <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
@@ -754,14 +558,15 @@
       </div>
       
       <div id="restore-session-container" style="display: none; width: 100%; text-align: center; margin-bottom: 10px;">
-        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">恢復上次的工作階段</button>
+        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">還原上次的工作階段</button>
       </div>
       <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個 PDF 檔案：</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正規表示式" />
       <button id="search-action-button">搜尋</button>
       
-            <div id="desktop-zoom-controls" class="zoom-controls">
+      <!-- Desktop Zoom Controls -->
+      <div id="desktop-zoom-controls" class="zoom-controls">
         <button id="zoom-out-btn" title="縮小">-</button>
         <button id="fit-height-btn" title="符合頁面高度">符合高度</button>
         <button id="fit-width-btn" title="符合頁面寬度">符合寬度</button>
@@ -779,7 +584,8 @@
         </select>
       </div>
 
-            <div id="mobile-zoom-controls" class="zoom-controls">
+      <!-- Mobile Zoom Controls (inside the slide-out menu) -->
+      <div id="mobile-zoom-controls" class="zoom-controls">
         <button id="mobile-zoom-out-btn" title="縮小">-</button>
         <button id="mobile-fit-height-btn" title="符合頁面高度">符合高度</button>
         <button id="mobile-fit-width-btn" title="符合頁面寬度">符合寬度</button>
