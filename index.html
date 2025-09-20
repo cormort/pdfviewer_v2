@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF關鍵字查詢平台</title>
+  <title>PDF Keyword Search Platform</title>
   <style>
-    /* [新增] 問號圖示連結的樣式 */
+    /* Styles for the help icon link */
     #help-link {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       margin-left: 10px;
-      color: #6c757d; /* 預設為灰色 */
+      color: #6c757d; /* Default gray */
       transition: color 0.2s ease-in-out;
     }
     #help-link:hover {
-      color: #007bff; /* 滑鼠懸停時變為藍色 */
+      color: #007bff; /* Becomes blue on hover */
       text-decoration: none;
     }
     #help-link svg {
@@ -42,21 +42,109 @@
       position: relative; 
     }
 
-    #toolbar-toggle {
-      display: none;
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 1003;
-      pointer-events: auto;
-      background-color: #f0f0f0;
-      border: 1px solid #ccc;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 1.2em;
-      border-radius: 4px;
+    /* --- Main content area for split view --- */
+    #main-content {
+      display: flex;
+      flex: 1; /* Take remaining height */
+      overflow: hidden; /* Prevent inner scrolling */
     }
     
+    #pdf-container {
+      flex: 1; /* Grow to fill available space */
+      position: relative;
+      overflow: auto;
+      background-color: #e9ecef;
+      padding: 10px;
+      box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 60px;
+    }
+    
+    /* --- Search results side panel --- */
+    #search-results-panel {
+      display: none; /* Hidden by default */
+      width: 320px;
+      flex-shrink: 0;
+      background-color: #f1f3f5;
+      border-left: 1px solid #dee2e6;
+      box-sizing: border-box;
+    }
+
+    #app-container.results-panel-visible #search-results-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #search-results-panel h3 {
+      margin: 0;
+      padding: 15px;
+      border-bottom: 1px solid #ccc;
+      font-size: 1.1em;
+      color: #333;
+      background-color: #f8f9fa;
+      flex-shrink: 0; /* Prevent shrinking */
+    }
+
+    #panel-dropdown-container {
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+        background-color: #f8f9fa;
+        flex-shrink: 0; /* Prevent shrinking */
+    }
+    #panelResultsDropdown {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 1em;
+    }
+
+    #results-list {
+      padding: 10px;
+      flex-grow: 1; /* Fill available space */
+      overflow-y: auto; /* Enable scrolling */
+    }
+
+    .result-item {
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #fff;
+      cursor: pointer;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .result-item:hover {
+      border-color: #007bff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .result-item .thumbnail-canvas {
+      width: 100%;
+      height: auto;
+      border: 1px solid #e9ecef;
+      margin-bottom: 8px;
+    }
+    .result-item .page-info {
+      font-weight: bold;
+      font-size: 0.9em;
+      margin-bottom: 5px;
+      color: #495057;
+    }
+    .result-item .context-snippet {
+      font-size: 0.85em;
+      line-height: 1.4;
+      color: #212529;
+      word-wrap: break-word;
+    }
+    .result-item .wavy-underline {
+      text-decoration-line: underline !important;
+      text-decoration-style: wavy !important;
+      text-decoration-color: sandybrown !important;
+      background-color: rgba(244, 164, 96, 0.2);
+      border-radius: 2px;
+      padding: 0 2px;
+    }
+
     #toolbar-toggle-tab {
         display: none;
     }
@@ -66,11 +154,11 @@
       background-color: #f8f9fa;
       border-bottom: 1px solid #dee2e6;
       display: flex;
-      /* [關鍵修正] 將 wrap 改為 nowrap，強制所有元件保持在同一行 */
       flex-wrap: nowrap; 
       gap: 10px;
       align-items: center;
       flex-shrink: 0;
+      overflow: hidden;
     }
     #toolbar .title-container {
       display: flex;
@@ -85,14 +173,13 @@
     }
 
     #toolbar input[type="file"]{
-      /* 設定一個最大寬度，防止它無限變寬 */
       max-width: 250px; 
-
-      /* 以下三行是為了讓超出的檔名顯示為 ... */
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    },
+      flex-shrink: 1;
+      min-width: 100px;
+    }
     #toolbar input[type="text"],
     #toolbar input[type="number"],
     #toolbar select,
@@ -105,7 +192,8 @@
       color: initial;
     }
     #toolbar input[type="text"] {
-      width: 150px;
+      flex: 1 1 150px;
+      min-width: 120px;
       background-color: initial;
       border-color: initial;
       color: initial;
@@ -126,23 +214,47 @@
       background-color: initial;
       color: initial;
       border-color: initial;
+      flex-shrink: 0;
     }
     #toolbar button:hover {
       background-color: initial;
     }
 
-    #quality-control,
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .zoom-controls button {
+      min-width: 38px;
+      font-weight: bold;
+    }
+    .zoom-controls button.active {
+      background-color: #007bff;
+      color: white;
+      border-color: #007bff;
+    }
+    #desktop-zoom-controls {
+      border-left: 1px solid #ccc;
+      padding-left: 10px;
+      margin-left: 10px;
+    }
+    #mobile-zoom-controls {
+        width: 100%;
+        justify-content: center;
+    }
+
+
     #local-magnifier-zoom-controls {
       display: flex;
       align-items: center;
       gap: 5px;
     }
-    #quality-control label,
     #local-magnifier-zoom-controls label {
       white-space: nowrap;
       font-size: 0.9em;
     }
-    #quality-control select,
     #local-magnifier-zoom-controls select {
       padding: 6px;
     }
@@ -152,6 +264,7 @@
       align-items: center;
       gap: 5px;
       margin-left: auto;
+      flex-shrink: 0;
     }
     #page-navigation button {
       padding: 8px;
@@ -170,17 +283,6 @@
       background-color: initial;
     }
 
-    #pdf-container {
-      position: relative;
-      flex-grow: 1;
-      overflow: auto;
-      background-color: #e9ecef;
-      padding: 10px;
-      box-sizing: border-box;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 60px;
-    }
-
     #pdf-canvas {
       border: 1px solid #000;
       display: block;
@@ -197,6 +299,30 @@
       z-index: 10;
       touch-action: none;
       pointer-events: none;
+    }
+
+    #pdf-container.paragraph-selection-mode {
+        cursor: pointer;
+    }
+    .paragraph-highlight {
+        position: absolute;
+        background-color: rgba(0, 123, 255, 0.25);
+        border: 1px solid rgba(0, 123, 255, 0.5);
+        border-radius: 3px;
+        z-index: 6;
+        pointer-events: none;
+    }
+    #copy-paragraph-btn {
+        position: absolute;
+        z-index: 7;
+        padding: 5px 10px;
+        font-size: 14px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 
     #magnifier-glass {
@@ -240,7 +366,7 @@
     .highlights-hidden .wavy-underline {
       text-decoration: none !important;
     }
-    #resultsDropdown .wavy-underline {
+    #resultsDropdown .wavy-underline, #panelResultsDropdown .wavy-underline {
       text-decoration-line: underline !important;
       text-decoration-style: wavy !important;
       text-decoration-color: sandybrown !important;
@@ -305,11 +431,15 @@
     #toggle-text-selection-btn.active {
       background-color: rgba(0, 0, 100, 0.7);
     }
+    #toggle-paragraph-selection-btn.active {
+      background-color: rgba(0, 123, 255, 0.7);
+    }
     #toggle-local-magnifier-btn.active {
       background-color: rgba(100, 0, 100, 0.7);
     }
 
     #bottom-results-bar {
+      display: none;
       position: fixed;
       bottom: 0;
       left: 0;
@@ -318,15 +448,11 @@
       border-top: 1px solid #dee2e6;
       padding: 5px 10px;
       box-sizing: border-box;
-      display: none;
       justify-content: center;
       align-items: center;
       gap: 0;
       box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
       z-index: 1002;
-    }
-    body.results-bar-visible #bottom-results-bar {
-      display: flex;
     }
     #bottom-results-bar #result-nav-wrapper {
       display: flex;
@@ -352,8 +478,46 @@
       max-width: 100%;
     }
 
-    /* Mobile Styles */
+    /* --- Responsive Logic --- */
+    #mobile-zoom-controls {
+        display: none;
+    }
+
+    @media (max-width: 1380px) {
+        #go-to-first-page {
+            display: none;
+        }
+        #page-slider {
+            min-width: 60px;
+        }
+        #toolbar input[type="text"] {
+            min-width: 100px;
+        }
+    }
+
+    @media (max-width: 1200px) {
+        #toolbar label[for="fileInput"] {
+            display: none;
+        }
+    }
+
+    @media (max-width: 1024px) {
+      #search-results-panel {
+        display: none !important;
+      }
+      body.results-bar-visible #bottom-results-bar {
+        display: flex;
+      }
+    }
+
     @media (max-width: 768px) {
+      #desktop-zoom-controls {
+        display: none;
+      }
+      #mobile-zoom-controls {
+        display: flex;
+      }
+
       #toolbar-toggle-tab {
         display: flex;
         position: absolute;
@@ -415,7 +579,7 @@
         flex-shrink: 0;
       }
       #toolbar .title-container {
-        flex-direction: row; /* 在手機上標題和問號圖示也保持同一行 */
+        flex-direction: row; 
         align-items: center;
         width: 100%;
       }
@@ -423,15 +587,20 @@
       #toolbar input[type="number"],
       #toolbar select,
       #toolbar button,
-      #quality-control,
       #local-magnifier-zoom-controls {
         width: 100%;
       }
-      #quality-control,
+      /* --- THIS IS THE FIX --- */
+      #toolbar input[type="text"],
+      #toolbar button {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        font-size: 0.95em;
+      }
+
       #local-magnifier-zoom-controls {
         justify-content: space-between;
       }
-      #quality-control select,
       #local-magnifier-zoom-controls select {
         flex-grow: 1;
       }
@@ -523,13 +692,11 @@
       #toolbar input[type="file"] {
         font-size: 0.7em !important;
       }
-      #quality-control label,
       #local-magnifier-zoom-controls label {
         font-size: 0.7em !important;
         margin-right: 3px !important;
         padding: 1px !important;
       }
-      #quality-control select,
       #local-magnifier-zoom-controls select {
         font-size: 0.7em !important;
         padding: 1px !important;
@@ -578,7 +745,7 @@
 
     <div id="toolbar">
       <div class="title-container">
-        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁開啟使用說明" id="help-link">
+        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="Open user guide in a new tab" id="help-link">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
             <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
@@ -587,23 +754,23 @@
       </div>
       
       <div id="restore-session-container" style="display: none; width: 100%; text-align: center; margin-bottom: 10px;">
-        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">還原上次的檔案</button>
+        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">Restore Last Session</button>
       </div>
-      <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個PDF檔案:</label>
+      <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">Choose one or more PDF files:</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
-      <input type="text" id="searchInput" placeholder="關鍵字或正則" />
-      <button id="search-action-button">搜尋</button>
+      <input type="text" id="searchInput" placeholder="Keyword or Regex" />
+      <button id="search-action-button">Search</button>
       
-      <div id="quality-control">
-        <label for="quality-selector">畫質:</label>
-        <select id="quality-selector">
-            <option value="1.0">標準</option>
-            <option value="1.5" selected>高</option>
-            <option value="2.0">最高</option>
-        </select>
+      <!-- Desktop Zoom Controls -->
+      <div id="desktop-zoom-controls" class="zoom-controls">
+        <button id="zoom-out-btn" title="Zoom Out">-</button>
+        <button id="fit-height-btn" title="Fit to Page Height">Fit Height</button>
+        <button id="fit-width-btn" title="Fit to Page Width">Fit Width</button>
+        <button id="zoom-in-btn" title="Zoom In">+</button>
       </div>
+
       <div id="local-magnifier-zoom-controls" style="display: none; align-items: center; gap: 5px;">
-        <label for="local-magnifier-zoom-selector" style="white-space: nowrap; font-size: 0.9em;">放大鏡倍率:</label>
+        <label for="local-magnifier-zoom-selector" style="white-space: nowrap; font-size: 0.9em;">Magnifier Zoom:</label>
         <select id="local-magnifier-zoom-selector" style="padding: 6px;">
             <option value="1.5">1.5x</option>
             <option value="2.0">2.0x</option>
@@ -612,55 +779,78 @@
             <option value="3.5">3.5x</option>
         </select>
       </div>
+
+      <!-- Mobile Zoom Controls (inside the slide-out menu) -->
+      <div id="mobile-zoom-controls" class="zoom-controls">
+        <button id="mobile-zoom-out-btn" title="Zoom Out">-</button>
+        <button id="mobile-fit-height-btn" title="Fit to Page Height">Fit Height</button>
+        <button id="mobile-fit-width-btn" title="Fit to Page Width">Fit Width</button>
+        <button id="mobile-zoom-in-btn" title="Zoom In">+</button>
+      </div>
+
       <div id="page-navigation">
-        <button id="go-to-first-page">回首頁</button>
-        <button id="prev-page">上一頁</button>
+        <button id="go-to-first-page">First Page</button>
+        <button id="prev-page">Prev</button>
         <input type="range" id="page-slider" min="1" max="1" value="1" disabled>
         <span id="page-num-display">- / -</span>
-        <button id="next-page">下一頁</button>
+        <button id="next-page">Next</button>
         <div>
-            <input type="number" id="page-to-go" min="1" placeholder="頁">
-            <button id="go-to-page-btn">跳</button>
+            <input type="number" id="page-to-go" min="1" placeholder="Page">
+            <button id="go-to-page-btn">Go</button>
         </div>
       </div>
     </div>
 
-    <div id="pdf-container">
-      <canvas id="pdf-canvas"></canvas>
-      <div id="text-layer" class="textLayer"></div>
-      <canvas id="drawing-canvas"></canvas>
-      <div id="magnifier-glass">
-        <canvas id="magnifier-canvas"></canvas>
-      </div>
+    <div id="main-content">
+        <div id="pdf-container">
+          <canvas id="pdf-canvas"></canvas>
+          <div id="text-layer" class="textLayer"></div>
+          <canvas id="drawing-canvas"></canvas>
+          <div id="magnifier-glass">
+            <canvas id="magnifier-canvas"></canvas>
+          </div>
+        </div>
+        <div id="search-results-panel">
+            <h3>Bookmarks / Search Results</h3>
+            <div id="panel-dropdown-container">
+                <select id="panelResultsDropdown">
+                    <option value="">Search Results</option>
+                </select>
+            </div>
+            <div id="results-list"></div>
+        </div>
     </div>
   </div>
 
   <div id="floating-action-buttons">
-    <button id="toggle-underline-btn" title="切換搜尋結果底線">
+    <button id="toggle-underline-btn" title="Toggle Search Result Underlines">
         <span class="toggle-underline-icon">S</span>
     </button>
-    <button id="toggle-text-selection-btn" title="啟用文字選取">TS</button>
     <div class="fab-button-group">
-        <button id="toggle-highlighter-btn" title="啟用螢光筆">🖌️</button>
-        <button id="clear-highlighter-btn" title="清除螢光筆標記">🗑️</button>
+        <button id="toggle-paragraph-selection-btn" title="Enable Paragraph Selection">¶</button>
+        <button id="copy-page-text-btn" title="Copy Page Text">📝</button>
+        <button id="toggle-text-selection-btn" title="Enable Text Selection">TS</button>
     </div>
-    <button id="toggle-local-magnifier-btn" title="切換放大鏡">🔍</button>
     <div class="fab-button-group">
-        <button id="export-page-btn" title="將目前頁面匯出為圖片">📷</button>
-        <button id="share-page-btn" title="分享目前頁面">🔗</button>
+        <button id="toggle-highlighter-btn" title="Enable Highlighter">🖌️</button>
+        <button id="clear-highlighter-btn" title="Clear Highlighter Marks">🗑️</button>
+    </div>
+    <button id="toggle-local-magnifier-btn" title="Toggle Magnifier">🔍</button>
+    <div class="fab-button-group">
+        <button id="export-page-btn" title="Export current page as image">📷</button>
+        <button id="share-page-btn" title="Share current page">🔗</button>
     </div>
   </div>
 
 <div id="bottom-results-bar">
   <div id="result-nav-wrapper">
     <select id="resultsDropdown">
-      <option value="">搜尋結果</option>
+      <option value="">Search Results</option>
     </select>
   </div>
 </div>
 
   <script type="module">
-    // This script should be placed before the main script.js
     import { GlobalWorkerOptions } from './lib/pdfjs/pdf.mjs'; 
     GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
   </script>
