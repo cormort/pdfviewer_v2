@@ -165,20 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    document.getElementById('fileInput').addEventListener('change', async function(e) {
-        const files = Array.from(e.target.files);
-        if (files.length > 0) {
-            try {
-                await saveFiles(files);
-                document.getElementById('restore-session-container').style.display = 'none';
-                await loadAndProcessFiles(files);
-            } catch (error) {
-                console.error("儲存或處理檔案失敗:", error);
-                alert("儲存或處理檔案時發生錯誤。");
-            }
-        }
-    });
-
     function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) return null;
         const mapping = pageMap[globalPage - 1];
@@ -304,17 +290,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateResultsNav();
         updateZoomControls();
-    }
-
-    if (toolbarToggleTab && appContainer) {
-        toolbarToggleTab.addEventListener('click', () => appContainer.classList.toggle('menu-active'));
-    }
-    if (pdfContainer && appContainer) {
-        pdfContainer.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768 && appContainer.classList.contains('menu-active') && !toolbar.contains(e.target)) {
-                appContainer.classList.remove('menu-active');
-            }
-        });
     }
 
     function renderPage(globalPageNum, highlightPattern = null) {
@@ -460,17 +435,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isDrawing = false;
     }
 
-    if (drawingCanvas) {
-        drawingCanvas.addEventListener('mousedown', startDrawing);
-        drawingCanvas.addEventListener('mousemove', draw);
-        drawingCanvas.addEventListener('mouseup', stopDrawing);
-        drawingCanvas.addEventListener('mouseout', stopDrawing);
-        drawingCanvas.addEventListener('touchstart', startDrawing, { passive: false });
-        drawingCanvas.addEventListener('touchmove', draw, { passive: false });
-        drawingCanvas.addEventListener('touchend', stopDrawing);
-        drawingCanvas.addEventListener('touchcancel', stopDrawing);
-    }
-
     async function renderThumbnail(docIndex, localPageNum, canvasEl) {
         try {
             const doc = pdfDocs[docIndex];
@@ -489,7 +453,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- CORRECTED searchKeyword function ---
     function searchKeyword() {
         const input = searchInputElem.value.trim();
         searchResults = [];
@@ -592,8 +555,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     option.value = result.page;
                     option.innerHTML = `第 ${result.page} 頁: ${result.summary}`;
                     
-                    // --- THIS IS THE FIX ---
-                    // Append a CLONE of the option to each dropdown
                     if(resultsDropdown) resultsDropdown.appendChild(option.cloneNode(true));
                     if(panelResultsDropdown) panelResultsDropdown.appendChild(option.cloneNode(true));
 
@@ -631,16 +592,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasResults = searchResults.length > 0;
         document.body.classList.toggle('results-bar-visible', hasResults);
         if (appContainer) appContainer.classList.toggle('results-panel-visible', hasResults);
-    }
-
-    if (searchActionButton) searchActionButton.addEventListener('click', searchKeyword);
-    if (searchInputElem) searchInputElem.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); searchActionButton.click(); } });
-    
-    if (resultsDropdown) {
-        resultsDropdown.addEventListener('change', () => goToPageDropdown(resultsDropdown.value));
-    }
-    if (panelResultsDropdown) {
-        panelResultsDropdown.addEventListener('change', () => goToPageDropdown(panelResultsDropdown.value));
     }
 
     function goToPageDropdown(pageNumStr) {
@@ -686,60 +637,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-    if (goToFirstPageBtn) goToFirstPageBtn.addEventListener('click', () => { if (pdfDocs.length > 0) goToPage(1, getPatternFromSearchInput()); });
-    if (prevPageBtn) prevPageBtn.addEventListener('click', () => { if (currentPage > 1) goToPage(currentPage - 1, getPatternFromSearchInput()); });
-    if (nextPageBtn) nextPageBtn.addEventListener('click', () => { if (pdfDocs.length > 0 && currentPage < globalTotalPages) goToPage(currentPage + 1, getPatternFromSearchInput()); });
-    
-    if (goToPageBtn && pageToGoInput) {
-        goToPageBtn.addEventListener('click', () => {
-            const pn = parseInt(pageToGoInput.value);
-            if (!isNaN(pn)) goToPage(pn, getPatternFromSearchInput());
-        });
-    }
-    if (pageToGoInput && goToPageBtn) {
-        pageToGoInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); goToPageBtn.click(); } });
-    }
-    if (pageSlider) pageSlider.addEventListener('input', () => {
-        const newPage = parseInt(pageSlider.value);
-        if (pageToGoInput) pageToGoInput.value = newPage;
-        if (currentPage !== newPage) goToPage(newPage, getPatternFromSearchInput());
-    });
-
-    if (exportPageBtn) exportPageBtn.addEventListener('click', () => {
-        if (pdfDocs.length === 0 || !canvas) { alert('請先載入 PDF 檔案'); return; }
-        if (pageRendering) { alert('頁面仍在渲染中，請稍候'); return; }
-        const wasCanvasHidden = canvas.style.visibility === 'hidden';
-        if (wasCanvasHidden) canvas.style.visibility = 'visible';
-        try {
-            const tc = document.createElement('canvas');
-            tc.width = canvas.width; tc.height = canvas.height;
-            const tctx = tc.getContext('2d');
-            if (!tctx) { alert('無法取得匯出畫布的內容'); return; }
-            tctx.drawImage(canvas, 0, 0);
-            if (drawingCanvas && drawingCtx) tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height);
-            const idu = tc.toDataURL('image/png');
-            const l = document.createElement('a');
-            l.href = idu;
-            const pageInfo = getDocAndLocalPage(currentPage);
-            const docNamePart = pageInfo ? pageInfo.docName.replace(/\.pdf$/i, '') : 'document';
-            l.download = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated.png`;
-            document.body.appendChild(l);
-            l.click();
-            document.body.removeChild(l);
-        } catch (er) {
-            console.error('匯出錯誤:', er);
-            alert('無法匯出圖片: ' + er.message);
-        } finally {
-            if (wasCanvasHidden) canvas.style.visibility = 'hidden';
-        }
-    });
-
-    if (toggleUnderlineBtn) toggleUnderlineBtn.addEventListener('click', () => {
-        if (pdfDocs.length === 0) return;
-        showSearchResultsHighlights = !showSearchResultsHighlights;
-        renderPage(currentPage, getPatternFromSearchInput());
-    });
-
     function deactivateAllModes(except = null) {
         if (except !== 'highlighter' && highlighterEnabled) {
             highlighterEnabled = false;
@@ -764,172 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updatePageControls();
     }
-
-    if (toggleHighlighterBtn) toggleHighlighterBtn.addEventListener('click', () => {
-        if (pdfDocs.length === 0) return;
-        const wasActive = highlighterEnabled;
-        deactivateAllModes();
-        if (!wasActive) {
-            highlighterEnabled = true;
-            if (drawingCanvas) drawingCanvas.style.pointerEvents = 'auto';
-        }
-        updatePageControls();
-    });
-
-    if (toggleTextSelectionBtn) toggleTextSelectionBtn.addEventListener('click', () => {
-        if (pdfDocs.length === 0) return;
-        const wasActive = textSelectionModeActive;
-        deactivateAllModes();
-        if (!wasActive) {
-            textSelectionModeActive = true;
-            if (textLayerDivGlobal) {
-                textLayerDivGlobal.style.pointerEvents = 'auto';
-                textLayerDivGlobal.classList.add('text-selection-active');
-            }
-            if (canvas) canvas.style.visibility = 'hidden';
-        }
-        updatePageControls();
-    });
-
-    if (toggleLocalMagnifierBtn) toggleLocalMagnifierBtn.addEventListener('click', () => {
-        if (pdfDocs.length === 0) return;
-        const wasActive = localMagnifierEnabled;
-        deactivateAllModes();
-        if (!wasActive) {
-            localMagnifierEnabled = true;
-        }
-        updatePageControls();
-    });
-
-    if (toggleParagraphSelectionBtn) toggleParagraphSelectionBtn.addEventListener('click', () => {
-        if (pdfDocs.length === 0) return;
-        const wasActive = paragraphSelectionModeActive;
-        deactivateAllModes();
-        if (!wasActive) {
-            paragraphSelectionModeActive = true;
-            if (pdfContainer) pdfContainer.classList.add('paragraph-selection-mode');
-        }
-        updatePageControls();
-    });
-
-
-    if (clearHighlighterBtn && drawingCtx && drawingCanvas) clearHighlighterBtn.addEventListener('click', () => {
-        if (pdfDocs.length === 0) return;
-        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-    });
     
-    if (copyPageTextBtn) copyPageTextBtn.addEventListener('click', async () => {
-        if (pdfDocs.length === 0 || pageRendering) return;
-        const pageInfo = getDocAndLocalPage(currentPage);
-        if (!pageInfo) { showFeedback('無法取得目前頁面資訊。'); return; }
-        try {
-            const page = await pageInfo.doc.getPage(pageInfo.localPage);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map(item => item.str).join('\n');
-            await navigator.clipboard.writeText(pageText);
-            showFeedback('頁面文字已複製到剪貼簿！');
-        } catch (err) {
-            console.error('複製文字失敗:', err);
-            showFeedback('複製頁面文字時發生錯誤。');
-        }
-    });
-
-    if (sharePageBtn) sharePageBtn.addEventListener('click', async () => {
-        if (pdfDocs.length === 0 || !canvas) { alert('請先載入 PDF 檔案'); return; }
-        if (pageRendering) { alert('頁面仍在渲染中，請稍候'); return; }
-        const wasCanvasHidden = canvas.style.visibility === 'hidden';
-        if (wasCanvasHidden) canvas.style.visibility = 'visible';
-        if (!navigator.share) { alert('您的瀏覽器不支援 Web Share API'); if (wasCanvasHidden) canvas.style.visibility = 'hidden'; return; }
-        try {
-            const tc = document.createElement('canvas');
-            tc.width = canvas.width; tc.height = canvas.height;
-            const tctx = tc.getContext('2d');
-            if (!tctx) { alert('無法取得分享畫布的內容'); if (wasCanvasHidden) canvas.style.visibility = 'hidden'; return; }
-            tctx.drawImage(canvas, 0, 0);
-            if (drawingCanvas && drawingCtx) { tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height); }
-            const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/png'));
-            if (!blob) { throw new Error('無法從畫布建立圖片資料。'); }
-            const pageInfo = getDocAndLocalPage(currentPage);
-            const docNamePart = pageInfo ? pageInfo.docName.replace(/\.pdf$/i, '') : 'document';
-            const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated.png`;
-            const f = new File([blob], fn, { type: 'image/png' });
-            const sd = { title: `PDF 全域頁碼 ${currentPage}`, text: `來自 ${docNamePart} (PDF 工具) 的第 ${pageInfo.localPage} 頁`, files: [f] };
-            if (navigator.canShare && navigator.canShare({ files: [f] })) {
-                await navigator.share(sd);
-            } else {
-                const fsd = { title: sd.title, text: sd.text };
-                if (fsd.text && navigator.canShare && navigator.canShare(fsd)) {
-                    await navigator.share(fsd);
-                } else {
-                    alert('您的瀏覽器不支援分享檔案或文字。');
-                }
-            }
-        } catch (er) {
-            console.error('分享錯誤:', er);
-            if (er.name !== 'AbortError') { alert('分享失敗: ' + er.message); }
-        } finally {
-            if (wasCanvasHidden) { canvas.style.visibility = 'hidden'; }
-        }
-    });
-
-    if (localMagnifierZoomSelector) localMagnifierZoomSelector.addEventListener('change', (e) => { LOCAL_MAGNIFIER_ZOOM_LEVEL = parseFloat(e.target.value); });
-
-    function handlePointerMoveForLocalMagnifier(e) {
-        if (!localMagnifierEnabled) return;
-        if (e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
-        let clientX, clientY;
-        if (e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; } 
-        else if (e.clientX !== undefined) { clientX = e.clientX; clientY = e.clientY; } 
-        else { return; }
-        updateLocalMagnifier(clientX, clientY);
-    }
-
-    function handlePointerLeaveForLocalMagnifier() {
-        if (localMagnifierEnabled && magnifierGlass) magnifierGlass.style.display = 'none';
-    }
-
-    if (pdfContainer) {
-        pdfContainer.addEventListener('mousemove', handlePointerMoveForLocalMagnifier);
-        pdfContainer.addEventListener('mouseleave', handlePointerLeaveForLocalMagnifier);
-        pdfContainer.addEventListener('touchstart', handlePointerMoveForLocalMagnifier, { passive: false });
-        pdfContainer.addEventListener('touchmove', handlePointerMoveForLocalMagnifier, { passive: false });
-        pdfContainer.addEventListener('touchend', handlePointerLeaveForLocalMagnifier);
-        pdfContainer.addEventListener('touchcancel', handlePointerLeaveForLocalMagnifier);
-    }
-
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            if (pdfDocs.length > 0) renderPage(currentPage, getPatternFromSearchInput());
-        }, 250);
-    });
-
-    if (fitWidthBtn) fitWidthBtn.addEventListener('click', () => { currentZoomMode = 'width'; renderPage(currentPage, getPatternFromSearchInput()); });
-    if (fitHeightBtn) fitHeightBtn.addEventListener('click', () => { currentZoomMode = 'height'; renderPage(currentPage, getPatternFromSearchInput()); });
-    if (zoomInBtn) zoomInBtn.addEventListener('click', () => { currentZoomMode = 'custom'; currentScale += 0.2; renderPage(currentPage, getPatternFromSearchInput()); });
-    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => { currentZoomMode = 'custom'; currentScale = Math.max(0.1, currentScale - 0.2); renderPage(currentPage, getPatternFromSearchInput()); });
-
-    function navigateToNextResult() {
-        if (searchResults.length === 0) return;
-        const nextResult = searchResults.find(r => r.page > currentPage);
-        if (nextResult) {
-            goToPage(nextResult.page, getPatternFromSearchInput());
-        } else {
-            showFeedback('已經是最後一個結果');
-        }
-    }
-
-    function navigateToPreviousResult() {
-        if (searchResults.length === 0) return;
-        const prevResult = [...searchResults].reverse().find(r => r.page < currentPage);
-        if (prevResult) {
-            goToPage(prevResult.page, getPatternFromSearchInput());
-        } else {
-            showFeedback('已經是第一個結果');
-        }
-    }
-
     function showFeedback(message) {
         let feedbackDiv = document.getElementById('feedback-message');
         if (!feedbackDiv) {
@@ -941,32 +673,6 @@ document.addEventListener('DOMContentLoaded', () => {
         feedbackDiv.textContent = message;
         feedbackDiv.style.opacity = '1';
         setTimeout(() => { feedbackDiv.style.opacity = '0'; }, 1500);
-    }
-
-    let touchStartX = 0, touchStartY = 0, isSwiping = false;
-    const MIN_SWIPE_DISTANCE_X = 50, MAX_SWIPE_DISTANCE_Y = 60;
-
-    if (pdfContainer) {
-        pdfContainer.addEventListener('touchstart', (e) => {
-            if (highlighterEnabled || textSelectionModeActive || localMagnifierEnabled || paragraphSelectionModeActive || e.touches.length !== 1) { isSwiping = false; return; }
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            isSwiping = true;
-        }, { passive: true });
-        pdfContainer.addEventListener('touchend', (e) => {
-            if (!isSwiping || e.changedTouches.length !== 1) { isSwiping = false; return; }
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
-            const diffX = touchEndX - touchStartX;
-            const diffY = touchEndY - touchStartY;
-            if (Math.abs(diffX) > MIN_SWIPE_DISTANCE_X && Math.abs(diffY) < MAX_SWIPE_DISTANCE_Y) {
-                const isSearchResultMode = searchResults.length > 0;
-                if (diffX < 0) { isSearchResultMode ? navigateToNextResult() : nextPageBtn.click(); } 
-                else { isSearchResultMode ? navigateToPreviousResult() : prevPageBtn.click(); }
-            }
-            isSwiping = false;
-        });
-        pdfContainer.addEventListener('touchcancel', () => { isSwiping = false; });
     }
 
     function clearParagraphHighlights() {
@@ -1078,12 +784,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (pdfContainer) {
-        pdfContainer.addEventListener('click', handleParagraphSelection);
+    function handlePointerMoveForLocalMagnifier(e) {
+        if (!localMagnifierEnabled) return;
+        if (e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
+        let clientX, clientY;
+        if (e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; } 
+        else if (e.clientX !== undefined) { clientX = e.clientX; clientY = e.clientY; } 
+        else { return; }
+        updateLocalMagnifier(clientX, clientY);
     }
 
-    initLocalMagnifier();
-    updatePageControls();
+    function handlePointerLeaveForLocalMagnifier() {
+        if (localMagnifierEnabled && magnifierGlass) magnifierGlass.style.display = 'none';
+    }
+
+    function navigateToNextResult() {
+        if (searchResults.length === 0) return;
+        const nextResult = searchResults.find(r => r.page > currentPage);
+        if (nextResult) {
+            goToPage(nextResult.page, getPatternFromSearchInput());
+        } else {
+            showFeedback('已經是最後一個結果');
+        }
+    }
+
+    function navigateToPreviousResult() {
+        if (searchResults.length === 0) return;
+        const prevResult = [...searchResults].reverse().find(r => r.page < currentPage);
+        if (prevResult) {
+            goToPage(prevResult.page, getPatternFromSearchInput());
+        } else {
+            showFeedback('已經是第一個結果');
+        }
+    }
 
     async function initializeApp() {
         try {
@@ -1104,6 +837,271 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("無法從 IndexedDB 初始化應用程式:", error);
         }
     }
+
+    // --- Event Listeners Setup ---
+    document.getElementById('fileInput').addEventListener('change', async function(e) {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            try {
+                await saveFiles(files);
+                document.getElementById('restore-session-container').style.display = 'none';
+                await loadAndProcessFiles(files);
+            } catch (error) {
+                console.error("儲存或處理檔案失敗:", error);
+                alert("儲存或處理檔案時發生錯誤。");
+            }
+        }
+    });
     
-    initializeApp();
+    if (toolbarToggleTab && appContainer) {
+        toolbarToggleTab.addEventListener('click', () => appContainer.classList.toggle('menu-active'));
+    }
+
+    if (pdfContainer && appContainer) {
+        pdfContainer.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && appContainer.classList.contains('menu-active') && !toolbar.contains(e.target)) {
+                appContainer.classList.remove('menu-active');
+            }
+        });
+    }
+
+    if (drawingCanvas) {
+        drawingCanvas.addEventListener('mousedown', startDrawing);
+        drawingCanvas.addEventListener('mousemove', draw);
+        drawingCanvas.addEventListener('mouseup', stopDrawing);
+        drawingCanvas.addEventListener('mouseout', stopDrawing);
+        drawingCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+        drawingCanvas.addEventListener('touchmove', draw, { passive: false });
+        drawingCanvas.addEventListener('touchend', stopDrawing);
+        drawingCanvas.addEventListener('touchcancel', stopDrawing);
+    }
+
+    if (searchActionButton) searchActionButton.addEventListener('click', searchKeyword);
+    if (searchInputElem) searchInputElem.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); searchActionButton.click(); } });
+    
+    if (resultsDropdown) resultsDropdown.addEventListener('change', () => goToPageDropdown(resultsDropdown.value));
+    if (panelResultsDropdown) panelResultsDropdown.addEventListener('change', () => goToPageDropdown(panelResultsDropdown.value));
+
+    if (goToFirstPageBtn) goToFirstPageBtn.addEventListener('click', () => { if (pdfDocs.length > 0) goToPage(1, getPatternFromSearchInput()); });
+    if (prevPageBtn) prevPageBtn.addEventListener('click', () => { if (currentPage > 1) goToPage(currentPage - 1, getPatternFromSearchInput()); });
+    if (nextPageBtn) nextPageBtn.addEventListener('click', () => { if (pdfDocs.length > 0 && currentPage < globalTotalPages) goToPage(currentPage + 1, getPatternFromSearchInput()); });
+    
+    if (goToPageBtn && pageToGoInput) {
+        goToPageBtn.addEventListener('click', () => {
+            const pn = parseInt(pageToGoInput.value);
+            if (!isNaN(pn)) goToPage(pn, getPatternFromSearchInput());
+        });
+    }
+    if (pageToGoInput && goToPageBtn) {
+        pageToGoInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); goToPageBtn.click(); } });
+    }
+    if (pageSlider) pageSlider.addEventListener('input', () => {
+        const newPage = parseInt(pageSlider.value);
+        if (pageToGoInput) pageToGoInput.value = newPage;
+        if (currentPage !== newPage) goToPage(newPage, getPatternFromSearchInput());
+    });
+
+    if (exportPageBtn) exportPageBtn.addEventListener('click', () => {
+        if (pdfDocs.length === 0 || !canvas) { alert('請先載入 PDF 檔案'); return; }
+        if (pageRendering) { alert('頁面仍在渲染中，請稍候'); return; }
+        const wasCanvasHidden = canvas.style.visibility === 'hidden';
+        if (wasCanvasHidden) canvas.style.visibility = 'visible';
+        try {
+            const tc = document.createElement('canvas');
+            tc.width = canvas.width; tc.height = canvas.height;
+            const tctx = tc.getContext('2d');
+            if (!tctx) { alert('無法取得匯出畫布的內容'); return; }
+            tctx.drawImage(canvas, 0, 0);
+            if (drawingCanvas && drawingCtx) tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height);
+            const idu = tc.toDataURL('image/png');
+            const l = document.createElement('a');
+            l.href = idu;
+            const pageInfo = getDocAndLocalPage(currentPage);
+            const docNamePart = pageInfo ? pageInfo.docName.replace(/\.pdf$/i, '') : 'document';
+            l.download = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated.png`;
+            document.body.appendChild(l);
+            l.click();
+            document.body.removeChild(l);
+        } catch (er) {
+            console.error('匯出錯誤:', er);
+            alert('無法匯出圖片: ' + er.message);
+        } finally {
+            if (wasCanvasHidden) canvas.style.visibility = 'hidden';
+        }
+    });
+
+    if (toggleUnderlineBtn) toggleUnderlineBtn.addEventListener('click', () => {
+        if (pdfDocs.length === 0) return;
+        showSearchResultsHighlights = !showSearchResultsHighlights;
+        renderPage(currentPage, getPatternFromSearchInput());
+    });
+
+    if (toggleHighlighterBtn) toggleHighlighterBtn.addEventListener('click', () => {
+        if (pdfDocs.length === 0) return;
+        const wasActive = highlighterEnabled;
+        deactivateAllModes();
+        if (!wasActive) {
+            highlighterEnabled = true;
+            if (drawingCanvas) drawingCanvas.style.pointerEvents = 'auto';
+        }
+        updatePageControls();
+    });
+
+    if (toggleTextSelectionBtn) toggleTextSelectionBtn.addEventListener('click', () => {
+        if (pdfDocs.length === 0) return;
+        const wasActive = textSelectionModeActive;
+        deactivateAllModes();
+        if (!wasActive) {
+            textSelectionModeActive = true;
+            if (textLayerDivGlobal) {
+                textLayerDivGlobal.style.pointerEvents = 'auto';
+                textLayerDivGlobal.classList.add('text-selection-active');
+            }
+            if (canvas) canvas.style.visibility = 'hidden';
+        }
+        updatePageControls();
+    });
+
+    if (toggleLocalMagnifierBtn) toggleLocalMagnifierBtn.addEventListener('click', () => {
+        if (pdfDocs.length === 0) return;
+        const wasActive = localMagnifierEnabled;
+        deactivateAllModes();
+        if (!wasActive) {
+            localMagnifierEnabled = true;
+        }
+        updatePageControls();
+    });
+
+    if (toggleParagraphSelectionBtn) toggleParagraphSelectionBtn.addEventListener('click', () => {
+        if (pdfDocs.length === 0) return;
+        const wasActive = paragraphSelectionModeActive;
+        deactivateAllModes();
+        if (!wasActive) {
+            paragraphSelectionModeActive = true;
+            if (pdfContainer) pdfContainer.classList.add('paragraph-selection-mode');
+        }
+        updatePageControls();
+    });
+
+    if (clearHighlighterBtn && drawingCtx && drawingCanvas) clearHighlighterBtn.addEventListener('click', () => {
+        if (pdfDocs.length === 0) return;
+        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    });
+    
+    if (copyPageTextBtn) copyPageTextBtn.addEventListener('click', async () => {
+        if (pdfDocs.length === 0 || pageRendering) return;
+        const pageInfo = getDocAndLocalPage(currentPage);
+        if (!pageInfo) { showFeedback('無法取得目前頁面資訊。'); return; }
+        try {
+            const page = await pageInfo.doc.getPage(pageInfo.localPage);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join('\n');
+            await navigator.clipboard.writeText(pageText);
+            showFeedback('頁面文字已複製到剪貼簿！');
+        } catch (err) {
+            console.error('複製文字失敗:', err);
+            showFeedback('複製頁面文字時發生錯誤。');
+        }
+    });
+
+    if (sharePageBtn) sharePageBtn.addEventListener('click', async () => {
+        if (pdfDocs.length === 0 || !canvas) { alert('請先載入 PDF 檔案'); return; }
+        if (pageRendering) { alert('頁面仍在渲染中，請稍候'); return; }
+        const wasCanvasHidden = canvas.style.visibility === 'hidden';
+        if (wasCanvasHidden) canvas.style.visibility = 'visible';
+        if (!navigator.share) { alert('您的瀏覽器不支援 Web Share API'); if (wasCanvasHidden) canvas.style.visibility = 'hidden'; return; }
+        try {
+            const tc = document.createElement('canvas');
+            tc.width = canvas.width; tc.height = canvas.height;
+            const tctx = tc.getContext('2d');
+            if (!tctx) { alert('無法取得分享畫布的內容'); if (wasCanvasHidden) canvas.style.visibility = 'hidden'; return; }
+            tctx.drawImage(canvas, 0, 0);
+            if (drawingCanvas && drawingCtx) { tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height); }
+            const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/png'));
+            if (!blob) { throw new Error('無法從畫布建立圖片資料。'); }
+            const pageInfo = getDocAndLocalPage(currentPage);
+            const docNamePart = pageInfo ? pageInfo.docName.replace(/\.pdf$/i, '') : 'document';
+            const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated.png`;
+            const f = new File([blob], fn, { type: 'image/png' });
+            const sd = { title: `PDF 全域頁碼 ${currentPage}`, text: `來自 ${docNamePart} (PDF 工具) 的第 ${pageInfo.localPage} 頁`, files: [f] };
+            if (navigator.canShare && navigator.canShare({ files: [f] })) {
+                await navigator.share(sd);
+            } else {
+                const fsd = { title: sd.title, text: sd.text };
+                if (fsd.text && navigator.canShare && navigator.canShare(fsd)) {
+                    await navigator.share(fsd);
+                } else {
+                    alert('您的瀏覽器不支援分享檔案或文字。');
+                }
+            }
+        } catch (er) {
+            console.error('分享錯誤:', er);
+            if (er.name !== 'AbortError') { alert('分享失敗: ' + er.message); }
+        } finally {
+            if (wasCanvasHidden) { canvas.style.visibility = 'hidden'; }
+        }
+    });
+
+    if (localMagnifierZoomSelector) localMagnifierZoomSelector.addEventListener('change', (e) => { LOCAL_MAGNIFIER_ZOOM_LEVEL = parseFloat(e.target.value); });
+    
+    if (pdfContainer) {
+        pdfContainer.addEventListener('mousemove', handlePointerMoveForLocalMagnifier);
+        pdfContainer.addEventListener('mouseleave', handlePointerLeaveForLocalMagnifier);
+        pdfContainer.addEventListener('touchstart', handlePointerMoveForLocalMagnifier, { passive: false });
+        pdfContainer.addEventListener('touchmove', handlePointerMoveForLocalMagnifier, { passive: false });
+        pdfContainer.addEventListener('touchend', handlePointerLeaveForLocalMagnifier);
+        pdfContainer.addEventListener('touchcancel', handlePointerLeaveForLocalMagnifier);
+    }
+    
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            if (pdfDocs.length > 0) renderPage(currentPage, getPatternFromSearchInput());
+        }, 250);
+    });
+
+    if (fitWidthBtn) fitWidthBtn.addEventListener('click', () => { currentZoomMode = 'width'; renderPage(currentPage, getPatternFromSearchInput()); });
+    if (fitHeightBtn) fitHeightBtn.addEventListener('click', () => { currentZoomMode = 'height'; renderPage(currentPage, getPatternFromSearchInput()); });
+    if (zoomInBtn) zoomInBtn.addEventListener('click', () => { currentZoomMode = 'custom'; currentScale += 0.2; renderPage(currentPage, getPatternFromSearchInput()); });
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => { currentZoomMode = 'custom'; currentScale = Math.max(0.1, currentScale - 0.2); renderPage(currentPage, getPatternFromSearchInput()); });
+
+    let touchStartX = 0, touchStartY = 0, isSwiping = false;
+    const MIN_SWIPE_DISTANCE_X = 50, MAX_SWIPE_DISTANCE_Y = 60;
+
+    if (pdfContainer) {
+        pdfContainer.addEventListener('touchstart', (e) => {
+            if (highlighterEnabled || textSelectionModeActive || localMagnifierEnabled || paragraphSelectionModeActive || e.touches.length !== 1) { isSwiping = false; return; }
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isSwiping = true;
+        }, { passive: true });
+        pdfContainer.addEventListener('touchend', (e) => {
+            if (!isSwiping || e.changedTouches.length !== 1) { isSwiping = false; return; }
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+            if (Math.abs(diffX) > MIN_SWIPE_DISTANCE_X && Math.abs(diffY) < MAX_SWIPE_DISTANCE_Y) {
+                const isSearchResultMode = searchResults.length > 0;
+                if (diffX < 0) { isSearchResultMode ? navigateToNextResult() : nextPageBtn.click(); } 
+                else { isSearchResultMode ? navigateToPreviousResult() : prevPageBtn.click(); }
+            }
+            isSwiping = false;
+        });
+        pdfContainer.addEventListener('touchcancel', () => { isSwiping = false; });
+    }
+
+    if (pdfContainer) {
+        pdfContainer.addEventListener('click', handleParagraphSelection);
+    }
+
+    // --- Application Entry Point ---
+    function runApplication() {
+        initLocalMagnifier();
+        updatePageControls();
+        initializeApp();
+    }
+
+    runApplication();
 });
