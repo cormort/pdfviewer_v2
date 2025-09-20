@@ -43,8 +43,8 @@
       margin: 0 auto;
     }
     #pdf-canvas { border: 1px solid #000; }
-    #text-layer, #drawing-canvas { position: absolute; }
-
+    #text-layer, #drawing-canvas { position: absolute; pointer-events: none; }
+    #drawing-canvas { z-index: 10; }
 
     /* Toolbar Styles */
     #toolbar {
@@ -75,15 +75,16 @@
     
     /* Search Results Panel */
     #search-results-panel {
-      display: none; /* Hidden by default */
+      display: none;
       width: 320px;
       flex-shrink: 0;
       background-color: #f1f3f5;
       border-left: 1px solid #dee2e6;
       flex-direction: column;
     }
+    /* FIX: This is the critical rule for the split panel */
     #app-container.results-panel-visible #search-results-panel {
-        display: flex;
+      display: flex;
     }
     #panel-dropdown-container { padding: 10px; border-bottom: 1px solid #ccc; }
     #results-list { flex-grow: 1; overflow-y: auto; }
@@ -96,19 +97,12 @@
 
     /* Floating Action Buttons */
     #floating-action-buttons {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1003;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: flex-end;
+      position: fixed; bottom: 20px; right: 20px; z-index: 1003;
+      display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
     }
     .fab-button-group { display: flex; flex-direction: row; gap: 10px; }
     #floating-action-buttons button {
-      background-color: rgba(0, 0, 0, 0.5);
-      color: white; border: none; border-radius: 50%;
+      background-color: rgba(0, 0, 0, 0.5); color: white; border: none; border-radius: 50%;
       width: 50px; height: 50px; font-size: 24px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
     }
