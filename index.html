@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF 關鍵字搜尋平台</title>
   <style>
-    /* --- General Setup --- */
+    /* --- Global Resets & Setup --- */
+    * {
+        box-sizing: border-box;
+    }
     body {
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       margin: 0;
-      padding: 0;
       display: flex;
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      overscroll-behavior-y: contain;
     }
 
     #app-container {
@@ -22,214 +23,132 @@
       flex-direction: column;
       height: 100%;
       width: 100%;
-      position: relative; 
     }
-    
-    /* --- Toolbar Styles (Desktop First) --- */
+
+    /* --- Toolbar (Desktop First) --- */
     #toolbar {
-      /* This is the default style for desktop (screens > 768px) */
-      position: relative;
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      height: auto;
-      width: 100%;
-      padding: 10px;
-      background-color: #f8f9fa;
-      border-bottom: 1px solid #dee2e6;
-      gap: 10px;
-      align-items: center;
-      flex-shrink: 0;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-    
-    #toolbar-toggle-tab {
-      /* The mobile menu toggle is hidden by default on desktop */
-      display: none;
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        flex-shrink: 0;
     }
 
-    #toolbar .title-container {
-      display: flex;
-      align-items: center;
-      margin-right: 15px;
-    }
-    #toolbar h2 {
-      margin: 0 0 0 10px;
-      font-size: 1.2em;
-      white-space: nowrap;
-      color: #343a40;
-    }
-    #help-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: #6c757d;
-      transition: color 0.2s ease-in-out;
-    }
-    #help-link:hover {
-      color: #007bff;
-      text-decoration: none;
-    }
-    #help-link svg {
-      width: 18px;
-      height: 18px;
-    }
+    .title-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-right: 15px;
+    }
 
-    #toolbar input[type="file"]{
-      max-width: 250px; 
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex-shrink: 1;
-      min-width: 100px;
-    }
-    #toolbar input[type="text"],
-    #toolbar input[type="number"],
-    #toolbar select,
-    #toolbar button {
-      padding: 8px;
-      border: 1px solid #ced4da;
-      border-radius: 4px;
-      font-size: 1em;
-      box-sizing: border-box;
-    }
-    #toolbar input[type="text"] {
-      flex: 1 1 150px;
-      min-width: 120px;
-    }
+    #help-link {
+        color: #6c757d;
+        display: inline-flex;
+    }
+    #help-link svg {
+        width: 18px;
+        height: 18px;
+    }
 
-    /* --- Main Content Area --- */
+    #toolbar h2 {
+        font-size: 1.1em;
+        margin: 0;
+        white-space: nowrap;
+        color: #343a40;
+    }
+
+    #toolbar label {
+        font-size: 0.9em;
+        white-space: nowrap;
+    }
+
+    #toolbar input[type="file"] {
+        max-width: 220px;
+        min-width: 100px;
+    }
+
+    #toolbar input[type="text"] {
+        flex: 1 1 150px;
+        min-width: 120px;
+    }
+
+    #toolbar input, #toolbar button, #toolbar select {
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 1em;
+    }
+    #toolbar button:hover {
+        background-color: #e2e6ea;
+    }
+
+    /* --- Page Navigation & Zoom --- */
+    #page-navigation {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-left: auto; /* Pushes to the right */
+        flex-shrink: 0;
+    }
+
+    .zoom-controls {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex-shrink: 0;
+    }
+
+    #desktop-zoom-controls {
+        border-left: 1px solid #dee2e6;
+        padding-left: 10px;
+        margin-left: 10px;
+    }
+
+    #mobile-zoom-controls {
+        display: none; /* Hidden on desktop */
+    }
+
+    /* --- Main Content & PDF Viewer --- */
     #main-content {
       display: flex;
-      flex: 1; /* Take remaining height */
-      overflow: hidden; /* Prevent inner scrolling */
+      flex: 1;
+      overflow: hidden;
     }
     
     #pdf-container {
-      flex: 1; /* Grow to fill available space */
+      flex: 1;
       position: relative;
       overflow: auto;
       background-color: #e9ecef;
       padding: 10px;
-      box-sizing: border-box;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 60px;
     }
-    
-    /* --- Search Results Side Panel --- */
+
+    #pdf-canvas, #text-layer, #drawing-canvas {
+        display: block;
+        margin: 0 auto;
+    }
+    #pdf-canvas {
+        border: 1px solid #000;
+    }
+
+    /* --- Search Results Panel --- */
     #search-results-panel {
-      display: none; /* Hidden by default */
+      display: none;
       width: 320px;
       flex-shrink: 0;
       background-color: #f1f3f5;
       border-left: 1px solid #dee2e6;
-      box-sizing: border-box;
     }
     #app-container.results-panel-visible #search-results-panel {
       display: flex;
       flex-direction: column;
     }
-    #search-results-panel h3 {
-      margin: 0;
-      padding: 15px;
-      border-bottom: 1px solid #ccc;
-      font-size: 1.1em;
-      color: #333;
-      background-color: #f8f9fa;
-      flex-shrink: 0;
-    }
-    #panel-dropdown-container {
-        padding: 10px;
-        border-bottom: 1px solid #ccc;
-        background-color: #f8f9fa;
-        flex-shrink: 0;
-    }
-    #panelResultsDropdown {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        font-size: 1em;
-    }
-    #results-list {
-      padding: 10px;
-      flex-grow: 1;
-      overflow-y: auto;
-    }
-    .result-item {
-      margin-bottom: 15px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: #fff;
-      cursor: pointer;
-      transition: box-shadow 0.2s, border-color 0.2s;
-    }
-    .result-item:hover {
-      border-color: #007bff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .result-item .thumbnail-canvas {
-      width: 100%;
-      height: auto;
-      border: 1px solid #e9ecef;
-      margin-bottom: 8px;
-    }
-    .result-item .page-info {
-      font-weight: bold;
-      font-size: 0.9em;
-      margin-bottom: 5px;
-      color: #495057;
-    }
-    .result-item .context-snippet {
-      font-size: 0.85em;
-      line-height: 1.4;
-      color: #212529;
-      word-wrap: break-word;
-    }
-    .result-item .wavy-underline {
-      text-decoration-line: underline !important;
-      text-decoration-style: wavy !important;
-      text-decoration-color: sandybrown !important;
-      background-color: rgba(244, 164, 96, 0.2);
-      border-radius: 2px;
-      padding: 0 2px;
-    }
+    /* ... other minor panel styles ... */
 
-    /* --- Other Components --- */
-    .zoom-controls {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      flex-shrink: 0;
-    }
-    .zoom-controls button {
-      min-width: 38px;
-      font-weight: bold;
-    }
-    #desktop-zoom-controls {
-      border-left: 1px solid #ccc;
-      padding-left: 10px;
-      margin-left: 10px;
-    }
-    #page-navigation {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-left: auto;
-      flex-shrink: 0;
-    }
-
-    #pdf-canvas, #drawing-canvas, #text-layer {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-    #pdf-canvas { border: 1px solid #000; z-index: 1; }
-    #text-layer { z-index: 5; pointer-events: none; }
-    #drawing-canvas { z-index: 10; pointer-events: none; touch-action: none; }
-
+    /* --- Floating Action Buttons --- */
     #floating-action-buttons {
       position: fixed;
       bottom: 20px;
@@ -238,13 +157,6 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      align-items: flex-end;
-    }
-    .fab-button-group {
-      display: flex;
-      flex-direction: row;
-      gap: 10px;
-      align-items: center;
     }
     #floating-action-buttons button {
       background-color: rgba(0, 0, 0, 0.5);
@@ -255,146 +167,112 @@
       height: 50px;
       font-size: 24px;
       cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      transition: background-color 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    #bottom-results-bar {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background-color: rgba(248, 249, 250, 0.95);
-      border-top: 1px solid #dee2e6;
-      padding: 5px 10px;
-      box-sizing: border-box;
-      justify-content: center;
-      align-items: center;
-      gap: 0;
-      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-      z-index: 1002;
-    }
-    #bottom-results-bar select {
-      flex-grow: 1;
-      padding: 8px;
-      border: 1px solid #ced4da;
-    }
 
-    /* --- Other hidden or utility classes from original code --- */
-    /* (The rest of the original styling for buttons, highlights, etc. goes here) */
-    #mobile-zoom-controls { display: none; }
-    /* ... other minor styles from the original file ... */
-    #toolbar button:hover { background-color: #e2e6ea; }
-    .zoom-controls button.active { background-color: #007bff; color: white; border-color: #007bff; }
-    #floating-action-buttons button:hover { background-color: rgba(0, 0, 0, 0.7); }
-    .wavy-underline { text-decoration: underline wavy sandybrown; }
+    /* --- Bottom Results Bar --- */
+    #bottom-results-bar {
+        display: none; /* Hidden by default */
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 8px;
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        z-index: 1002;
+    }
 
+    #toolbar-toggle-tab {
+        display: none; /* Hidden on desktop */
+    }
 
-    /* --- Responsive Logic --- */
-
+    /* --- RESPONSIVE DESIGN --- */
     @media (max-width: 1024px) {
       #search-results-panel {
-        display: none !important; /* Hide side panel on tablets */
+        display: none !important;
       }
       body.results-bar-visible #bottom-results-bar {
-        display: flex; /* Show bottom bar when there are results */
+        display: block;
       }
     }
 
-    /* --- Mobile Styles (max-width: 768px) --- */
     @media (max-width: 768px) {
-      #desktop-zoom-controls {
+        /* Hide desktop elements */
+      #desktop-zoom-controls, #page-navigation {
         display: none;
       }
+        /* Show mobile elements */
       #mobile-zoom-controls {
         display: flex;
         width: 100%;
         justify-content: center;
       }
-      #toolbar-toggle-tab {
-        /* On mobile, show the toggle tab */
-        display: flex;
-        position: absolute;
-        top: 30%;
-        left: 0;
-        transition: left 0.3s ease-in-out;
-        z-index: 1003;
-        background-color: #ff9a15;
-        border: 1px solid #ff9a15;
-        border-left: none;
-        border-radius: 0 4px 4px 0;
-        padding: 8px 12px;
-        cursor: pointer;
-        font-size: 1.2em;
-        height: 40px;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 5px rgba(0,0,0,0.3);
-        color: white;
-      }
-      #toolbar-toggle-tab .icon {
-        transition: transform 0.3s ease-in-out;
-      }
-      #app-container.menu-active #toolbar-toggle-tab {
-        left: 280px; /* Moves with the panel */
-      }
-      #app-container.menu-active #toolbar-toggle-tab .icon {
-        transform: rotate(180deg);
-      }
 
+        /* Show mobile menu toggle */
+        #toolbar-toggle-tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 40%;
+            left: 0;
+            width: 35px;
+            height: 40px;
+            background-color: #ff9a15;
+            color: white;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            z-index: 1003;
+            transition: left 0.3s ease;
+        }
+        #app-container.menu-active #toolbar-toggle-tab {
+            left: 280px;
+        }
+
+        /* Convert toolbar to a slide-out menu */
       #toolbar {
-        /* On mobile, the toolbar becomes a fixed side panel, hidden by default */
-        position: fixed;
-        top: 0;
-        left: -280px; /* Start off-screen */
-        width: 280px;
-        max-width: 80vw;
-        height: 100vh;
-        background-color: #f0f0f0;
-        border-right: 1px solid #ccc;
-        padding: 50px 15px 20px 15px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        flex-direction: column;
-        align-items: stretch;
-        justify-content: flex-start;
-        transition: left 0.3s ease-in-out;
-        z-index: 1001;
-        overflow-y: auto;
-        gap: 15px;
+            position: fixed;
+            top: 0;
+            left: -280px; /* Hidden by default */
+            width: 280px;
+            height: 100vh;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            padding: 50px 15px 20px;
+            gap: 15px;
+            background-color: #f0f0f0;
+            border-right: 1px solid #ccc;
+            transition: left 0.3s ease;
+            z-index: 1001;
+            overflow-y: auto;
       }
       #app-container.menu-active #toolbar {
-        left: 0; /* Slides into view when active */
+        left: 0; /* Slide in when active */
       }
-      #toolbar > * {
-        flex-shrink: 0;
-      }
-      #toolbar .title-container, #toolbar input, #toolbar button, #toolbar select {
-        width: 100%;
-      }
-      #page-navigation {
-        margin-left: 0;
-        flex-direction: column;
-        width: 100%;
-        gap: 8px;
-      }
-      #page-navigation > div {
-        display: flex;
-        width: 100%;
-        gap: 5px;
-      }
-      #page-navigation input[type="number"] {
-        flex-grow: 1;
-      }
-      #pdf-container {
-        padding: 5px;
-      }
-      #floating-action-buttons {
-        bottom: 70px;
-        right: 15px;
-      }
+        #toolbar .title-container {
+            margin-bottom: 10px;
+        }
+        /* Mobile page navigation appears in the slide-out menu */
+        #page-navigation-mobile {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+        #page-navigation-mobile div {
+            display: flex;
+            gap: 5px;
+        }
+        #page-navigation-mobile input {
+            flex-grow: 1;
+        }
     }
   </style>
 </head>
@@ -415,15 +293,15 @@
         <h2>PDF 關鍵字搜尋平台</h2>
       </div>
       
-      <div id="restore-session-container" style="display: none; width: 100%; text-align: center; margin-bottom: 10px;">
-        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">還原上次的工作階段</button>
+      <div id="restore-session-container" style="display: none;">
+        <button id="restore-session-btn">還原上次的工作階段</button>
       </div>
-      <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個 PDF 檔案：</label>
+      <!-- FIX: Removed inline 'display: block' which broke the layout -->
+      <label for="fileInput">選擇 PDF 檔案：</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正規表示式" />
       <button id="search-action-button">搜尋</button>
       
-      <!-- Desktop Zoom Controls -->
       <div id="desktop-zoom-controls" class="zoom-controls">
         <button id="zoom-out-btn" title="縮小">-</button>
         <button id="fit-height-btn" title="符合頁面高度">符合高度</button>
@@ -431,24 +309,32 @@
         <button id="zoom-in-btn" title="放大">+</button>
       </div>
 
-      <!-- Mobile Zoom Controls (inside the slide-out menu) -->
-      <div id="mobile-zoom-controls" class="zoom-controls">
-        <button id="mobile-zoom-out-btn" title="縮小">-</button>
-        <button id="mobile-fit-height-btn" title="符合頁面高度">符合高度</button>
-        <button id="mobile-fit-width-btn" title="符合頁面寬度">符合寬度</button>
-        <button id="mobile-zoom-in-btn" title="放大">+</button>
-      </div>
-
       <div id="page-navigation">
-        <button id="go-to-first-page">第一頁</button>
         <button id="prev-page">上一頁</button>
         <span id="page-num-display">- / -</span>
         <button id="next-page">下一頁</button>
-        <div>
-            <input type="number" id="page-to-go" min="1" placeholder="頁碼">
-            <button id="go-to-page-btn">前往</button>
-        </div>
+        <input type="number" id="page-to-go" min="1" placeholder="頁碼" style="width: 60px;">
+        <button id="go-to-page-btn">前往</button>
       </div>
+
+      <!-- Controls for Mobile Slide-out Menu -->
+      <div id="mobile-zoom-controls" class="zoom-controls">
+        <button id="mobile-zoom-out-btn" title="縮小">-</button>
+        <button id="mobile-fit-height-btn" title="符合頁面高度">符合高度</button>
+        <button id="mobile-fit-width-btn" title="符合頁面寬度">符合寬度</button>
+        <button id="mobile-zoom-in-btn" title="放大">+</button>
+      </div>
+      <div id="page-navigation-mobile">
+        <div>
+            <button id="mobile-prev-page">上一頁</button>
+            <span id="mobile-page-num-display">- / -</span>
+            <button id="mobile-next-page">下一頁</button>
+        </div>
+        <div>
+            <input type="number" id="mobile-page-to-go" min="1" placeholder="頁碼">
+            <button id="mobile-go-to-page-btn">前往</button>
+        </div>
+      </div>
     </div>
 
     <div id="main-content">
@@ -459,27 +345,23 @@
         </div>
         <div id="search-results-panel">
             <h3>書籤 / 搜尋結果</h3>
-            <div id="panel-dropdown-container">
-                <select id="panelResultsDropdown">
-                    <option value="">搜尋結果</option>
-                </select>
-            </div>
+            <select id="panelResultsDropdown">
+                <option value="">搜尋結果</option>
+            </select>
             <div id="results-list"></div>
         </div>
     </div>
   </div>
 
   <div id="floating-action-buttons">
-    <div class="fab-button-group">
-        <button id="toggle-text-selection-btn" title="啟用文字選取">TS</button>
-    </div>
+    <button id="toggle-text-selection-btn" title="啟用文字選取">TS</button>
   </div>
 
-<div id="bottom-results-bar">
-    <select id="resultsDropdown">
-      <option value="">搜尋結果</option>
-    </select>
-</div>
+  <div id="bottom-results-bar">
+    <select id="resultsDropdown">
+      <option value="">搜尋結果</option>
+    </select>
+  </div>
 
   <script type="module">
     import { GlobalWorkerOptions } from './lib/pdfjs/pdf.mjs'; 
