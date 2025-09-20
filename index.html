@@ -5,35 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF 關鍵字搜尋平台</title>
   <style>
-    /* Styles for the help icon link */
-    #help-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-left: 10px;
-      color: #6c757d; /* Default gray */
-      transition: color 0.2s ease-in-out;
-    }
-    #help-link:hover {
-      color: #007bff; /* Becomes blue on hover */
-      text-decoration: none;
-    }
-    #help-link svg {
-      width: 20px;
-      height: 20px;
-    }
-
+    /* Global Styles */
+    :root { --toolbar-height: 57px; }
+    * { box-sizing: border-box; }
     body {
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       margin: 0;
-      padding: 0;
       display: flex;
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      overscroll-behavior-y: contain;
     }
 
+    /* App Layout */
     #app-container {
       display: flex;
       flex-direction: column;
@@ -41,114 +25,28 @@
       width: 100%;
       position: relative; 
     }
-
-    /* --- Main content area for split view --- */
     #main-content {
       display: flex;
-      flex: 1; /* Take remaining height */
-      overflow: hidden; /* Prevent inner scrolling */
+      flex: 1;
+      height: calc(100vh - var(--toolbar-height));
+      overflow: hidden;
     }
-    
     #pdf-container {
-      flex: 1; /* Grow to fill available space */
+      flex: 1;
       position: relative;
       overflow: auto;
       background-color: #e9ecef;
       padding: 10px;
-      box-sizing: border-box;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 60px;
     }
-    
-    /* --- Search results side panel --- */
-    #search-results-panel {
-      display: none; /* Hidden by default */
-      width: 320px;
-      flex-shrink: 0;
-      background-color: #f1f3f5;
-      border-left: 1px solid #dee2e6;
-      box-sizing: border-box;
+    #pdf-canvas, #text-layer, #drawing-canvas {
+      display: block;
+      margin: 0 auto;
     }
+    #pdf-canvas { border: 1px solid #000; }
+    #text-layer, #drawing-canvas { position: absolute; }
 
-    #app-container.results-panel-visible #search-results-panel {
-      display: flex;
-      flex-direction: column;
-    }
 
-    #search-results-panel h3 {
-      margin: 0;
-      padding: 15px;
-      border-bottom: 1px solid #ccc;
-      font-size: 1.1em;
-      color: #333;
-      background-color: #f8f9fa;
-      flex-shrink: 0; /* Prevent shrinking */
-    }
-
-    #panel-dropdown-container {
-        padding: 10px;
-        border-bottom: 1px solid #ccc;
-        background-color: #f8f9fa;
-        flex-shrink: 0; /* Prevent shrinking */
-    }
-    #panelResultsDropdown {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        font-size: 1em;
-    }
-
-    #results-list {
-      padding: 10px;
-      flex-grow: 1; /* Fill available space */
-      overflow-y: auto; /* Enable scrolling */
-    }
-
-    .result-item {
-      margin-bottom: 15px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: #fff;
-      cursor: pointer;
-      transition: box-shadow 0.2s, border-color 0.2s;
-    }
-    .result-item:hover {
-      border-color: #007bff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .result-item .thumbnail-canvas {
-      width: 100%;
-      height: auto;
-      border: 1px solid #e9ecef;
-      margin-bottom: 8px;
-    }
-    .result-item .page-info {
-      font-weight: bold;
-      font-size: 0.9em;
-      margin-bottom: 5px;
-      color: #495057;
-    }
-    .result-item .context-snippet {
-      font-size: 0.85em;
-      line-height: 1.4;
-      color: #212529;
-      word-wrap: break-word;
-    }
-    .result-item .wavy-underline {
-      text-decoration-line: underline !important;
-      text-decoration-style: wavy !important;
-      text-decoration-color: sandybrown !important;
-      background-color: rgba(244, 164, 96, 0.2);
-      border-radius: 2px;
-      padding: 0 2px;
-    }
-
-    #toolbar-toggle-tab {
-        display: none;
-    }
-
+    /* Toolbar Styles */
     #toolbar {
       padding: 10px;
       background-color: #f8f9fa;
@@ -158,207 +56,45 @@
       gap: 10px;
       align-items: center;
       flex-shrink: 0;
-      overflow: hidden;
+      height: var(--toolbar-height);
     }
-    #toolbar .title-container {
-      display: flex;
-      align-items: center;
-      margin: 0 10px 0 0;
-    }
-    #toolbar h2 {
-      margin: 0;
-      font-size: 1.2em;
-      white-space: nowrap;
-      color: initial;
-    }
-    #toolbar label[for="fileInput"] {
-        font-size: 0.9em;
-        white-space: nowrap;
-    }
-
-    #toolbar input[type="file"]{
-      max-width: 250px; 
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex-shrink: 1;
-      min-width: 100px;
-    }
-    #toolbar input[type="text"],
-    #toolbar input[type="number"],
-    #toolbar select,
-    #toolbar button {
+    #toolbar input, #toolbar button, #toolbar select {
       padding: 8px;
       border: 1px solid #ced4da;
       border-radius: 4px;
       font-size: 1em;
-      box-sizing: border-box;
     }
-    #toolbar input[type="text"] {
-      flex: 1 1 150px;
-      min-width: 120px;
-    }
-    #toolbar input[type="number"] {
-      width: 60px;
-      text-align: center;
-    }
-    #toolbar button {
+    #toolbar button:hover { background-color: #e9ecef; }
+    #toolbar input[type="text"] { flex: 1 1 150px; min-width: 120px; }
+
+    .zoom-controls { display: flex; align-items: center; gap: 5px; }
+    .zoom-controls button.active { background-color: #007bff; color: white; border-color: #007bff; }
+    #desktop-zoom-controls { border-left: 1px solid #dee2e6; padding-left: 10px; margin-left: 10px; }
+    
+    #page-navigation { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+    
+    /* Search Results Panel */
+    #search-results-panel {
+      display: none; /* Hidden by default */
+      width: 320px;
       flex-shrink: 0;
+      background-color: #f1f3f5;
+      border-left: 1px solid #dee2e6;
+      flex-direction: column;
     }
-    #toolbar button:hover {
-      background-color: #e9ecef;
+    #app-container.results-panel-visible #search-results-panel {
+        display: flex;
     }
+    #panel-dropdown-container { padding: 10px; border-bottom: 1px solid #ccc; }
+    #results-list { flex-grow: 1; overflow-y: auto; }
+    .result-item { padding: 10px; border-bottom: 1px solid #ddd; cursor: pointer; }
+    .result-item:hover { background-color: #e9ecef; }
+    .thumbnail-canvas { width: 100%; border: 1px solid #ccc; margin-bottom: 8px; }
+    .page-info { font-weight: bold; font-size: 0.9em; }
+    .context-snippet { font-size: 0.85em; }
+    .wavy-underline { text-decoration: underline wavy sandybrown; }
 
-    .zoom-controls {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      flex-shrink: 0;
-    }
-    .zoom-controls button {
-      min-width: 38px;
-      font-weight: bold;
-    }
-    .zoom-controls button.active {
-      background-color: #007bff;
-      color: white;
-      border-color: #007bff;
-    }
-    #desktop-zoom-controls {
-      border-left: 1px solid #ccc;
-      padding-left: 10px;
-      margin-left: 10px;
-    }
-    #mobile-zoom-controls {
-        width: 100%;
-        justify-content: center;
-    }
-
-
-    #local-magnifier-zoom-controls {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    #local-magnifier-zoom-controls label {
-      white-space: nowrap;
-      font-size: 0.9em;
-    }
-    #local-magnifier-zoom-controls select {
-      padding: 6px;
-    }
-
-    #page-navigation {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-left: auto;
-      flex-shrink: 0;
-    }
-    #page-navigation button {
-      padding: 8px;
-    }
-    #page-num-display {
-      font-size: 0.9em;
-      white-space: nowrap;
-      padding: 0 3px;
-    }
-    #page-slider {
-      flex-grow: 1;
-      min-width: 80px;
-      margin: 0;
-      height: 20px;
-    }
-
-    #pdf-canvas {
-      border: 1px solid #000;
-      display: block;
-      margin: 0 auto;
-    }
-
-    #text-layer {
-      position: absolute;
-      z-index: 5;
-      pointer-events: none;
-    }
-    #drawing-canvas {
-      position: absolute;
-      z-index: 10;
-      touch-action: none;
-      pointer-events: none;
-    }
-
-    #pdf-container.paragraph-selection-mode {
-        cursor: pointer;
-    }
-    .paragraph-highlight {
-        position: absolute;
-        background-color: rgba(0, 123, 255, 0.25);
-        border: 1px solid rgba(0, 123, 255, 0.5);
-        border-radius: 3px;
-        z-index: 6;
-        pointer-events: none;
-    }
-    #copy-paragraph-btn {
-        position: absolute;
-        z-index: 7;
-        padding: 5px 10px;
-        font-size: 14px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-
-    #magnifier-glass {
-      display: none;
-      position: absolute;
-      border: 2px solid #333;
-      border-radius: 50%;
-      overflow: hidden;
-      z-index: 2000;
-      pointer-events: none;
-      background-color: white;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-    }
-    #magnifier-canvas {
-      display: block;
-    }
-
-    #text-layer > div {
-      color: transparent;
-      position: absolute;
-      line-height: 1;
-      white-space: pre;
-      user-select: none;
-    }
-
-    #text-layer.text-selection-active > div {
-      color: initial !important;
-      user-select: text !important;
-    }
-    #text-layer.text-selection-active > div.wavy-underline {
-      color: initial !important;
-    }
-
-    .wavy-underline {
-      text-decoration-line: underline;
-      text-decoration-style: wavy;
-      text-decoration-color: sandybrown;
-      text-decoration-thickness: 2px;
-      text-underline-offset: 0.2em;
-    }
-    .highlights-hidden .wavy-underline {
-      text-decoration: none !important;
-    }
-    #resultsDropdown .wavy-underline, #panelResultsDropdown .wavy-underline {
-      text-decoration-line: underline !important;
-      text-decoration-style: wavy !important;
-      text-decoration-color: sandybrown !important;
-    }
-
+    /* Floating Action Buttons */
     #floating-action-buttons {
       position: fixed;
       bottom: 20px;
@@ -369,452 +105,122 @@
       gap: 10px;
       align-items: flex-end;
     }
-    .fab-button-group {
-      display: flex;
-      flex-direction: row;
-      gap: 10px;
-      align-items: center;
-    }
-
+    .fab-button-group { display: flex; flex-direction: row; gap: 10px; }
     #floating-action-buttons button {
       background-color: rgba(0, 0, 0, 0.5);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      transition: background-color 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      color: white; border: none; border-radius: 50%;
+      width: 50px; height: 50px; font-size: 24px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
     }
-    #floating-action-buttons button:hover {
-      background-color: rgba(0, 0, 0, 0.7);
-    }
-    #floating-action-buttons button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      background-color: rgba(0, 0, 0, 0.3);
-    }
+    #floating-action-buttons button.active { background-color: #007bff; }
 
-    .toggle-underline-icon {
-      font-size: 1.1em;
-      font-weight: bold;
-      display: inline-block;
-    }
-    #toggle-underline-btn.active .toggle-underline-icon {
-      text-decoration-line: underline;
-      text-decoration-style: wavy;
-      text-decoration-color: sandybrown;
-      text-decoration-thickness: 2px;
-      text-underline-offset: 0.15em;
-    }
-    #toggle-highlighter-btn.active {
-      background-color: rgba(0, 100, 0, 0.7);
-    }
-    #toggle-text-selection-btn.active {
-      background-color: rgba(0, 0, 100, 0.7);
-    }
-    #toggle-paragraph-selection-btn.active {
-      background-color: rgba(0, 123, 255, 0.7);
-    }
-    #toggle-local-magnifier-btn.active {
-      background-color: rgba(100, 0, 100, 0.7);
-    }
-
+    /* Bottom Bar */
     #bottom-results-bar {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background-color: rgba(248, 249, 250, 0.95);
-      border-top: 1px solid #dee2e6;
-      padding: 5px 10px;
-      box-sizing: border-box;
-      justify-content: center;
-      align-items: center;
-      gap: 0;
-      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-      z-index: 1002;
+      display: none; position: fixed; bottom: 0; left: 0;
+      width: 100%; padding: 8px; background-color: #f8f9fa;
+      border-top: 1px solid #dee2e6; z-index: 1002;
     }
-    #bottom-results-bar #result-nav-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      flex-grow: 1;
-      max-width: 600px;
-    }
+    body.results-bar-visible #bottom-results-bar { display: block; }
 
-    #bottom-results-bar select {
-      flex-grow: 1;
-      flex-shrink: 1;
-      min-width: 0;
-      padding: 8px;
-      border: 1px solid #ced4da;
-      border-radius: 4px;
-      font-size: 1em;
-      box-sizing: border-box;
-      background-color: white;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-
-    /* --- Responsive Logic --- */
-    #mobile-zoom-controls {
-        display: none;
-    }
-
-    @media (max-width: 1380px) {
-        #go-to-first-page {
-            display: none;
-        }
-        #page-slider {
-            min-width: 60px;
-        }
-        #toolbar input[type="text"] {
-            min-width: 100px;
-        }
-    }
-
-    @media (max-width: 1200px) {
-        #toolbar label[for="fileInput"] {
-            display: none;
-        }
-    }
+    /* Responsive Design */
+    #mobile-zoom-controls { display: none; }
+    #toolbar-toggle-tab { display: none; }
 
     @media (max-width: 1024px) {
-      #search-results-panel {
-        display: none !important;
-      }
-      body.results-bar-visible #bottom-results-bar {
-        display: flex;
+      #app-container.results-panel-visible #search-results-panel {
+        display: none !important; /* On tablets, hide side panel */
       }
     }
 
     @media (max-width: 768px) {
-      #desktop-zoom-controls {
-        display: none;
-      }
-      #mobile-zoom-controls {
-        display: flex;
-      }
+      #desktop-zoom-controls, #page-navigation { display: none; }
+      #mobile-zoom-controls { display: flex; width: 100%; justify-content: center; }
 
       #toolbar-toggle-tab {
-        display: flex;
-        position: absolute;
-        top: 30%;
-        left: 0; 
-        transition: left 0.3s ease-in-out; 
-        z-index: 1003;
-        pointer-events: auto;
-        background-color: #ff9a15;
-        border: 1px solid #ff9a15;
-        border-left: none;
-        border-radius: 0 4px 4px 0;
-        padding: 8px 12px;
-        cursor: pointer;
-        font-size: 1.2em;
-        height: 40px;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 5px rgba(0,0,0,0.3);
-        color: white;
+        display: flex; align-items: center; justify-content: center;
+        position: absolute; top: 40%; left: 0;
+        width: 35px; height: 40px; background-color: #ff9a15; color: white;
+        border-radius: 0 4px 4px 0; cursor: pointer; z-index: 1003;
+        transition: left 0.3s ease;
       }
-      #toolbar-toggle-tab .icon {
-        transition: transform 0.3s ease-in-out;
-        transform: rotate(0deg);
-      }
-      #app-container.menu-active #toolbar-toggle-tab .icon {
-        transform: rotate(180deg);
-      }
-      #app-container.menu-active #toolbar-toggle-tab {
-        left: 280px;
-      }
+      #app-container.menu-active #toolbar-toggle-tab { left: 280px; }
 
       #toolbar {
-        position: fixed;
-        top: 0;
-        left: -280px;
-        width: 280px;
-        max-width: 80vw;
-        height: 100vh;
-        background-color: #f0f0f0;
-        border-right: 1px solid #ccc;
-        padding: 50px 15px 20px 15px;
-        box-sizing: border-box;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        justify-content: flex-start;
-        transition: left 0.3s ease-in-out;
-        z-index: 1001;
+        position: fixed; top: 0; left: -280px;
+        width: 280px; height: 100vh; flex-direction: column;
+        align-items: stretch; justify-content: flex-start;
+        padding: 50px 15px 20px; gap: 15px; background-color: #f0f0f0;
+        border-right: 1px solid #ccc; transition: left 0.3s ease; z-index: 1001;
         overflow-y: auto;
-        overflow-x: hidden;
-        gap: 15px;
       }
-      #app-container.menu-active #toolbar {
-        left: 0;
-      }
-      #toolbar > * {
-        flex-shrink: 0;
-      }
-      #toolbar .title-container {
-        flex-direction: row; 
-        align-items: center;
-        width: 100%;
-      }
-      #toolbar input[type="text"],
-      #toolbar input[type="number"],
-      #toolbar select,
-      #toolbar button,
-      #local-magnifier-zoom-controls {
-        width: 100%;
-      }
-      /* --- THIS IS THE FIX --- */
-      #toolbar input[type="text"],
-      #toolbar button {
-        padding-top: 6px;
-        padding-bottom: 6px;
-        font-size: 0.95em;
-      }
-
-      #local-magnifier-zoom-controls {
-        justify-content: space-between;
-      }
-      #local-magnifier-zoom-controls select {
-        flex-grow: 1;
-      }
-
-      #page-navigation {
-        margin-left: 0;
-        flex-direction: column;
-        width: 100%;
-        gap: 8px;
-      }
-      #page-navigation > div {
-        display: flex;
-        width: 100%;
-        gap: 5px;
-      }
-      #page-navigation input[type="number"] {
-        flex-grow: 1;
-      }
-      #page-navigation #page-slider {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0;
-      }
-      #pdf-container {
-        padding: 5px;
-        padding-bottom: 60px;
-      }
-      #floating-action-buttons {
-        bottom: 70px;
-        right: 15px;
-        gap: 8px;
-      }
-      #floating-action-buttons button {
-        width: 45px;
-        height: 45px;
-        font-size: 20px;
-      }
-      .toggle-underline-icon {
-        font-size: 1em;
-      }
-
-      #bottom-results-bar {
-        padding: 8px;
-        gap: 0;
-      }
-      #bottom-results-bar select {
-          width: 100%;
-          box-sizing: border-box;
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-          padding: 8px;
-          font-size: 0.9em;
-        }
-    }
-    @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
-      #app-container.menu-active #toolbar-toggle-tab {
-        left: 240px;
-      }
-      #toolbar {
-        width: 240px;
-        max-width: 70vw;
-        left: -240px;
-        padding: 50px 5px 5px 5px !important;
-        gap: 3px !important;
-      }
-      #toolbar-toggle-tab {
-        height: 35px;
-        font-size: 1.1em;
-      }
-      #toolbar > * {
-        overflow-x: hidden !important;
-        text-overflow: ellipsis !important;
-        padding-left: 2px !important;
-        padding-right: 2px !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-      }
-      #toolbar h2 {
-        font-size: 0.85em !important;
-        margin-bottom: 2px !important;
-      }
-      #toolbar input,
-      #toolbar select,
-      #toolbar button {
-        padding: 3px !important;
-        font-size: 0.75em !important;
-      }
-      #toolbar input[type="file"] {
-        font-size: 0.7em !important;
-      }
-      #local-magnifier-zoom-controls label {
-        font-size: 0.7em !important;
-        margin-right: 3px !important;
-        padding: 1px !important;
-      }
-      #local-magnifier-zoom-controls select {
-        font-size: 0.7em !important;
-        padding: 1px !important;
-      }
-      #page-navigation {
-        gap: 3px !important;
-        padding: 1px !important;
-      }
-      #page-navigation > * {
-        padding-left: 1px !important;
-        padding-right: 1px !important;
-      }
-      #page-navigation button {
-        padding: 2px 4px !important;
-        font-size: 0.7em !important;
-        text-align: left;
-      }
-      #page-navigation span#page-num-display {
-        padding: 1px 0 !important;
-        font-size: 0.7em !important;
-      }
-      #page-navigation #page-slider {
-        margin: 1px 0 !important;
-        height: 14px !important;
-      }
-      #page-navigation input[type="number"] {
-        padding: 2px !important;
-        font-size: 0.75em !important;
-      }
-    }
-    @media (max-width: 480px) {
-      #toolbar .title-container {
-        width: 100%;
-      }
-      #toolbar h2 {
-        font-size: 1.1em;
-      }
+      #app-container.menu-active #toolbar { left: 0; }
     }
   </style>
 </head>
 <body>
   <div id="app-container">
-    <div id="toolbar-toggle-tab">
-        <span class="icon">›</span>
-    </div>
+    <div id="toolbar-toggle-tab"><span class="icon">›</span></div>
 
     <div id="toolbar">
-      <div class="title-container">
-        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁中開啟使用說明" id="help-link">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
-          </svg>
-        </a>
+      <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁中開啟使用說明" id="help-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+          <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+        </svg>
+      </a>
+      <div id="restore-session-container" style="display: none;">
+        <button id="restore-session-btn" style="background-color: #28a745; color: white;">還原上次的工作階段</button>
       </div>
-      
-      <div id="restore-session-container" style="display: none; width: 100%; text-align: center; margin-bottom: 10px;">
-        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">還原上次的工作階段</button>
-      </div>
-      
-      <!-- FIX: Removed inline style="display: block;" which broke the flexbox layout -->
       <label for="fileInput">選擇 PDF 檔案：</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正規表示式" />
       <button id="search-action-button">搜尋</button>
       
-      <!-- Desktop Zoom Controls -->
       <div id="desktop-zoom-controls" class="zoom-controls">
         <button id="zoom-out-btn" title="縮小">-</button>
         <button id="fit-height-btn" title="符合頁面高度">符合高度</button>
         <button id="fit-width-btn" title="符合頁面寬度">符合寬度</button>
         <button id="zoom-in-btn" title="放大">+</button>
       </div>
-
-      <div id="local-magnifier-zoom-controls" style="display: none; align-items: center; gap: 5px;">
-        <label for="local-magnifier-zoom-selector" style="white-space: nowrap; font-size: 0.9em;">放大鏡倍率：</label>
-        <select id="local-magnifier-zoom-selector" style="padding: 6px;">
-            <option value="1.5">1.5x</option>
-            <option value="2.0">2.0x</option>
-            <option value="2.5" selected>2.5x</option>
-            <option value="3.0">3.0x</option>
-            <option value="3.5">3.5x</option>
-        </select>
-      </div>
-
-      <!-- Mobile Zoom Controls (inside the slide-out menu) -->
-      <div id="mobile-zoom-controls" class="zoom-controls">
-        <button id="mobile-zoom-out-btn" title="縮小">-</button>
-        <button id="mobile-fit-height-btn" title="符合頁面高度">符合高度</button>
-        <button id="mobile-fit-width-btn" title="符合頁面寬度">符合寬度</button>
-        <button id="mobile-zoom-in-btn" title="放大">+</button>
-      </div>
-
+      
       <div id="page-navigation">
         <button id="go-to-first-page">第一頁</button>
         <button id="prev-page">上一頁</button>
         <input type="range" id="page-slider" min="1" max="1" value="1" disabled>
         <span id="page-num-display">- / -</span>
         <button id="next-page">下一頁</button>
-        <div>
-            <input type="number" id="page-to-go" min="1" placeholder="頁碼">
-            <button id="go-to-page-btn">前往</button>
-        </div>
+        <input type="number" id="page-to-go" min="1" placeholder="頁碼" style="width: 70px;">
+        <button id="go-to-page-btn">前往</button>
+      </div>
+      
+      <!-- Mobile only controls inside toolbar -->
+      <div id="mobile-zoom-controls" class="zoom-controls">
+          <button id="mobile-zoom-out-btn" title="縮小">-</button>
+          <button id="mobile-fit-height-btn" title="符合頁面高度">符合高度</button>
+          <button id="mobile-fit-width-btn" title="符合頁面寬度">符合寬度</button>
+          <button id="mobile-zoom-in-btn" title="放大">+</button>
       </div>
     </div>
 
     <div id="main-content">
         <div id="pdf-container">
           <canvas id="pdf-canvas"></canvas>
-          <div id="text-layer" class="textLayer"></div>
+          <div id="text-layer"></div>
           <canvas id="drawing-canvas"></canvas>
-          <div id="magnifier-glass">
-            <canvas id="magnifier-canvas"></canvas>
-          </div>
+          <div id="magnifier-glass" style="display:none; position:absolute; border:2px solid #333; border-radius:50%; overflow:hidden; z-index:2000; pointer-events:none;"><canvas id="magnifier-canvas"></canvas></div>
         </div>
         <div id="search-results-panel">
-            <h3>書籤 / 搜尋結果</h3>
             <div id="panel-dropdown-container">
-                <select id="panelResultsDropdown">
-                    <option value="">搜尋結果</option>
-                </select>
+                <h3>搜尋結果</h3>
+                <select id="panelResultsDropdown"><option value="">搜尋結果</option></select>
             </div>
             <div id="results-list"></div>
         </div>
     </div>
   </div>
 
-  <div id="floating-action-buttons">
-    <button id="toggle-underline-btn" title="切換搜尋結果底線">
-        <span class="toggle-underline-icon">S</span>
-    </button>
+  <div id="floating-action-buttons" style="display: none;">
+    <button id="toggle-underline-btn" title="切換搜尋結果底線"><span class="toggle-underline-icon">S</span></button>
     <div class="fab-button-group">
         <button id="toggle-paragraph-selection-btn" title="啟用段落選取">¶</button>
         <button id="copy-page-text-btn" title="複製頁面文字">📝</button>
@@ -832,11 +238,7 @@
   </div>
 
 <div id="bottom-results-bar">
-  <div id="result-nav-wrapper">
-    <select id="resultsDropdown">
-      <option value="">搜尋結果</option>
-    </select>
-  </div>
+    <select id="resultsDropdown"><option value="">搜尋結果</option></select>
 </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
