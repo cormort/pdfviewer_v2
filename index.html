@@ -10,7 +10,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      margin-left: 10px;
+      /* margin-left: 10px; */ /* Removed for better alignment */
       color: #6c757d; /* Default gray */
       transition: color 0.2s ease-in-out;
     }
@@ -19,8 +19,8 @@
       text-decoration: none;
     }
     #help-link svg {
-      width: 20px;
-      height: 20px;
+      width: 18px;  /* FIXED: Reduced size from 20px */
+      height: 18px; /* FIXED: Reduced size from 20px */
     }
 
     body {
@@ -745,7 +745,7 @@
 
     <div id="toolbar">
       <div class="title-container">
-        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁中開啟使用指南" id="help-link">
+        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁中開啟使用說明" id="help-link">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
             <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
@@ -754,14 +754,15 @@
       </div>
       
       <div id="restore-session-container" style="display: none; width: 100%; text-align: center; margin-bottom: 10px;">
-        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">恢復上次的工作階段</button>
+        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">還原上次的工作階段</button>
       </div>
       <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇一個或多個 PDF 檔案：</label>
       <input type="file" id="fileInput" accept="application/pdf" multiple />
       <input type="text" id="searchInput" placeholder="關鍵字或正規表示式" />
       <button id="search-action-button">搜尋</button>
       
-            <div id="desktop-zoom-controls" class="zoom-controls">
+      <!-- Desktop Zoom Controls -->
+      <div id="desktop-zoom-controls" class="zoom-controls">
         <button id="zoom-out-btn" title="縮小">-</button>
         <button id="fit-height-btn" title="符合頁面高度">符合高度</button>
         <button id="fit-width-btn" title="符合頁面寬度">符合寬度</button>
@@ -779,7 +780,8 @@
         </select>
       </div>
 
-            <div id="mobile-zoom-controls" class="zoom-controls">
+      <!-- Mobile Zoom Controls (inside the slide-out menu) -->
+      <div id="mobile-zoom-controls" class="zoom-controls">
         <button id="mobile-zoom-out-btn" title="縮小">-</button>
         <button id="mobile-fit-height-btn" title="符合頁面高度">符合高度</button>
         <button id="mobile-fit-width-btn" title="符合頁面寬度">符合寬度</button>
