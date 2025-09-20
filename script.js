@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- All other functions from your script remain here ---
+    // --- All original functions from your script remain here ---
     function getDocAndLocalPage(globalPage) {
         if (globalPage < 1 || globalPage > globalTotalPages || pageMap.length === 0) {
             console.error(`Invalid globalPage ${globalPage}, globalTotalPages ${globalTotalPages}, pageMap.length ${pageMap.length}`);
