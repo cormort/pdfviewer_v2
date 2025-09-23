@@ -411,7 +411,7 @@ function renderPage(globalPageNum, highlightPattern = null) {
             drawingCanvas.style.top = `${canvasOffsetTop}px`;
             drawingCanvas.style.left = `${canvasOffsetLeft}px`;
 
-            drawingCtx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+            drawingCtx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
             drawingCtx.lineWidth = 15;
             drawingCtx.lineJoin = 'round'; drawingCtx.lineCap = 'round';
 
@@ -1281,3 +1281,4 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
