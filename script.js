@@ -298,8 +298,8 @@ function updatePageControls() {
     }
 
     const docInfo = getDocAndLocalPage(currentPage);
-    const docNameDisplay = docInfo ? ` (檔案: ${docInfo.docName})` : '';
-    pageNumDisplay.textContent = `第 ${currentPage} 頁 / 共 ${globalTotalPages} 頁${docNameDisplay}`;
+    const docNameDisplay = docInfo ? ` (檔名${docInfo.docName})` : '';
+    pageNumDisplay.textContent = `第${currentPage}頁/共${globalTotalPages}頁${docNameDisplay}`;
     if (pageToGoInput) { pageToGoInput.value = currentPage; pageToGoInput.max = globalTotalPages; }
     if (goToFirstPageBtn) goToFirstPageBtn.disabled = (currentPage === 1);
     if (prevPageBtn) prevPageBtn.disabled = (currentPage === 1);
@@ -1323,6 +1323,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
