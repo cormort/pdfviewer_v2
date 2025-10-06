@@ -172,7 +172,15 @@ body {
   gap: 10px;
   align-items: center;
   flex-shrink: 0;
-  overflow-x: auto; /* Allow horizontal scrolling if needed */
+  overflow-x: auto; /* Handle overflow horizontally */
+}
+
+#toolbar textarea {
+  height: auto;
+  min-height: 40px;
+  max-height: 120px;
+  resize: vertical;
+  width: 100%;
 }
 #toolbar .title-container {
   display: flex;
