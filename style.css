@@ -939,6 +939,31 @@ body {
         padding: 2px !important;
         font-size: 0.75em !important;
     }
+    /* 在手機模式下，重新定位幫助圖示 */
+#help-link {
+    position: fixed; /* 1. 將定位方式改為 fixed，相對於瀏覽器視窗 */
+    
+    /* 2. 計算位置：橘色按鈕的 top 是 30%，我們用 calc() 把它往上移 50px */
+    top: calc(30% - 50px); 
+    
+    left: 12px;      /* 3. 設定離畫面左邊的距離 */
+    z-index: 1004;   /* 4. 確保圖示會顯示在橘色按鈕 (z-index: 1003) 的上面 */
+
+    /* 5. 美化樣式，讓它看起來像一個浮動按鈕 */
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%; /* 變成圓形 */
+    margin: 0;          /* 重設外距 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* 讓 SVG 圖示在圓圈內稍微小一點 */
+#help-link svg {
+    width: 18px;
+    height: 18px;
+}
 }
 
 /* 當螢幕寬度小於等於 480px 時 (更小的手機) */
