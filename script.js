@@ -385,9 +385,12 @@ function renderPage(globalPageNum, highlightPattern = null) {
         const viewportCss = page.getViewport({ scale: scaleForCss });
         currentViewport = viewportCss;
         const devicePixelRatio = window.devicePixelRatio || 1;
-        const qualityMultiplier = 1.2;
+        
+        // 提升基礎渲染品質因子。數值越高，畫面越清晰，但效能和記憶體消耗也越高。
+        // 原始值為 1.2，調整為 2.0 可顯著改善在「符合高度」等縮小顯示模式下的模糊問題。
+        const QUALITY_FACTOR = 2.0;
 
-        const renderScale = scaleForCss * devicePixelRatio * qualityMultiplier;
+        const renderScale = scaleForCss * devicePixelRatio * QUALITY_FACTOR;
         const viewportRender = page.getViewport({ scale: renderScale });
 
         canvas.width = viewportRender.width; canvas.height = viewportRender.height;
@@ -1320,6 +1323,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
