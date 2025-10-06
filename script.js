@@ -316,7 +316,7 @@ function updatePageControls() {
             displayDocName = `${startPart}...${endPart}`;
         }
         // 5. 組合最終要顯示的完整文字
-        fullDisplayText += ` (${displayDocName})`;
+        fullDisplayText += ` (${displayDocName})`; // 顯示工具列括號內的檔案名稱
     }
     // 6. 將處理過的文字設定到 DOM 元素上
     pageNumDisplay.textContent = fullDisplayText;
@@ -1360,6 +1360,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
