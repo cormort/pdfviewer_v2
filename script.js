@@ -307,7 +307,7 @@ function updatePageControls() {
 
     if (docInfo && docInfo.docName) {
         // 2. 定義檔名最大長度，您可以依需求調整這個數字
-        const MAX_FILENAME_LENGTH = 30;
+        const MAX_FILENAME_LENGTH = 20;
         let truncatedDocName = docInfo.docName;
 
         // 3. 如果檔名超過最大長度，就進行裁剪
@@ -1346,6 +1346,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
