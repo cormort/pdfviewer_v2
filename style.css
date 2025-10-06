@@ -1,750 +1,675 @@
 /* 幫助圖示連結的樣式 */
 #help-link {
-    display: inline-flex; /* 顯示方式：設為行內彈性盒子，讓圖示和文字可以對齊 */
-    align-items: center; /* 垂直對齊：項目在交叉軸上置中 */
-    justify-content: center; /* 水平對齊：項目在主軸上置中 */
-    margin-left: 10px; /* 左外距：10像素 */
-    color: #6c757d; /* 文字顏色：預設灰色 */
-    transition: color 0.2s ease-in-out; /* 過渡效果：顏色變化在 0.2 秒內以緩入緩出方式完成 */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;
+    color: #6c757d;
+    transition: color 0.2s ease-in-out;
 }
 
-/* 當滑鼠懸停在幫助圖示連結上時的樣式 */
 #help-link:hover {
-    color: #007bff; /* 文字顏色：懸停時變為藍色 */
-    text-decoration: none; /* 文字裝飾：移除底線 */
+    color: #007bff;
+    text-decoration: none;
 }
 
-/* 幫助圖示連結內的 SVG 圖示樣式 */
 #help-link svg {
-    width: 20px; /* 寬度：20像素 */
-    height: 20px; /* 高度：20像素 */
+    width: 20px;
+    height: 20px;
 }
 
 /* 整個網頁主體 (body) 的樣式 */
 body {
-    font-family: sans-serif; /* 字體：使用無襯線字體 */
-    margin: 0; /* 外距：0 */
-    padding: 0; /* 內距：0 */
-    display: flex; /* 顯示方式：彈性盒子 */
-    flex-direction: column; /* 彈性方向：項目垂直排列 */
-    height: 100vh; /* 高度：100% 的視窗高度 */
-    overflow: hidden; /* 溢出處理：隱藏超出邊界的內容 */
-    overscroll-behavior-y: contain; /* Y軸滾動鏈行為：防止在元素內滾動到底時觸發父元素的滾動 */
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    overscroll-behavior-y: contain;
 }
 
 /* 應用程式主容器 (#app-container) 的樣式 */
 #app-container {
-    display: flex; /* 顯示方式：彈性盒子 */
-    flex-direction: column; /* 彈性方向：項目垂直排列 */
-    height: 100%; /* 高度：佔滿父元素的 100% */
-    width: 100%; /* 寬度：佔滿父元素的 100% */
-    position: relative; /* 定位：相對定位，作為子元素絕對定位的基準 */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    position: relative;
 }
 
 /* --- 分割視圖的主內容區域 --- */
 #main-content {
-    display: flex; /* 顯示方式：彈性盒子 */
-    flex: 1; /* 彈性因子：佔據所有剩餘的高度 */
-    overflow: hidden; /* 溢出處理：隱藏內部溢出的內容，防止出現滾動條 */
+    display: flex;
+    flex: 1;
+    overflow: hidden;
 }
 
 /* PDF 顯示容器的樣式 */
 #pdf-container {
-    flex: 1 1 auto; /* 彈性因子：允許放大/縮小，基準大小為 auto */
-    position: relative; /* 定位：相對定位 */
-    overflow: auto; /* 溢出處理：內容超出時自動顯示滾動條 */
-    background-color: #e9ecef; /* 背景顏色：淺灰色 */
-    padding: 10px; /* 內距：10像素 */
-    box-sizing: border-box; /* 盒子模型：padding 和 border 不會增加元素的總寬高 */
-    -webkit-overflow-scrolling: touch; /* 滾動方式：在 iOS 設備上啟用帶有慣性的平滑滾動 */
-    padding-bottom: 60px; /* 下內距：60像素，為底部工具列預留空間 */
-    min-width: 200px; /* 最小寬度：200像素 */
+    flex: 1 1 auto;
+    position: relative;
+    overflow: auto;
+    background-color: #e9ecef;
+    padding: 10px;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 60px;
+    min-width: 200px;
 }
 
 /* --- 分割視圖的調整大小器 --- */
 #resizer {
-    width: 5px; /* 寬度：5像素 */
-    background: #ccc; /* 背景顏色：灰色 */
-    cursor: col-resize; /* 滑鼠游標：顯示為可左右調整欄寬的圖示 */
-    flex-shrink: 0; /* 彈性收縮：不允許收縮 */
-    display: none; /* 顯示方式：預設隱藏 */
+    width: 5px;
+    background: #ccc;
+    cursor: col-resize;
+    flex-shrink: 0;
+    display: none;
 }
 
-/* 當搜尋結果面板可見時，顯示調整大小器 */
 #app-container.results-panel-visible #resizer {
-    display: block; /* 顯示方式：區塊元素 (顯示出來) */
+    display: block;
 }
 
 /* --- 搜尋結果側邊面板 --- */
 #search-results-panel {
-    display: none; /* 顯示方式：預設隱藏 */
-    flex: 0 0 320px; /* 彈性因子：不放大、不縮小，初始寬度為 320px */
-    min-width: 200px; /* 最小寬度：200像素 */
-    max-width: 70%; /* 最大寬度：父元素的 70% */
-    background-color: #f1f3f5; /* 背景顏色：非常淺的灰色 */
-    border-left: 1px solid #dee2e6; /* 左邊框：1像素實線灰色 */
-    box-sizing: border-box; /* 盒子模型：邊框盒模型 */
+    display: none;
+    flex: 0 0 320px;
+    min-width: 200px;
+    max-width: 70%;
+    background-color: #f1f3f5;
+    border-left: 1px solid #dee2e6;
+    box-sizing: border-box;
 }
 
-/* 當搜尋結果面板可見時，設定其為彈性盒子佈局 */
 #app-container.results-panel-visible #search-results-panel {
-    display: flex; /* 顯示方式：彈性盒子 */
-    flex-direction: column; /* 彈性方向：項目垂直排列 */
+    display: flex;
+    flex-direction: column;
 }
 
-/* 搜尋結果面板中的 h3 標題樣式 */
 #search-results-panel h3 {
-    margin: 0; /* 外距：0 */
-    padding: 15px; /* 內距：15像素 */
-    border-bottom: 1px solid #ccc; /* 下邊框：1像素實線灰色 */
-    font-size: 1.1em; /* 字體大小：預設的 1.1 倍 */
-    color: #333; /* 文字顏色：深灰色 */
-    background-color: #f8f9fa; /* 背景顏色：接近白色的灰色 */
-    flex-shrink: 0; /* 彈性收縮：防止標題在空間不足時被壓縮 */
+    margin: 0;
+    padding: 15px;
+    border-bottom: 1px solid #ccc;
+    font-size: 1.1em;
+    color: #333;
+    background-color: #f8f9fa;
+    flex-shrink: 0;
 }
 
-/* 面板中下拉選單容器的樣式 */
 #panel-dropdown-container {
-    padding: 10px; /* 內距：10像素 */
-    border-bottom: 1px solid #ccc; /* 下邊框：1像素實線灰色 */
-    background-color: #f8f9fa; /* 背景顏色：接近白色的灰色 */
-    flex-shrink: 0; /* 彈性收縮：防止容器在空間不足時被壓縮 */
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    background-color: #f8f9fa;
+    flex-shrink: 0;
 }
 
-/* 面板下拉選單容器內的 select 元素樣式 */
 #panel-dropdown-container select {
-    width: 100%; /* 寬度：100% */
-    padding: 8px; /* 內距：8像素 */
-    border: 1px solid #ced4da; /* 邊框：1像素實線灰色 */
-    border-radius: 4px; /* 邊框圓角：4像素 */
-    font-size: 1em; /* 字體大小：預設大小 */
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1em;
 }
 
-/* 面板檔案篩選下拉選單的樣式 */
 #panelFileFilterDropdown {
-    margin-bottom: 5px; /* 下外距：5像素 */
+    margin-bottom: 5px;
 }
 
-/* 結果列表的樣式 */
 #results-list {
-    padding: 10px; /* 內距：10像素 */
-    flex-grow: 1; /* 彈性放大：填滿所有可用的垂直空間 */
-    overflow-y: auto; /* Y軸溢出處理：內容超出時自動顯示垂直滾動條 */
+    padding: 10px;
+    flex-grow: 1;
+    overflow-y: auto;
 }
 
-/* 每個搜尋結果項目的樣式 */
 .result-item {
-    margin-bottom: 15px; /* 下外距：15像素 */
-    padding: 10px; /* 內距：10像素 */
-    border: 1px solid #ccc; /* 邊框：1像素實線灰色 */
-    border-radius: 4px; /* 邊框圓角：4像素 */
-    background-color: #fff; /* 背景顏色：白色 */
-    cursor: pointer; /* 滑鼠游標：指標樣式 (手形) */
-    transition: box-shadow 0.2s, border-color 0.2s; /* 過渡效果：陰影和邊框顏色變化，持續 0.2 秒 */
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: box-shadow 0.2s, border-color 0.2s;
 }
 
-/* 滑鼠懸停在結果項目上時的樣式 */
 .result-item:hover {
-    border-color: #007bff; /* 邊框顏色：變為藍色 */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 盒子陰影：增加輕微的陰影效果 */
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 結果項目中的縮圖畫布樣式 */
 .result-item .thumbnail-canvas {
-    width: 100%; /* 寬度：100% */
-    height: auto; /* 高度：自動調整 */
-    border: 1px solid #e9ecef; /* 邊框：1像素實線淺灰色 */
-    margin-bottom: 8px; /* 下外距：8像素 */
-    background-color: #f8f9fa; /* 背景顏色：預留位置顏色 */
-    min-height: 100px; /* 最小高度：100像素，作為預留位置的高度 */
+    width: 100%;
+    height: auto;
+    border: 1px solid #e9ecef;
+    margin-bottom: 8px;
+    background-color: #f8f9fa;
+    min-height: 100px;
 }
 
-/* 結果項目中的頁碼資訊樣式 */
 .result-item .page-info {
-    font-weight: bold; /* 字體粗細：粗體 */
-    font-size: 0.9em; /* 字體大小：預設的 0.9 倍 */
-    margin-bottom: 5px; /* 下外距：5像素 */
-    color: #495057; /* 文字顏色：較深的灰色 */
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    color: #495057;
 }
 
-/* 結果項目中的上下文摘要樣式 */
 .result-item .context-snippet {
-    font-size: 0.85em; /* 字體大小：預設的 0.85 倍 */
-    line-height: 1.4; /* 行高：1.4 倍 */
-    color: #212529; /* 文字顏色：近黑色 */
-    word-wrap: break-word; /* 換行方式：允許在單字內部換行，防止長單字溢出 */
+    font-size: 0.85em;
+    line-height: 1.4;
+    color: #212529;
+    word-wrap: break-word;
 }
 
-/* 結果項目中波浪底線的樣式 */
 .result-item .wavy-underline {
-    text-decoration-line: underline !important; /* 文字裝飾線：底線 (強制生效) */
-    text-decoration-style: wavy !important; /* 文字裝飾樣式：波浪線 (強制生效) */
-    text-decoration-color: sandybrown !important; /* 文字裝飾顏色：沙棕色 (強制生效) */
-    background-color: rgba(244, 164, 96, 0.2); /* 背景顏色：半透明的沙棕色 */
-    border-radius: 2px; /* 邊框圓角：2像素 */
-    padding: 0 2px; /* 左右內距：2像素 */
+    text-decoration-line: underline !important;
+    text-decoration-style: wavy !important;
+    text-decoration-color: sandybrown !important;
+    background-color: rgba(244, 164, 96, 0.2);
+    border-radius: 2px;
+    padding: 0 2px;
 }
 
-/* 工具列切換標籤 (用於行動版) */
 #toolbar-toggle-tab {
-    display: none; /* 顯示方式：預設隱藏 */
+    display: none;
 }
 
-/* 頂部工具列的樣式 */
 #toolbar {
-    padding: 10px; /* 內距：10像素 */
-    background-color: #f8f9fa; /* 背景顏色：接近白色的灰色 */
-    border-bottom: 1px solid #dee2e6; /* 下邊框：1像素實線灰色 */
-    display: flex; /* 顯示方式：彈性盒子 */
-    flex-wrap: nowrap; /* 彈性換行：不換行 */
-    gap: 10px; /* 項目間距：10像素 */
-    align-items: center; /* 垂直對齊：置中 */
-    flex-shrink: 0; /* 彈性收縮：不允許收縮 */
-    overflow: hidden; /* 溢出處理：隱藏 */
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
 }
 
-/* 工具列中的標題容器 */
 #toolbar .title-container {
-    display: flex; /* 顯示方式：彈性盒子 */
-    align-items: center; /* 垂直對齊：置中 */
-    margin: 0 10px 0 0; /* 外距：右邊 10 像素 */
+    display: flex;
+    align-items: center;
+    margin: 0 10px 0 0;
 }
 
-/* 工具列中的 h2 標題 */
 #toolbar h2 {
-    margin: 0; /* 外距：0 */
-    font-size: 1.2em; /* 字體大小：預設的 1.2 倍 */
-    white-space: nowrap; /* 空白處理：不換行 */
-    color: initial; /* 文字顏色：繼承父元素 */
+    margin: 0;
+    font-size: 1.2em;
+    white-space: nowrap;
+    color: initial;
 }
 
-/* 工具列中的檔案上傳輸入框 */
 #toolbar input[type="file"] {
-    max-width: 250px; /* 最大寬度：250像素 */
-    white-space: nowrap; /* 空白處理：不換行 */
-    overflow: hidden; /* 溢出處理：隱藏 */
-    text-overflow: ellipsis; /* 文字溢出：顯示省略號 (...) */
-    flex-shrink: 1; /* 彈性收縮：允許收縮 */
-    min-width: 100px; /* 最小寬度：100像素 */
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+    min-width: 100px;
 }
 
-/* 工具列中的通用輸入框、選單和按鈕樣式 */
 #toolbar input[type="text"],
 #toolbar input[type="number"],
 #toolbar select,
 #toolbar button {
-    padding: 8px; /* 內距：8像素 */
-    border: 1px solid #ced4da; /* 邊框：1像素實線灰色 */
-    border-radius: 4px; /* 邊框圓角：4像素 */
-    font-size: 1em; /* 字體大小：預設大小 */
-    box-sizing: border-box; /* 盒子模型：邊框盒模型 */
-    color: initial; /* 文字顏色：繼承 */
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+    color: initial;
 }
 
-/* 工具列中的文字輸入框 */
 #toolbar input[type="text"] {
-    flex: 1 1 150px; /* 彈性因子：允許放大縮小，基準寬度 150px */
-    min-width: 120px; /* 最小寬度：120px */
-    background-color: initial; /* 背景顏色：繼承 */
-    border-color: initial; /* 邊框顏色：繼承 */
-    color: initial; /* 文字顏色：繼承 */
+    flex: 1 1 150px;
+    min-width: 120px;
+    background-color: initial;
+    border-color: initial;
+    color: initial;
 }
 
-/* 工具列中的數字輸入框 */
 #toolbar input[type="number"] {
-    width: 60px; /* 寬度：60像素 */
-    text-align: center; /* 文字對齊：置中 */
-    background-color: initial; /* 背景顏色：繼承 */
-    border-color: initial; /* 邊框顏色：繼承 */
-    color: initial; /* 文字顏色：繼承 */
+    width: 60px;
+    text-align: center;
+    background-color: initial;
+    border-color: initial;
+    color: initial;
 }
 
-/* 工具列中的下拉選單 */
 #toolbar select {
-    background-color: initial; /* 背景顏色：繼承 */
-    border-color: initial; /* 邊框顏色：繼承 */
-    color: initial; /* 文字顏色：繼承 */
+    background-color: initial;
+    border-color: initial;
+    color: initial;
 }
 
-/* 工具列中的按鈕 */
 #toolbar button {
-    background-color: initial; /* 背景顏色：繼承 */
-    color: initial; /* 文字顏色：繼承 */
-    border-color: initial; /* 邊框顏色：繼承 */
-    flex-shrink: 0; /* 彈性收縮：不允許收縮 */
+    background-color: initial;
+    color: initial;
+    border-color: initial;
+    flex-shrink: 0;
 }
 
-/* 工具列中按鈕的懸停效果 */
 #toolbar button:hover {
-    background-color: initial; /* 背景顏色：繼承 */
+    background-color: initial;
 }
 
-/* 縮放控制項的容器 */
 .zoom-controls {
-    display: flex; /* 顯示方式：彈性盒子 */
-    align-items: center; /* 垂直對齊：置中 */
-    gap: 5px; /* 項目間距：5像素 */
-    flex-shrink: 0; /* 彈性收縮：不允許收縮 */
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
 }
 
-/* 縮放控制項中的按鈕 */
 .zoom-controls button {
-    min-width: 38px; /* 最小寬度：38像素 */
-    font-weight: bold; /* 字體粗細：粗體 */
+    min-width: 38px;
+    font-weight: bold;
 }
 
-/* 縮放控制項中被啟用的按鈕 */
 .zoom-controls button.active {
-    background-color: #007bff; /* 背景顏色：藍色 */
-    color: white; /* 文字顏色：白色 */
-    border-color: #007bff; /* 邊框顏色：藍色 */
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
 }
 
-/* 桌面版縮放控制項 */
 #desktop-zoom-controls {
-    border-left: 1px solid #ccc; /* 左邊框：1像素實線灰色 */
-    padding-left: 10px; /* 左內距：10像素 */
-    margin-left: 10px; /* 左外距：10像素 */
+    border-left: 1px solid #ccc;
+    padding-left: 10px;
+    margin-left: 10px;
 }
 
-/* 行動版縮放控制項 */
 #mobile-zoom-controls {
-    width: 100%; /* 寬度：100% */
-    justify-content: center; /* 水平對齊：置中 */
+    width: 100%;
+    justify-content: center;
 }
 
-/* 局部放大鏡的縮放控制項 */
 #local-magnifier-zoom-controls {
-    display: flex; /* 顯示方式：彈性盒子 */
-    align-items: center; /* 垂直對齊：置中 */
-    gap: 5px; /* 項目間距：5像素 */
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-/* 局部放大鏡縮放控制項的標籤 */
 #local-magnifier-zoom-controls label {
-    white-space: nowrap; /* 空白處理：不換行 */
-    font-size: 0.9em; /* 字體大小：預設的 0.9 倍 */
+    white-space: nowrap;
+    font-size: 0.9em;
 }
 
-/* 局部放大鏡縮放控制項的下拉選單 */
 #local-magnifier-zoom-controls select {
-    padding: 6px; /* 內距：6像素 */
+    padding: 6px;
 }
 
-/* 頁面導覽的容器 */
 #page-navigation {
-    display: flex; /* 顯示方式：彈性盒子 */
-    align-items: center; /* 垂直對齊：置中 */
-    gap: 5px; /* 項目間距：5像素 */
-    margin-left: auto; /* 左外距：自動 (推到最右邊) */
-    flex-shrink: 0; /* 彈性收縮：不允許收縮 */
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
-/* 頁面導覽中的按鈕 */
 #page-navigation button {
-    padding: 8px; /* 內距：8像素 */
+    padding: 8px;
 }
 
-/* 頁碼顯示區 */
 #page-num-display {
-    font-size: 0.9em; /* 字體大小：預設的 0.9 倍 */
-    white-space: nowrap; /* 空白處理：不換行 */
-    padding: 0 3px; /* 左右內距：3像素 */
-    color: initial; /* 文字顏色：繼承 */
+    font-size: 0.9em;
+    white-space: nowrap;
+    padding: 0 3px;
+    color: initial;
 }
 
-/* 頁面滑桿 */
 #page-slider {
-    flex-grow: 1; /* 彈性放大：佔據可用空間 */
-    min-width: 80px; /* 最小寬度：80像素 */
-    margin: 0; /* 外距：0 */
-    height: 20px; /* 高度：20像素 */
-    background-color: initial; /* 背景顏色：繼承 */
+    flex-grow: 1;
+    min-width: 80px;
+    margin: 0;
+    height: 20px;
+    background-color: initial;
 }
 
-/* PDF 渲染的畫布 */
 #pdf-canvas {
-    border: 1px solid #000; /* 邊框：1像素實線黑色 */
-    display: block; /* 顯示方式：區塊元素 */
-    margin: 0 auto; /* 外距：上下 0，左右自動 (實現水平置中) */
+    border: 1px solid #000;
+    display: block;
+    margin: 0 auto;
 }
 
-/* 文字層 (用於選取文字) */
 #text-layer {
-    position: absolute; /* 定位：絕對定位 (相對於 #pdf-container) */
-    z-index: 5; /* 堆疊順序：5 */
-    pointer-events: none; /* 指標事件：無 (滑鼠事件會穿透此層) */
+    position: absolute;
+    z-index: 5;
+    pointer-events: none;
 }
 
-/* 繪圖層 (用於高亮等) */
 #drawing-canvas {
-    position: absolute; /* 定位：絕對定位 */
-    z-index: 10; /* 堆疊順序：10 */
-    touch-action: none; /* 觸控操作：禁用預設的觸控行為 (如縮放) */
-    pointer-events: none; /* 指標事件：無 */
+    position: absolute;
+    z-index: 10;
+    touch-action: none;
+    pointer-events: none;
 }
 
-/* 當啟用段落選擇模式時，PDF 容器的滑鼠游標 */
 #pdf-container.paragraph-selection-mode {
-    cursor: pointer; /* 滑鼠游標：指標樣式 (手形) */
+    cursor: pointer;
 }
 
-/* 段落高亮的樣式 */
 .paragraph-highlight {
-    position: absolute; /* 定位：絕對定位 */
-    background-color: rgba(0, 123, 255, 0.25); /* 背景顏色：半透明藍色 */
-    border: 1px solid rgba(0, 123, 255, 0.5); /* 邊框：1像素半透明藍色實線 */
-    border-radius: 3px; /* 邊框圓角：3像素 */
-    z-index: 6; /* 堆疊順序：6 */
-    pointer-events: none; /* 指標事件：無 */
+    position: absolute;
+    background-color: rgba(0, 123, 255, 0.25);
+    border: 1px solid rgba(0, 123, 255, 0.5);
+    border-radius: 3px;
+    z-index: 6;
+    pointer-events: none;
 }
 
-/* 複製段落按鈕的樣式 */
 #copy-paragraph-btn {
-    position: absolute; /* 定位：絕對定位 */
-    z-index: 7; /* 堆疊順序：7 */
-    padding: 5px 10px; /* 內距：上下5px，左右10px */
-    font-size: 14px; /* 字體大小：14像素 */
-    background-color: #007bff; /* 背景顏色：藍色 */
-    color: white; /* 文字顏色：白色 */
-    border: none; /* 邊框：無 */
-    border-radius: 5px; /* 邊框圓角：5像素 */
-    cursor: pointer; /* 滑鼠游標：指標樣式 (手形) */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* 盒子陰影 */
+    position: absolute;
+    z-index: 7;
+    padding: 5px 10px;
+    font-size: 14px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* 放大鏡的容器樣式 */
 #magnifier-glass {
-    display: none; /* 顯示方式：預設隱藏 */
-    position: absolute; /* 定位：絕對定位 */
-    border: 2px solid #333; /* 邊框：2像素實線深灰色 */
-    border-radius: 50%; /* 邊框圓角：50% (圓形) */
-    overflow: hidden; /* 溢出處理：隱藏 */
-    z-index: 2000; /* 堆疊順序：非常高，確保在最上層 */
-    pointer-events: none; /* 指標事件：無 */
-    background-color: white; /* 背景顏色：白色 */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* 盒子陰影 */
+    display: none;
+    position: absolute;
+    border: 2px solid #333;
+    border-radius: 50%;
+    overflow: hidden;
+    z-index: 2000;
+    pointer-events: none;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
-/* 放大鏡內的畫布 */
 #magnifier-canvas {
-    display: block; /* 顯示方式：區塊元素 */
+    display: block;
 }
 
-/* 文字層內部的 div 元素 (代表每個文字片段) */
-#text-layer > div {
-    color: transparent; /* 文字顏色：透明 (預設不可見，只用於佈局) */
-    position: absolute; /* 定位：絕對定位 */
-    line-height: 1; /* 行高：1 */
-    white-space: pre; /* 空白處理：保留空白和換行 */
-    user-select: none; /* 使用者選取：不允許選取文字 */
+#text-layer>div {
+    color: transparent;
+    position: absolute;
+    line-height: 1;
+    white-space: pre;
+    user-select: none;
 }
 
-/* 當文字選取功能啟用時，文字層內 div 的樣式 */
-#text-layer.text-selection-active > div {
-    color: initial !important; /* 文字顏色：繼承 (顯示文字，強制生效) */
-    user-select: text !important; /* 使用者選取：允許選取文字 (強制生效) */
+#text-layer.text-selection-active>div {
+    color: initial !important;
+    user-select: text !important;
 }
 
-/* 當文字選取啟用時，帶有波浪線的 div 的樣式 */
-#text-layer.text-selection-active > div.wavy-underline {
-    color: initial !important; /* 文字顏色：繼承 (強制生效) */
+#text-layer.text-selection-active>div.wavy-underline {
+    color: initial !important;
 }
 
-/* 通用的波浪底線樣式 */
 .wavy-underline {
-    text-decoration-line: underline; /* 文字裝飾線：底線 */
-    text-decoration-style: wavy; /* 文字裝飾樣式：波浪線 */
-    text-decoration-color: sandybrown; /* 文字裝飾顏色：沙棕色 */
-    text-decoration-thickness: 2px; /* 文字裝飾線粗細：2像素 */
-    text-underline-offset: 0.2em; /* 底線偏移量：0.2em */
+    text-decoration-line: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: sandybrown;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
 }
 
-/* 當高亮隱藏時，移除波浪底線 */
 .highlights-hidden .wavy-underline {
-    text-decoration: none !important; /* 文字裝飾：無 (強制生效) */
+    text-decoration: none !important;
 }
 
-/* 下拉選單中波浪底線的樣式 */
 #resultsDropdown .wavy-underline,
 #panelResultsDropdown .wavy-underline {
-    text-decoration-line: underline !important; /* 文字裝飾線：底線 (強制生效) */
-    text-decoration-style: wavy !important; /* 文字裝飾樣式：波浪線 (強制生效) */
-    text-decoration-color: sandybrown !important; /* 文字裝飾顏色：沙棕色 (強制生效) */
+    text-decoration-line: underline !important;
+    text-decoration-style: wavy !important;
+    text-decoration-color: sandybrown !important;
 }
 
-/* 浮動操作按鈕容器 */
 #floating-action-buttons {
-    position: fixed; /* 定位：固定定位 (相對於視窗) */
-    bottom: 20px; /* 底部：20像素 */
-    right: 20px; /* 右側：20像素 */
-    z-index: 1003; /* 堆疊順序：1003 */
-    display: flex; /* 顯示方式：彈性盒子 */
-    flex-direction: column; /* 彈性方向：垂直排列 */
-    gap: 10px; /* 項目間距：10像素 */
-    align-items: flex-end; /* 交叉軸對齊：末端對齊 (靠右) */
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1003;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-end;
 }
 
-/* 浮動按鈕群組 */
 .fab-button-group {
-    display: flex; /* 顯示方式：彈性盒子 */
-    flex-direction: row; /* 彈性方向：水平排列 */
-    gap: 10px; /* 項目間距：10像素 */
-    align-items: center; /* 垂直對齊：置中 */
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
 }
 
-/* 浮動操作按鈕的通用樣式 */
 #floating-action-buttons button {
-    background-color: rgba(0, 0, 0, 0.5); /* 背景顏色：半透明黑色 */
-    color: white; /* 文字顏色：白色 */
-    border: none; /* 邊框：無 */
-    border-radius: 50%; /* 邊框圓角：50% (圓形) */
-    width: 50px; /* 寬度：50像素 */
-    height: 50px; /* 高度：50像素 */
-    font-size: 24px; /* 字體大小：24像素 */
-    cursor: pointer; /* 滑鼠游標：指標樣式 (手形) */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* 盒子陰影 */
-    transition: background-color 0.2s; /* 過渡效果：背景顏色變化，持續 0.2 秒 */
-    display: flex; /* 顯示方式：彈性盒子 */
-    align-items: center; /* 垂直對齊：置中 */
-    justify-content: center; /* 水平對齊：置中 */
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* 浮動按鈕的懸停效果 */
 #floating-action-buttons button:hover {
-    background-color: rgba(0, 0, 0, 0.7); /* 背景顏色：更深的半透明黑色 */
+    background-color: rgba(0, 0, 0, 0.7);
 }
 
-/* 浮動按鈕被禁用時的樣式 */
 #floating-action-buttons button:disabled {
-    opacity: 0.5; /* 透明度：0.5 */
-    cursor: not-allowed; /* 滑鼠游標：禁止圖示 */
-    background-color: rgba(0, 0, 0, 0.3); /* 背景顏色：更淺的半透明黑色 */
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: rgba(0, 0, 0, 0.3);
 }
 
-/* 切換底線按鈕中的圖示樣式 */
 .toggle-underline-icon {
-    font-size: 1.1em; /* 字體大小：預設的 1.1 倍 */
-    font-weight: bold; /* 字體粗細：粗體 */
-    display: inline-block; /* 顯示方式：行內區塊 */
+    font-size: 1.1em;
+    font-weight: bold;
+    display: inline-block;
 }
 
-/* 當切換底線按鈕啟用時，圖示的樣式 */
 #toggle-underline-btn.active .toggle-underline-icon {
-    text-decoration-line: underline; /* 文字裝飾線：底線 */
-    text-decoration-style: wavy; /* 文字裝飾樣式：波浪線 */
-    text-decoration-color: sandybrown; /* 文字裝飾顏色：沙棕色 */
-    text-decoration-thickness: 2px; /* 文字裝飾線粗細：2像素 */
-    text-underline-offset: 0.15em; /* 底線偏移量：0.15em */
+    text-decoration-line: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: sandybrown;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.15em;
 }
 
-/* 當高亮功能啟用時，按鈕的樣式 */
 #toggle-highlighter-btn.active {
-    background-color: rgba(0, 100, 0, 0.7); /* 背景顏色：半透明深綠色 */
+    background-color: rgba(0, 100, 0, 0.7);
 }
 
-/* 當文字選取功能啟用時，按鈕的樣式 */
 #toggle-text-selection-btn.active {
-    background-color: rgba(0, 0, 100, 0.7); /* 背景顏色：半透明深藍色 */
+    background-color: rgba(0, 0, 100, 0.7);
 }
 
-/* 當段落選取功能啟用時，按鈕的樣式 */
 #toggle-paragraph-selection-btn.active {
-    background-color: rgba(0, 123, 255, 0.7); /* 背景顏色：半透明藍色 */
+    background-color: rgba(0, 123, 255, 0.7);
 }
 
-/* 當局部放大鏡功能啟用時，按鈕的樣式 */
 #toggle-local-magnifier-btn.active {
-    background-color: rgba(100, 0, 100, 0.7); /* 背景顏色：半透明紫色 */
+    background-color: rgba(100, 0, 100, 0.7);
 }
 
-/* 底部搜尋結果導覽列 */
 #bottom-results-bar {
-    display: none; /* 顯示方式：預設隱藏 */
-    position: fixed; /* 定位：固定定位 */
-    bottom: 0; /* 底部：0 */
-    left: 0; /* 左側：0 */
-    width: 100%; /* 寬度：100% */
-    background-color: rgba(248, 249, 250, 0.95); /* 背景顏色：帶透明度的淺灰色 */
-    border-top: 1px solid #dee2e6; /* 上邊框：1像素實線灰色 */
-    padding: 5px 10px; /* 內距：上下5px，左右10px */
-    box-sizing: border-box; /* 盒子模型：邊框盒模型 */
-    justify-content: center; /* 水平對齊：置中 */
-    align-items: center; /* 垂直對齊：置中 */
-    gap: 0; /* 項目間距：0 */
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* 盒子陰影 */
-    z-index: 1002; /* 堆疊順序：1002 */
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(248, 249, 250, 0.95);
+    border-top: 1px solid #dee2e6;
+    padding: 5px 10px;
+    box-sizing: border-box;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1002;
 }
 
-/* 底部結果列中的導覽容器 */
 #bottom-results-bar #result-nav-wrapper {
-    display: flex; /* 顯示方式：彈性盒子 */
-    align-items: center; /* 垂直對齊：置中 */
-    gap: 5px; /* 項目間距：5像素 */
-    flex-grow: 1; /* 彈性放大：佔據可用空間 */
-    max-width: 600px; /* 最大寬度：600像素 */
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-grow: 1;
+    max-width: 600px;
 }
 
-/* 檔案篩選下拉選單 */
 #fileFilterDropdown {
-    flex: 1; /* 彈性因子：佔 1 份 */
+    flex: 1;
 }
 
-/* 結果下拉選單 */
 #resultsDropdown {
-    flex: 2; /* 彈性因子：佔 2 份 (是檔案篩選的兩倍寬) */
+    flex: 2;
 }
 
-/* 底部結果列中的下拉選單樣式 */
 #bottom-results-bar select {
-    flex-grow: 1; /* 彈性放大：允許放大 */
-    flex-shrink: 1; /* 彈性收縮：允許收縮 */
-    min-width: 0; /* 最小寬度：0 (允許完全收縮) */
-    padding: 8px; /* 內距：8像素 */
-    border: 1px solid #ced4da; /* 邊框：1像素實線灰色 */
-    border-radius: 4px; /* 邊框圓角：4像素 */
-    font-size: 1em; /* 字體大小：預設大小 */
-    box-sizing: border-box; /* 盒子模型：邊框盒模型 */
-    background-color: white; /* 背景顏色：白色 */
-    overflow: hidden; /* 溢出處理：隱藏 */
-    white-space: nowrap; /* 空白處理：不換行 */
-    text-overflow: ellipsis; /* 文字溢出：顯示省略號 */
-    max-width: 100%; /* 最大寬度：100% */
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+    background-color: white;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 /* --- 響應式設計邏輯 --- */
 #mobile-zoom-controls {
-    display: none; /* 行動版縮放控制項預設隱藏 */
+    display: none;
 }
 
-/* 當螢幕寬度小於等於 1380px 時 */
 @media (max-width: 1380px) {
     #go-to-first-page {
-        display: none; /* 隱藏 "跳至第一頁" 按鈕 */
+        display: none;
     }
 
     #page-slider {
-        min-width: 60px; /* 頁面滑桿的最小寬度縮小為 60px */
+        min-width: 60px;
     }
 
     #toolbar input[type="text"] {
-        min-width: 100px; /* 工具列文字輸入框的最小寬度縮小為 100px */
+        min-width: 100px;
     }
 }
 
-/* 當螢幕寬度小於等於 1200px 時 */
 @media (max-width: 1200px) {
     #toolbar label[for="fileInput"] {
-        display: none; /* 隱藏檔案上傳的標籤文字 */
+        display: none;
     }
 }
 
-/* 當螢幕寬度小於等於 1024px 時 (平板電腦尺寸) */
 @media (max-width: 1024px) {
-    /* 強制隱藏右側搜尋結果面板和調整大小器 */
     #search-results-panel,
     #resizer {
-        display: none !important; 
+        display: none !important;
     }
 
-    /* 當底部結果列可見時，顯示它 */
     body.results-bar-visible #bottom-results-bar {
         display: flex;
     }
 }
 
-/* 當螢幕寬度小於等於 768px 時 (手機尺寸) */
+/* ================================================================== */
+/* =================== 以下為手機模式 (<= 768px) 的修正 =================== */
+/* ================================================================== */
 @media (max-width: 768px) {
     #desktop-zoom-controls {
-        display: none; /* 隱藏桌面版縮放控制項 */
+        display: none;
     }
 
+    /* --- 修正 #1：讓「符合高度/寬度」等按鈕可以自動換行 --- */
     #mobile-zoom-controls {
-        display: flex; /* 顯示行動版縮放控制項 */
+        display: flex;
+        flex-wrap: wrap; /* 允許裡面的按鈕在空間不足時自動換行 */
+        justify-content: flex-start; /* 讓按鈕從左邊開始排列 */
     }
 
-    /* 顯示並設定工具列切換標籤的樣式 (漢堡選單按鈕) */
+    /* --- 修正 #2：固定橘色展開按鈕的位置 --- */
     #toolbar-toggle-tab {
-        display: flex; /* 顯示 */
-        position: absolute; /* 絕對定位 */
-        top: 30%; /* 距離頂部 30% */
-        left: 0; /* 初始位置在左側邊緣 */
-        transition: left 0.3s ease-in-out; /* left 屬性變動時有 0.3 秒的過渡效果 */
-        z-index: 1003; /* 堆疊順序 */
-        pointer-events: auto; /* 啟用指標事件 */
-        background-color: #ff9a15; /* 背景顏色：橘色 */
-        border: 1px solid #ff9a15; /* 邊框 */
-        border-left: none; /* 移除左邊框 */
-        border-radius: 0 4px 4px 0; /* 圓角 (左上和左下為直角) */
-        padding: 8px 12px; /* 內距 */
-        cursor: pointer; /* 滑鼠游標 */
-        font-size: 1.2em; /* 字體大小 */
-        height: 40px; /* 高度 */
-        align-items: center; /* 垂直置中 */
-        justify-content: center; /* 水平置中 */
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3); /* 陰影 */
-        color: white; /* 文字顏色 */
+        display: flex;
+        position: absolute;
+        top: 150px; /* 設定一個固定的 top 值，避免跑版 */
+        left: 0;
+        transition: left 0.3s ease-in-out;
+        z-index: 1003;
+        pointer-events: auto;
+        background-color: #ff9a15;
+        border: 1px solid #ff9a15;
+        border-left: none;
+        border-radius: 0 4px 4px 0;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 1.2em;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        color: white;
     }
 
-    /* 切換標籤內的圖示 */
     #toolbar-toggle-tab .icon {
-        transition: transform 0.3s ease-in-out; /* 旋轉效果有 0.3 秒的過渡 */
-        transform: rotate(0deg); /* 初始角度為 0 */
+        transition: transform 0.3s ease-in-out;
+        transform: rotate(0deg);
     }
 
-    /* 當選單啟用時，圖示旋轉 180 度 */
     #app-container.menu-active #toolbar-toggle-tab .icon {
         transform: rotate(180deg);
     }
 
-    /* 當選單啟用時，切換標籤向右移動 */
     #app-container.menu-active #toolbar-toggle-tab {
         left: 280px;
     }
 
-    /* 工具列改為側邊滑出選單的樣式 */
+    /* --- 修正 #3：調整選單高度為自動 --- */
     #toolbar {
-        position: fixed; /* 固定定位 */
-        top: 0; /* 距離頂部 0 */
-        left: -280px; /* 初始位置在畫面外左側 */
-        width: 280px; /* 寬度 */
-        max-width: 80vw; /* 最大寬度為視窗寬度的 80% */
-        height: auto; /* 高度為 100% 視窗高度 */
-        max-height: 100vh; /* 【建議新增】保險措施，確保內容再多也不會超過螢幕高，並啟用滾動條 */
-        background-color: #f0f0f0; /* 背景顏色 */
-        border-right: 1px solid #ccc; /* 右邊框 */
-        padding: 50px 15px 20px 15px; /* 內距 */
-        box-sizing: border-box; /* 邊框盒模型 */
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* 陰影 */
-        display: flex; /* 彈性盒子 */
-        flex-direction: column; /* 垂直排列 */
-        align-items: stretch; /* 項目沿交叉軸拉伸填滿 */
-        justify-content: flex-start; /* 從頂部開始排列 */
-        transition: left 0.3s ease-in-out; /* left 屬性變動時有過渡效果 */
-        z-index: 1001; /* 堆疊順序 */
-        overflow-y: auto; /* 內容過多時顯示垂直滾動條 */
-        overflow-x: hidden; /* 隱藏水平滾動條 */
-        gap: 15px; /* 項目間距 */
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        max-width: 80vw;
+        height: auto; /* 將高度改為自動，由內容撐開 */
+        max-height: 100vh; /* 最高不高過整個螢幕，內容多時可滾動 */
+        background-color: #f0f0f0;
+        border-right: 1px solid #ccc;
+        padding: 50px 15px 20px 15px;
+        box-sizing: border-box;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        transition: left 0.3s ease-in-out;
+        z-index: 1001;
+        overflow-y: auto;
+        overflow-x: hidden;
+        gap: 15px;
     }
 
-    /* 當選單啟用時，工具列滑入畫面 */
     #app-container.menu-active #toolbar {
         left: 0;
     }
 
-    /* 工具列內的所有直接子元素不允許收縮 */
-    #toolbar > * {
+    #toolbar>* {
         flex-shrink: 0;
     }
 
-    /* 工具列標題容器改為水平排列 */
     #toolbar .title-container {
         flex-direction: row;
         align-items: center;
         width: 100%;
     }
 
-    /* 工具列內所有控制項寬度設為 100% */
     #toolbar input[type="text"],
     #toolbar input[type="number"],
     #toolbar select,
@@ -754,7 +679,6 @@ body {
         width: 100%;
     }
 
-    /* 調整文字輸入框和按鈕的內距和字體大小 */
     #toolbar input[type="text"],
     #toolbar button {
         padding-top: 6px;
@@ -762,17 +686,14 @@ body {
         font-size: 0.95em;
     }
 
-    /* 局部放大鏡控制項兩端對齊 */
     #local-magnifier-zoom-controls {
         justify-content: space-between;
     }
-    
-    /* 局部放大鏡的下拉選單填滿剩餘空間 */
+
     #local-magnifier-zoom-controls select {
         flex-grow: 1;
     }
 
-    /* 頁面導覽改為垂直排列 */
     #page-navigation {
         margin-left: 0;
         flex-direction: column;
@@ -780,57 +701,48 @@ body {
         gap: 8px;
     }
 
-    /* 頁面導覽內的 div (用於包裹按鈕和輸入框) */
-    #page-navigation > div {
+    #page-navigation>div {
         display: flex;
         width: 100%;
         gap: 5px;
     }
 
-    /* 頁碼輸入框填滿可用空間 */
     #page-navigation input[type="number"] {
         flex-grow: 1;
     }
 
-    /* 頁面滑桿寬度 100% */
     #page-navigation #page-slider {
         width: 100%;
         box-sizing: border-box;
         margin: 0;
     }
 
-    /* 調整 PDF 容器的內距 */
     #pdf-container {
         padding: 5px;
         padding-bottom: 60px;
     }
 
-    /* 調整浮動按鈕的位置和間距 */
     #floating-action-buttons {
         bottom: 70px;
         right: 15px;
         gap: 8px;
     }
 
-    /* 縮小浮動按鈕的尺寸 */
     #floating-action-buttons button {
         width: 45px;
         height: 45px;
         font-size: 20px;
     }
 
-    /* 縮小底線圖示的字體 */
     .toggle-underline-icon {
         font-size: 1em;
     }
 
-    /* 調整底部結果列的內距和間距 */
     #bottom-results-bar {
         padding: 8px;
         gap: 0;
     }
 
-    /* 調整底部結果列下拉選單的樣式 */
     #bottom-results-bar select {
         width: 100%;
         box-sizing: border-box;
@@ -840,16 +752,37 @@ body {
         padding: 8px;
         font-size: 0.9em;
     }
+
+    /* --- 修正 #4：重新定位問號 (?) 圖示 --- */
+    #help-link {
+        position: fixed !important; /* 使用 !important 確保覆蓋原始設定 */
+        top: 100px; /* 放在橘色按鈕 (150px) 的上方 */
+        left: 12px;
+        z-index: 1004;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin: 0;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        display: inline-flex; /* 確保裡面的 SVG 能置中 */
+        align-items: center;
+        justify-content: center;
+    }
+
+    #help-link svg {
+        width: 18px;
+        height: 18px;
+    }
 }
 
-/* 當螢幕寬度小於 768px、橫向顯示、且高度小於 450px 時 (橫向手機的特殊情況) */
+
 @media (max-width: 768px) and (orientation: landscape) and (max-height: 450px) {
-    /* 調整選單啟用時切換標籤的位置 */
     #app-container.menu-active #toolbar-toggle-tab {
         left: 240px;
     }
 
-    /* 縮小側邊選單的寬度、內距和間距 */
     #toolbar {
         width: 240px;
         max-width: 70vw;
@@ -858,14 +791,12 @@ body {
         gap: 3px !important;
     }
 
-    /* 縮小切換標籤的高度和字體 */
     #toolbar-toggle-tab {
         height: 35px;
         font-size: 1.1em;
     }
 
-    /* 壓縮側邊選單內所有項目的樣式 */
-    #toolbar > * {
+    #toolbar>* {
         overflow-x: hidden !important;
         text-overflow: ellipsis !important;
         padding-left: 2px !important;
@@ -874,25 +805,22 @@ body {
         margin-right: 0 !important;
     }
 
-    /* 縮小標題字體 */
     #toolbar h2 {
         font-size: 0.85em !important;
         margin-bottom: 2px !important;
     }
 
-    /* 縮小輸入框、選單和按鈕的內距和字體 */
     #toolbar input,
     #toolbar select,
     #toolbar button {
         padding: 3px !important;
         font-size: 0.75em !important;
     }
-    
+
     #toolbar input[type="file"] {
         font-size: 0.7em !important;
     }
 
-    /* 縮小局部放大鏡控制項的標籤和選單字體 */
     #local-magnifier-zoom-controls label {
         font-size: 0.7em !important;
         margin-right: 3px !important;
@@ -904,75 +832,44 @@ body {
         padding: 1px !important;
     }
 
-    /* 壓縮頁面導覽的間距和內距 */
     #page-navigation {
         gap: 3px !important;
         padding: 1px !important;
     }
 
-    #page-navigation > * {
+    #page-navigation>* {
         padding-left: 1px !important;
         padding-right: 1px !important;
     }
 
-    /* 壓縮頁面導覽按鈕的樣式 */
     #page-navigation button {
         padding: 2px 4px !important;
         font-size: 0.7em !important;
         text-align: left;
     }
 
-    /* 壓縮頁碼顯示的樣式 */
     #page-navigation span#page-num-display {
         padding: 1px 0 !important;
         font-size: 0.7em !important;
     }
 
-    /* 壓縮頁面滑桿的高度 */
     #page-navigation #page-slider {
         margin: 1px 0 !important;
         height: 14px !important;
     }
 
-    /* 壓縮頁碼輸入框的樣式 */
     #page-navigation input[type="number"] {
         padding: 2px !important;
         font-size: 0.75em !important;
     }
-    /* 在手機模式下，重新定位幫助圖示 */
-#help-link {
-    position: fixed; /* 1. 將定位方式改為 fixed，相對於瀏覽器視窗 */
-    
-    /* 2. 計算位置：橘色按鈕的 top 是 30%，我們用 calc() 把它往上移 50px */
-    top: calc(30% - 50px); 
-    
-    left: 12px;      /* 3. 設定離畫面左邊的距離 */
-    z-index: 1004;   /* 4. 確保圖示會顯示在橘色按鈕 (z-index: 1003) 的上面 */
-
-    /* 5. 美化樣式，讓它看起來像一個浮動按鈕 */
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%; /* 變成圓形 */
-    margin: 0;          /* 重設外距 */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-/* 讓 SVG 圖示在圓圈內稍微小一點 */
-#help-link svg {
-    width: 18px;
-    height: 18px;
-}
-}
-
-/* 當螢幕寬度小於等於 480px 時 (更小的手機) */
 @media (max-width: 480px) {
     #toolbar .title-container {
-        width: 100%; /* 標題容器寬度 100% */
+        width: 100%;
     }
 
     #toolbar h2 {
-        font-size: 1.1em; /* 稍微調整標題字體大小 */
+        font-size: 1.1em;
     }
 }
