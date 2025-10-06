@@ -284,10 +284,18 @@ function updateLocalMagnifier(clientX, clientY) {
 }
 
 function updateZoomControls() {
-    if (!zoomLevelDisplay || !fitWidthBtn || !fitHeightBtn) return;
+    if (!zoomLevelDisplay) return;
     zoomLevelDisplay.textContent = `${Math.round(currentScale * 100)}%`;
-    fitWidthBtn.classList.toggle('active', currentZoomMode === 'width');
-    fitHeightBtn.classList.toggle('active', currentZoomMode === 'height');
+
+    // 遍歷所有的「符合頁寬」按鈕並更新它們的狀態
+    if (fitWidthBtns) {
+        fitWidthBtns.forEach(btn => btn.classList.toggle('active', currentZoomMode === 'width'));
+    }
+
+    // 遍歷所有的「符合頁高」按鈕並更新它們的狀態
+    if (fitHeightBtns) {
+        fitHeightBtns.forEach(btn => btn.classList.toggle('active', currentZoomMode === 'height'));
+    }
 }
 
 function updatePageControls() {
@@ -300,7 +308,7 @@ function updatePageControls() {
         return;
     }
 
-    const allControls = [goToFirstPageBtn, prevPageBtn, nextPageBtn, pageToGoInput, goToPageBtn, pageSlider, toggleUnderlineBtn, toggleHighlighterBtn, clearHighlighterBtn, toggleTextSelectionBtn, sharePageBtn, exportPageBtn, toggleLocalMagnifierBtn, localMagnifierZoomSelector, copyPageTextBtn, zoomInBtn, zoomOutBtn, fitWidthBtn, fitHeightBtn, toggleParagraphSelectionBtn];
+    const allControls = [goToFirstPageBtn, prevPageBtn, nextPageBtn, pageToGoInput, goToPageBtn, pageSlider, toggleUnderlineBtn, toggleHighlighterBtn, clearHighlighterBtn, toggleTextSelectionBtn, sharePageBtn, exportPageBtn, toggleLocalMagnifierBtn, localMagnifierZoomSelector, copyPageTextBtn, zoomInBtn, zoomOutBtn, ...fitWidthBtns, ...fitHeightBtns, toggleParagraphSelectionBtn];
     allControls.forEach(el => { if(el) el.disabled = !hasDocs; });
 
     if (!hasDocs) {
@@ -1376,6 +1384,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
