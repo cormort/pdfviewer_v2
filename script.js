@@ -814,32 +814,56 @@ if (pageSlider) pageSlider.addEventListener('input', () => {
     if (currentPage !== newPage) goToPage(newPage, getPatternFromSearchInput());
 });
 
-if (exportPageBtn) exportPageBtn.addEventListener('click', () => {
+if (exportPageBtn) exportPageBtn.addEventListener('click', async () => { // <-- 注意：函式改為 async
     if (pdfDocs.length === 0 || !canvas) { alert('請先載入 PDF 檔案'); return; }
     if (pageRendering) { alert('頁面仍在渲染中，請稍候'); return; }
-    const wasCanvasHidden = canvas.style.visibility === 'hidden';
-    if (wasCanvasHidden) canvas.style.visibility = 'visible';
+
+    // 定義匯出的解析度倍率，數值越高，圖片越清晰，檔案也越大
+    const EXPORT_RESOLUTION_MULTIPLIER = 2.5; 
+    
+    const originalBtnText = exportPageBtn.innerHTML;
+    exportPageBtn.disabled = true;
+    exportPageBtn.innerHTML = '匯出中...';
+
     try {
+        const pageInfo = getDocAndLocalPage(currentPage);
+        if (!pageInfo) throw new Error('無法取得目前頁面資訊');
+
+        const page = await pageInfo.doc.getPage(pageInfo.localPage);
+        
+        // 根據目前的縮放比例和我們定義的倍率，建立一個高解析度的 viewport
+        const exportViewport = page.getViewport({ scale: currentScale * EXPORT_RESOLUTION_MULTIPLIER });
+
         const tc = document.createElement('canvas');
-        tc.width = canvas.width; tc.height = canvas.height;
+        tc.width = exportViewport.width;
+        tc.height = exportViewport.height;
         const tctx = tc.getContext('2d');
-        if (!tctx) { alert('無法為匯出的畫布取得渲染環境'); return; }
-        tctx.drawImage(canvas, 0, 0);
-        if (drawingCanvas && drawingCtx) tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height);
+        if (!tctx) throw new Error('無法為匯出的畫布取得渲染環境');
+
+        // 在高解析度的暫存畫布上重新渲染 PDF
+        const renderContext = { canvasContext: tctx, viewport: exportViewport };
+        await page.render(renderContext).promise;
+
+        // 將螢光筆標記等繪圖內容，按比例放大並疊加上去
+        if (drawingCanvas && drawingCanvas.width > 0) {
+            tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height);
+        }
+
         const idu = tc.toDataURL('image/png');
         const l = document.createElement('a');
         l.href = idu;
-        const pageInfo = getDocAndLocalPage(currentPage);
-        const docNamePart = pageInfo ? pageInfo.docName.replace(/\.pdf$/i, '') : 'document';
-        l.download = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated.png`;
+        const docNamePart = pageInfo.docName.replace(/\.pdf$/i, '');
+        l.download = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated_HD.png`;
         document.body.appendChild(l);
         l.click();
         document.body.removeChild(l);
+
     } catch (er) {
         console.error('Export error:', er);
         alert('匯出圖片失敗: ' + er.message);
     } finally {
-        if (wasCanvasHidden) canvas.style.visibility = 'hidden';
+        exportPageBtn.disabled = false;
+        exportPageBtn.innerHTML = originalBtnText;
     }
 });
 
@@ -950,41 +974,56 @@ if (copyPageTextBtn) copyPageTextBtn.addEventListener('click', async () => {
 if (sharePageBtn) sharePageBtn.addEventListener('click', async () => {
     if (pdfDocs.length === 0 || !canvas) { alert('請先載入 PDF 檔案'); return; }
     if (pageRendering) { alert('頁面仍在渲染中，請稍候'); return; }
-    const wasCanvasHidden = canvas.style.visibility === 'hidden';
-    if (wasCanvasHidden) canvas.style.visibility = 'visible';
-    if (!navigator.share) { alert('您的瀏覽器不支援 Web Share API'); if (wasCanvasHidden) canvas.style.visibility = 'hidden'; return; }
+    if (!navigator.share) { alert('您的瀏覽器不支援 Web Share API'); return; }
+
+    // 同樣使用高解析度倍率
+    const SHARE_RESOLUTION_MULTIPLIER = 2.0; 
+
+    const originalBtnText = sharePageBtn.innerHTML;
+    sharePageBtn.disabled = true;
+    sharePageBtn.innerHTML = '準備中...';
+
     try {
-        const tc = document.createElement('canvas');
-        tc.width = canvas.width; tc.height = canvas.height;
-        const tctx = tc.getContext('2d');
-        if (!tctx) { alert('無法為分享的畫布取得渲染環境'); if (wasCanvasHidden) canvas.style.visibility = 'hidden'; return; }
-        tctx.drawImage(canvas, 0, 0);
-        if (drawingCanvas && drawingCtx) { tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height); }
-        const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/png'));
-        if (!blob) { throw new Error('無法從畫布建立圖片資料。'); }
         const pageInfo = getDocAndLocalPage(currentPage);
-        const docNamePart = pageInfo ? pageInfo.docName.replace(/\.pdf$/i, '') : 'document';
-        const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated.png`;
+        if (!pageInfo) throw new Error('無法取得目前頁面資訊');
+
+        const page = await pageInfo.doc.getPage(pageInfo.localPage);
+        const shareViewport = page.getViewport({ scale: currentScale * SHARE_RESOLUTION_MULTIPLIER });
+
+        const tc = document.createElement('canvas');
+        tc.width = shareViewport.width;
+        tc.height = shareViewport.height;
+        const tctx = tc.getContext('2d');
+        if (!tctx) throw new Error('無法為分享的畫布取得渲染環境');
+
+        const renderContext = { canvasContext: tctx, viewport: shareViewport };
+        await page.render(renderContext).promise;
+
+        if (drawingCanvas && drawingCanvas.width > 0) {
+            tctx.drawImage(drawingCanvas, 0, 0, drawingCanvas.width, drawingCanvas.height, 0, 0, tc.width, tc.height);
+        }
+
+        const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/png'));
+        if (!blob) throw new Error('無法從畫布建立圖片資料。');
+
+        const docNamePart = pageInfo.docName.replace(/\.pdf$/i, '');
+        const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated_HD.png`;
         const f = new File([blob], fn, { type: 'image/png' });
         const sd = { title: `PDF 全域頁碼 ${currentPage}`, text: `來自 ${docNamePart} 的第 ${pageInfo.localPage} 頁 (PDF 工具)`, files: [f] };
+
         if (navigator.canShare && navigator.canShare({ files: [f] })) {
             await navigator.share(sd);
         } else {
-            const fsd = { title: sd.title, text: sd.text };
-            if (fsd.text && navigator.canShare && navigator.canShare(fsd)) {
-                await navigator.share(fsd);
-            } else {
-                alert('您的瀏覽器不支援分享檔案或文字。');
-            }
+            alert('您的瀏覽器不支援分享檔案。');
         }
     } catch (er) {
         console.error('Share error:', er);
         if (er.name !== 'AbortError') { alert('分享失敗: ' + er.message); }
     } finally {
-        if (wasCanvasHidden) { canvas.style.visibility = 'hidden'; }
+        sharePageBtn.disabled = false;
+        sharePageBtn.innerHTML = originalBtnText;
     }
 });
-
 if (localMagnifierZoomSelector) localMagnifierZoomSelector.addEventListener('change', (e) => { LOCAL_MAGNIFIER_ZOOM_LEVEL = parseFloat(e.target.value); });
 
 function handlePointerMoveForLocalMagnifier(e) {
@@ -1281,6 +1320,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
