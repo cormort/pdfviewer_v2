@@ -709,7 +709,8 @@ body {
         left: -280px; /* 初始位置在畫面外左側 */
         width: 280px; /* 寬度 */
         max-width: 80vw; /* 最大寬度為視窗寬度的 80% */
-        height: 100vh; /* 高度為 100% 視窗高度 */
+        height: auto; /* 高度為 100% 視窗高度 */
+        max-height: 100vh; /* 【建議新增】保險措施，確保內容再多也不會超過螢幕高，並啟用滾動條 */
         background-color: #f0f0f0; /* 背景顏色 */
         border-right: 1px solid #ccc; /* 右邊框 */
         padding: 50px 15px 20px 15px; /* 內距 */
