@@ -298,30 +298,30 @@ function updatePageControls() {
     }
 
     const docInfo = getDocAndLocalPage(currentPage);
-        // --- START: 這裡是新增的修改 ---
-
-    // 1. 先組合好頁碼部分的文字
+    // 1. 組合好頁碼部分的文字
     const pageInfoText = `第 ${currentPage} 頁 / 共 ${globalTotalPages} 頁`;
-    
-    let fullDisplayText = pageInfoText; // 預設只顯示頁碼
-
+    let fullDisplayText = pageInfoText; // 預設顯示文字
+    const fullDocNameForTitle = docInfo ? docInfo.docName : 'N/A'; // 用於滑鼠懸停提示的完整檔名
     if (docInfo && docInfo.docName) {
-        // 2. 定義檔名最大長度，您可以依需求調整這個數字
-        const MAX_FILENAME_LENGTH = 20;
-        let truncatedDocName = docInfo.docName;
-
-        // 3. 如果檔名超過最大長度，就進行裁剪
-        if (docInfo.docName.length > MAX_FILENAME_LENGTH) {
-            // 從頭部截斷，保留結尾部分通常更有用
-            truncatedDocName = '...' + docInfo.docName.slice(-MAX_FILENAME_LENGTH);
+        // 2. 移除檔名結尾的 .pdf (使用正規表達式，i 表示不分大小寫)
+        const cleanName = docInfo.docName.replace(/\.pdf$/i, '');
+        // 3. 定義頭、尾要保留的字數
+        const START_CHARS = 10;
+        const END_CHARS = 10;
+        let displayDocName = cleanName; // 預設使用清理後的完整檔名
+        // 4. 如果清理後的檔名長度超過頭尾總和，才進行裁剪
+        if (cleanName.length > (START_CHARS + END_CHARS)) {
+            const startPart = cleanName.substring(0, START_CHARS);
+            const endPart = cleanName.slice(-END_CHARS); // slice(-10) 表示從後面取10個字
+            displayDocName = `${startPart}...${endPart}`;
         }
-        // 4. 組合最終要顯示的完整文字
-        fullDisplayText += ` (檔案: ${truncatedDocName})`;
+        // 5. 組合最終要顯示的完整文字
+        fullDisplayText += ` (檔案: ${displayDocName})`;
     }
-    // 5. 將處理過的文字設定到 DOM 元素上
+    // 6. 將處理過的文字設定到 DOM 元素上
     pageNumDisplay.textContent = fullDisplayText;
-    // 同時也設定 title 屬性，讓滑鼠懸停時能看到完整檔名
-    pageNumDisplay.title = `${pageInfoText} (檔案: ${docInfo ? docInfo.docName : 'N/A'})`;
+    // 7. 設定 title 屬性，讓滑鼠懸停時能看到完整的原始檔名
+    pageNumDisplay.title = `${pageInfoText} (檔案: ${fullDocNameForTitle})`;
    
     if (pageToGoInput) { pageToGoInput.value = currentPage; pageToGoInput.max = globalTotalPages; }
     if (goToFirstPageBtn) goToFirstPageBtn.disabled = (currentPage === 1);
@@ -1346,6 +1346,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
