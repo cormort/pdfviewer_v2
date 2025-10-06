@@ -316,12 +316,12 @@ function updatePageControls() {
             displayDocName = `${startPart}...${endPart}`;
         }
         // 5. 組合最終要顯示的完整文字
-        fullDisplayText += ` (檔案: ${displayDocName})`;
+        fullDisplayText += ` (${displayDocName})`;
     }
     // 6. 將處理過的文字設定到 DOM 元素上
     pageNumDisplay.textContent = fullDisplayText;
     // 7. 設定 title 屬性，讓滑鼠懸停時能看到完整的原始檔名
-    pageNumDisplay.title = `${pageInfoText} (檔案: ${fullDocNameForTitle})`;
+    pageNumDisplay.title = `${pageInfoText} (檔案:${fullDocNameForTitle})`;
    
     if (pageToGoInput) { pageToGoInput.value = currentPage; pageToGoInput.max = globalTotalPages; }
     if (goToFirstPageBtn) goToFirstPageBtn.disabled = (currentPage === 1);
@@ -1360,6 +1360,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
