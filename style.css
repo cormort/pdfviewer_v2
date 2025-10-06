@@ -172,7 +172,7 @@ body {
   gap: 10px;
   align-items: center;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow-x: auto; /* Allow horizontal scrolling if needed */
 }
 #toolbar .title-container {
   display: flex;
@@ -237,13 +237,15 @@ body {
 
 /* --- FIX 2: 為 textarea 新增特定樣式 --- */
 #toolbar textarea {
-  height: 80px; /* 設定一個預設高度 */
-  min-height: 40px; /* 最小高度 */
-  resize: vertical; /* 允許使用者垂直調整大小 */
-  width: 100%; /* 確保它填滿容器 */
+  height: auto; /* Remove fixed height */
+  min-height: 40px; /* Minimum height */
+  max-height: 150px; /* Cap maximum height */
+  resize: vertical; /* Allow vertical resizing */
+  width: 100%; /* Ensure it fits the container */
 }
-
-
+.zoom-controls, #page-navigation {
+  flex-shrink: 1; /* Allow shrinking */
+}
 .zoom-controls {
   display: flex;
   align-items: center;
