@@ -59,8 +59,8 @@ const resultsList = document.getElementById('results-list');
 const copyPageTextBtn = document.getElementById('copy-page-text-btn');
 const zoomOutBtn = document.getElementById('zoom-out-btn');
 const zoomInBtn = document.getElementById('zoom-in-btn');
-const fitWidthBtn = document.getElementById('fit-width-btn');
-const fitHeightBtn = document.getElementById('fit-height-btn');
+const fitWidthBtns = document.querySelectorAll('.fit-width-btn'); // getElementById 改為 querySelectorAll，選擇 class
+const fitHeightBtns = document.querySelectorAll('.fit-height-btn'); // getElementById 改為 querySelectorAll，選擇 class
 const zoomLevelDisplay = document.getElementById('zoom-level-display');
 const toggleParagraphSelectionBtn = document.getElementById('toggle-paragraph-selection-btn');
 const resizer = document.getElementById('resizer');
@@ -1083,8 +1083,22 @@ window.addEventListener('resize', () => {
     }, 250);
 });
 
-if (fitWidthBtn) fitWidthBtn.addEventListener('click', () => { currentZoomMode = 'width'; renderPage(currentPage, getPatternFromSearchInput()); });
-if (fitHeightBtn) fitHeightBtn.addEventListener('click', () => { currentZoomMode = 'height'; renderPage(currentPage, getPatternFromSearchInput()); });
+if (fitWidthBtns) {
+    fitWidthBtns.forEach(btn => {
+        btn.addEventListener('click', () => { 
+            currentZoomMode = 'width'; 
+            renderPage(currentPage, getPatternFromSearchInput()); 
+        });
+    });
+}
+if (fitHeightBtns) {
+    fitHeightBtns.forEach(btn => {
+        btn.addEventListener('click', () => { 
+            currentZoomMode = 'height'; 
+            renderPage(currentPage, getPatternFromSearchInput()); 
+        });
+    });
+}
 if (zoomInBtn) zoomInBtn.addEventListener('click', () => { currentZoomMode = 'custom'; currentScale += 0.2; renderPage(currentPage, getPatternFromSearchInput()); });
 if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => { currentZoomMode = 'custom'; currentScale = Math.max(0.1, currentScale - 0.2); renderPage(currentPage, getPatternFromSearchInput()); });
 
@@ -1346,6 +1360,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
