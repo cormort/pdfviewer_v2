@@ -183,13 +183,29 @@ async function loadAndProcessFiles(files) {
 fileInput.addEventListener('change', async function(e) {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
+        
+        // 步驟 1: 嘗試儲存檔案到資料庫 (非關鍵步驟)
+        // 即使這一步失敗，我們只在控制台顯示警告，不中斷核心功能
         try {
             await saveFiles(files);
-            document.getElementById('restore-session-container').style.display = 'none';
+            const restoreContainer = document.getElementById('restore-session-container');
+            if (restoreContainer) restoreContainer.style.display = 'none';
+        } catch (dbError) {
+            console.warn("無法儲存工作階段到 IndexedDB，但不影響本次讀取。", dbError);
+        }
+
+        // 步驟 2: 處理並載入 PDF 檔案 (關鍵步驟)
+        // 這裡的錯誤才會真正跳出提示，因為這會影響檔案讀取
+        try {
             await loadAndProcessFiles(files);
-        } catch (error) {
-            console.error("Failed to save or process files:", error);
-            alert("儲存或處理檔案時發生錯誤。");
+            
+            // (優化) 手機模式下，成功選擇檔案後自動關閉選單
+            if (window.innerWidth <= 768 && appContainer.classList.contains('menu-active')) {
+                appContainer.classList.remove('menu-active');
+            }
+        } catch (loadError) {
+            console.error("載入或處理 PDF 檔案時失敗:", loadError);
+            alert("讀取或處理 PDF 檔案時發生錯誤。");
         }
     }
 });
@@ -1360,6 +1376,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
