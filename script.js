@@ -315,7 +315,7 @@ function updatePageControls() {
 
     const docInfo = getDocAndLocalPage(currentPage);
     // 1. 組合好頁碼部分的文字
-    const pageInfoText = `第 ${currentPage} 頁 / 共 ${globalTotalPages} 頁`;
+    const pageInfoText = `第${currentPage}頁/共${globalTotalPages}頁`;
     let fullDisplayText = pageInfoText; // 預設顯示文字
     const fullDocNameForTitle = docInfo ? docInfo.docName : 'N/A'; // 用於滑鼠懸停提示的完整檔名
     if (docInfo && docInfo.docName) {
@@ -332,7 +332,7 @@ function updatePageControls() {
             displayDocName = `${startPart}...${endPart}`;
         }
         // 5. 組合最終要顯示的完整文字
-        fullDisplayText += ` (${displayDocName})`; // 顯示工具列括號內的檔案名稱
+        fullDisplayText += `(${displayDocName})`; // 顯示工具列括號內的檔案名稱
     }
     // 6. 將處理過的文字設定到 DOM 元素上
     pageNumDisplay.textContent = fullDisplayText;
@@ -1376,6 +1376,7 @@ initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
+
 
 
 
