@@ -541,7 +541,7 @@ body {
 
   #toolbar-toggle-tab {
     display: flex;
-    position: absolute;
+    position: fixed;
     top: 30%;
     left: 0; 
     transition: left 0.3s ease-in-out; 
