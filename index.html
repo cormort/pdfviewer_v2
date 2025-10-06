@@ -23,19 +23,21 @@
       </div>
       
       <div id="restore-session-container" style="display: none; width: 100%; text-align: center; margin-bottom: 10px;">
-        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">還原上次的作業</button>
+        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">載入前次檔案</button>
       </div>
       
       <div id="file-selection-container">
+        
         <!-- 下面這整個區塊被暫時停用了 -->
         <!--
         <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇PDF檔案</label>
         -->
+        
         <input type="file" id="fileInput" accept="application/pdf" multiple />
-        <button id="clear-session-btn" style="display: none; width: 100%; margin-top: 5px;">清除檔案</button>
+        <button id="clear-session-btn" style="display: none; width: 100%; margin-top: 5px;">清除選擇</button>
       </div>
 
-      <input type="text" id="searchInput" placeholder="關鍵字或正規表示式" />
+      <input type="text" id="searchInput" placeholder="關鍵字或RE" />
       <button id="search-action-button">搜尋</button>
       
       <div id="desktop-zoom-controls" class="zoom-controls">
@@ -58,17 +60,18 @@
 
       <div id="mobile-zoom-controls" class="zoom-controls">
         <button id="mobile-zoom-out-btn" title="縮小">-</button>
-        <button id="mobile-fit-height-btn" title="符合頁面高度">符合高度</button>
-        <button id="mobile-fit-width-btn" title="符合頁面寬度">符合寬度</button>
+        <button id="mobile-fit-height-btn" title="符合頁面高度">符合頁高</button>
+        <button id="mobile-fit-width-btn" title="符合頁面寬度">符合頁寬</button>
         <button id="mobile-zoom-in-btn" title="放大">+</button>
       </div>
 
       <div id="page-navigation">
-        <button id="go-to-first-page">第一頁</button>
-        <button id="prev-page">上一頁</button>
+        <button id="go-to-first-page">首頁</button>
+        <button id="prev-page">上頁</button>
         <input type="range" id="page-slider" min="1" max="1" value="1" disabled>
         <span id="page-num-display">- / -</span>
-        <button id="next-page">下一頁</button>
+        <button id="next-page">下頁</button>
+        
         <!-- 下面這整個區塊被暫時停用了 -->
         <!--
         <div>
@@ -76,6 +79,7 @@
             <button id="go-to-page-btn">前往</button>
         </div>
         -->
+        
       </div>
     </div>
 
