@@ -489,7 +489,16 @@ pdfContainer?.addEventListener('click', (e) => {
         appContainer.classList.remove('menu-active');
     }
 });
+// === 關閉按鈕功能 ===
+const closeToolbarBtn = document.getElementById('close-toolbar-btn');
 
+closeToolbarBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (appContainer) {
+        appContainer.classList.remove('menu-active');
+    }
+});
 // === 渲染頁面 ===
 function renderPage(globalPageNum, highlightPattern = null) {
     if (!pdfDocs.length || !pdfContainer || !canvas || !ctx) return;
@@ -1983,4 +1992,5 @@ console.log('  Home / End : 第一頁 / 最後一頁');
 console.log('  Ctrl+F : 搜尋');
 console.log('  + / - : 放大 / 縮小');
 console.log('  Ctrl+0 : 重設縮放 (符合頁高)');
+
 
