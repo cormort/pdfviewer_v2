@@ -1983,3 +1983,4 @@ console.log('  Home / End : 第一頁 / 最後一頁');
 console.log('  Ctrl+F : 搜尋');
 console.log('  + / - : 放大 / 縮小');
 console.log('  Ctrl+0 : 重設縮放 (符合頁高)');
+
