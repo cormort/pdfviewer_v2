@@ -52,7 +52,19 @@
     text-decoration: none;
     transform: scale(1.05);
 }
+/* [新增] 修正桌面版幫助圖示容器樣式 */
+#help-widget-container {
+    /* 讓它在工具列中保持內聯 (inline)，才不會換行 */
+    display: inline-flex;
+    align-items: center;
+    /* 確保它垂直對齊標題 */
+    vertical-align: middle; 
+}
 
+/* [新增] 桌面版預設隱藏關閉按鈕 */
+#close-help-btn {
+    display: none;
+}
 #help-link svg {
     width: 20px;
     height: 20px;
