@@ -489,6 +489,27 @@ pdfContainer?.addEventListener('click', (e) => {
         appContainer.classList.remove('menu-active');
     }
 });
+
+/ === 關閉 Help 圖示功能 ===
+const closeHelpBtn = document.getElementById('close-help-btn');
+const helpContainer = document.getElementById('help-container');
+
+closeHelpBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (helpContainer) {
+        helpContainer.style.display = 'none';
+        // 可選:將偏好設定儲存到 localStorage
+        localStorage.setItem('helpIconHidden', 'true');
+        showNotification('說明圖示已隱藏', 'info');
+    }
+});
+
+// 頁面載入時檢查是否要隱藏 help 圖示
+if (localStorage.getItem('helpIconHidden') === 'true' && helpContainer) {
+    helpContainer.style.display = 'none';
+}
+
 // === 關閉按鈕功能 ===
 const closeToolbarBtn = document.getElementById('close-toolbar-btn');
 
@@ -1992,5 +2013,6 @@ console.log('  Home / End : 第一頁 / 最後一頁');
 console.log('  Ctrl+F : 搜尋');
 console.log('  + / - : 放大 / 縮小');
 console.log('  Ctrl+0 : 重設縮放 (符合頁高)');
+
 
 
