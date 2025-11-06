@@ -950,7 +950,7 @@ body {
 
     #page-navigation {
         margin-left: 0;
-      g  flex-direction: column;
+        flex-direction: column;
         width: 100%;
         gap: 10px;
     }
@@ -1007,44 +1007,78 @@ body {
         font-size: 0.875rem;
     }
 
-    /* 問號圖示 (玻璃效果修改) */
+    /* === [開始] 手機版幫助圖示修改 === */
+    /* [新增] 幫助圖示容器 */
+    #help-widget-container {
+      position: fixed;
+      top: 90px;
+      left: 12px;
+      z-index: 1004;
+      display: flex; /* 讓幫助圖示和關閉按鈕並排 */
+      align-items: flex-start; /* 頂部對齊 */
+      gap: 4px; /* 兩個按鈕之間的間距 */
+      transition: all var(--transition-fast);
+    }
+
+    /* [新增] 關閉按鈕 */
+    #close-help-btn {
+      position: relative;
+      z-index: 2;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0, 0, 0, 0.4);
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 18px; /* 讓 '×' 垂直置中 */
+      text-align: center;
+      cursor: pointer;
+      padding: 0;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      transition: all var(--transition-fast);
+      backdrop-filter: blur(5px);
+    }
+
+    #close-help-btn:hover {
+      background: rgba(0, 0, 0, 0.7);
+      transform: scale(1.1);
+    }
+
+    /* [修改] 問號圖示 (玻璃效果) */
     #help-link {
-        position: fixed !important;
-        top: 90px;
-        left: 12px;
-        z-index: 1004;
-        /* [修改] 改為玻璃效果背景 */
-        background: rgba(255, 255, 255, 0.25);
-        /* [新增] 玻璃邊框 */
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        /* [修改] 調整圖示顏色以保持可見性 */
-        color: rgba(255, 255, 255, 0.9);
-        /* [修改] 縮小尺寸 */
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        margin: 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(8px);
-        transition: all var(--transition-fast);
+      position: relative !important; /* [修改] 移除 fixed 定位 */
+      top: auto !important;         /* [修改] 移除 fixed 定位 */
+      left: auto !important;        /* [修改] 移除 fixed 定位 */
+      margin: 0 !important;       /* [修改] 移除 margin */
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: rgba(255, 255, 255, 0.9);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      transition: all var(--transition-fast);
     }
 
     #help-link:hover {
-        /* [修改] Hover 效果 */
-        background: rgba(255, 255, 255, 0.4);
-        color: white;
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      background: rgba(255, 255, 255, 0.4);
+      color: white;
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     }
 
     #help-link svg {
-        /* [修改] 配合按鈕縮小 SVG */
-        width: 14px;
-        height: 14px;
+      width: 14px;
+      height: 14px;
     }
+    /* === [結束] 手機版幫助圖示修改 === */
 }
 
 /* =================== 橫向手機模式 =================== */
@@ -1237,7 +1271,7 @@ body {
     }
     to {
         transform: translateX(0);
-t        opacity: 1;
+        opacity: 1;
     }
 }
 
@@ -1301,7 +1335,8 @@ button:focus-visible {
     #bottom-results-bar,
     #search-results-panel,
     #toolbar-toggle-tab,
-    #help-link {
+    #help-link,
+    #help-widget-container { /* [新增] 列印時隱藏 */
         display: none !important;
     }
 
@@ -1312,6 +1347,6 @@ button:focus-visible {
 
     #pdf-canvas {
         border: none;
-        box-shadow: none;
+    d  box-shadow: none;
     }
 }
