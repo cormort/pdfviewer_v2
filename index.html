@@ -1,160 +1,148 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PDF 全域閱讀器 v2</title>
-
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js"></script>
-
-        <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF關鍵字搜尋平台</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="app-container">
+    <div id="toolbar-toggle-tab">
+        <span class="icon">›</span>
+    </div>
 
-        <div id="app-container">
+    <div id="toolbar">
+      <div class="title-container">
+        <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁中開啟使用說明" id="help-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+          </svg>
+        </a>
+      </div>
+      
+      <div id="restore-session-container" style="display: none; width: 100%; text-align: center; margin-bottom: 10px;">
+        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">載入前次檔案</button>
+      </div>
+      
+      <div id="file-selection-container">
+        
+        <!-- 下面這整個區塊被暫時停用了 -->
+        <!--
+        <label for="fileInput" style="display: block; font-size: 0.9em; margin-bottom: -5px;">選擇PDF檔案</label>
+        -->
+        
+        <input type="file" id="fileInput" accept="application/pdf" multiple />
+        <button id="clear-session-btn" style="display: none; width: 100%; margin-top: 5px;">清除選擇</button>
+      </div>
 
-                <button id="toolbar-toggle-tab" aria-label="切換工具列">
-            <span class="icon" aria-hidden="true">➔</span>
-        </button>
+      <input type="text" id="searchInput" placeholder="關鍵字或RE" />
+      <button id="search-action-button">搜尋</button>
+      
+      <div id="desktop-zoom-controls" class="zoom-controls">
+        <button id="zoom-out-btn" title="縮小">-</button>
+        <button class="fit-width-btn">符合頁寬</button>
+        <button class="fit-height-btn">符合頁高</button>
+        <button id="zoom-in-btn" title="放大">+</button>
+      </div>
 
-                <header id="toolbar">
-                        <div class="title-container">
-                <h2>PDF 閱讀器</h2>
-                                <a href="https://github.com/cormort/pdfviewer_v2" target="_blank" id="help-link" title="查看說明">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
-                    </svg>                 
-                </a>
-            </div>
+      <div id="local-magnifier-zoom-controls" style="display: none; align-items: center; gap: 5px;">
+        <label for="local-magnifier-zoom-selector" style="white-space: nowrap; font-size: 0.9em;">放大鏡倍率：</label>
+        <select id="local-magnifier-zoom-selector" style="padding: 6px;">
+            <option value="1.5">1.5x</option>
+            <option value="2.0">2.0x</option>
+            <option value="2.5" selected>2.5x</option>
+            <option value="3.0">3.0x</option>
+            <option value="3.5">3.5x</option>
+        </select>
+      </div>
 
-                        <div id="file-selection-container">
-                <label for="fileInput">選擇 PDF 檔案:</label>
-                <input type="file" id="fileInput" multiple accept=".pdf">
-            </div>
-            <button id="clear-session-btn" style="display: none;">載入新檔案</button>
+      <div id="mobile-zoom-controls" class="zoom-controls">
+        <button id="mobile-zoom-out-btn" title="縮小">-</button>
+        <button class="fit-width-btn">符合頁寬</button>
+        <button class="fit-height-btn">符合頁高</button>
+        <button id="mobile-zoom-in-btn" title="放大">+</button>
+      </div>
 
-                        <input type="text" id="searchInput" placeholder="搜尋關鍵字 (支援 /reg/i)">
-            <button id="search-action-button">搜尋</button>
+      <div id="page-navigation">
+        <button id="go-to-first-page">首頁</button>
+        <button id="prev-page">上頁</button>
+        <input type="range" id="page-slider" min="1" max="1" value="1" disabled>
+        <span id="page-num-display">- / -</span>
+        <button id="next-page">下頁</button>
+        
+        <!-- 下面這整個區塊被暫時停用了 -->
+        <!--
+        <div>
+            <input type="number" id="page-to-go" min="1" placeholder="頁碼">
+            <button id="go-to-page-btn">前往</button>
+        </div>
+        -->
+        
+      </div>
+    </div>
 
-                        <div id="page-navigation">
-                <div>
-                    <button id="go-to-first-page" title="第一頁">«</button>
-                    <button id="prev-page" title="上一頁">‹</button>
-                    <input type="number" id="page-to-go" min="1">
-                    <button id="go-to-page-btn">前往</button>
-                    <button id="next-page" title="下一頁">›</button>
-                </div>
-                <input type="range" id="page-slider" min="1" value="1">
-                <span id="page-num-display">- / -</span>
-            </div>
+    <div id="main-content">
+        <div id="pdf-container">
+          <canvas id="pdf-canvas"></canvas>
+          <div id="text-layer" class="textLayer"></div>
+          <canvas id="drawing-canvas"></canvas>
+          <div id="magnifier-glass">
+            <canvas id="magnifier-canvas"></canvas>
+          </div>
+        </div>
+        <div id="resizer"></div>
+        <div id="search-results-panel">
+            <h3>書籤 / 搜尋結果</h3>
+            <div id="panel-dropdown-container">
+                <select id="panelFileFilterDropdown">
+                    <option value="all">所有檔案</option>
+                </select>
+                <select id="panelResultsDropdown">
+                    <option value="">搜尋結果</option>
+                </select>
+            </div>
+            <div id="results-list"></div>
+        </div>
+    </div>
+  </div>
 
-                        <div id="desktop-zoom-controls" class="zoom-controls">
-                <button id="zoom-out-btn" title="縮小">-</button>
-                <span id="zoom-level-display">100%</span>
-                <button id="zoom-in-btn" title="放大">+</button>
-                <button class="fit-height-btn" title="符合頁高">頁高</button>
-                <button class="fit-width-btn" title="符合頁寬">頁寬</button>
-            </div>
+  <div id="floating-action-buttons">
+    <button id="toggle-underline-btn" title="切換搜尋結果底線">
+        <span class="toggle-underline-icon">S</span>
+    </button>
+    <div class="fab-button-group">
+        <button id="toggle-paragraph-selection-btn" title="啟用段落選擇">¶</button>
+        <button id="copy-page-text-btn" title="複製本頁文字">📝</button>
+        <button id="toggle-text-selection-btn" title="啟用文字選擇">TS</button>
+    </div>
+    <div class="fab-button-group">
+        <button id="toggle-highlighter-btn" title="啟用螢光筆">🖌️</button>
+        <button id="clear-highlighter-btn" title="清除螢光筆標記">🗑️</button>
+    </div>
+    <button id="toggle-local-magnifier-btn" title="切換放大鏡">🔍</button>
+    <div class="fab-button-group">
+        <button id="export-page-btn" title="將目前頁面匯出為圖片">📷</button>
+        <button id="share-page-btn" title="分享目前頁面">🔗</button>
+    </div>
+  </div>
 
-                        <div id="mobile-zoom-controls" class="zoom-controls">
-                <button id="zoom-out-btn-mobile" class="zoom-out-btn" title="縮小">-</button>
-                <button id="zoom-in-btn-mobile" class="zoom-in-btn" title="放大">+</button>
-                <button id="fit-height-btn-mobile" class="fit-height-btn" title="符合頁高">頁高</button>
-                <button id="fit-width-btn-mobile" class="fit-width-btn" title="符合頁寬">頁寬</button>
-            </div>
-            
-                        <div id="local-magnifier-zoom-controls">
-                <label for="local-magnifier-zoom-selector">放大鏡:</label>
-                <select id="local-magnifier-zoom-selector">
-                    <option value="1.5">1.5x</option>
-                    <option value="2.0">2.0x</option>
-                    <option value="2.5" selected>2.5x</option>
-                    <option value="3.0">3.0x</option>
-                </select>
-            </div>
+<div id="bottom-results-bar">
+  <div id="result-nav-wrapper">
+    <select id="fileFilterDropdown">
+      <option value="all">所有檔案</option>
+    </select>
+    <select id="resultsDropdown">
+      <option value="">搜尋結果</option>
+    </select>
+  </div>
+</div>
 
-                        <button id="export-page-btn" title="匯出本頁為圖片">匯出 PNG</button>
-            <button id="share-page-btn" title="分享本頁圖片">分享</button>
-            <button id="copy-page-text-btn" title="複製本頁文字 (需啟用 TS)">複製文字</button>
-
-                        <div id="restore-session-container" style="display: none;">
-                <button id="restore-session-btn">恢復上次的工作階段</button>
-            </div>
-        </header>
-
-                <div id="main-content">
-                        <div id="pdf-container">
-                                <canvas id="pdf-canvas"></canvas>
-                                <div id="text-layer"></div>
-                                <canvas id="drawing-canvas"></canvas>
-                                <div id="magnifier-glass">
-                    <canvas id="magnifier-canvas"></canvas>
-                </div>
-            </div>
-
-                        <div id="resizer"></div>
-
-                        <aside id="search-results-panel">
-                <h3>搜尋結果</h3>
-                <div id="panel-dropdown-container">
-                    <select id="panelFileFilterDropdown">
-                        <option value="all">所有檔案</option>
-                    </select>
-                    <select id="panelResultsDropdown">
-                        <option value="">搜尋結果</option>
-                    </select>
-                </div>
-                <div id="results-list"></div>
-            </aside>
-        </div>
-    </div>
-
-        <div id="floating-action-buttons">
-        <div class="fab-button-group">
-            <button id="toggle-local-magnifier-btn" title="啟用放大鏡">
-                <span class="sr-only">放大鏡</span>
-                🔍
-            </button>
-        </div>
-        <div class="fab-button-group">
-            <button id="clear-highlighter-btn" title="清除螢光筆">
-                <span class="sr-only">清除螢光筆</span>
-                🗑️
-            </button>
-            <button id="toggle-highlighter-btn" title="啟用螢光筆">
-                <span class="sr-only">螢光筆</span>
-                🖍️
-            </button>
-        <div class="fab-button-group">
-            <button id="toggle-underline-btn" title="切換搜尋高亮">
-                <span class="toggle-underline-icon">U</span>
-            </button>
-        </div>
-        <div class="fab-button-group">
-            <button id="toggle-paragraph-selection-btn" title="啟用段落選擇 (需啟用 TS)">
-                <span class="sr-only">段落選擇</span>
-                ¶
-            </button>
-            <button id="toggle-text-selection-btn" title="啟用文字選擇">
-                <span class="sr-only">文字選擇</span>
-                TS
-            </button>
-        </div>
-    </div>
-
-        <footer id="bottom-results-bar">
-        <div id="result-nav-wrapper">
-            <select id="fileFilterDropdown">
-                <option value="all">所有檔案</option>
-            </select>
-            <select id="resultsDropdown">
-                <option value="">搜尋結果</option>
-            </select>
-        </div>
-    </footer>
-
-            <script src="script.js" type="module"></script>
-
+  <script type="module">
+    import { GlobalWorkerOptions } from './lib/pdfjs/pdf.mjs'; 
+    GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
+  </script>
+  <script type="module" src="./script.js"></script>
 </body>
 </html>
