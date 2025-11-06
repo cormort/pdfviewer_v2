@@ -1308,3 +1308,58 @@ button:focus-visible {
         box-shadow: none;
     }
 }
+/* 新增:關閉按鈕樣式 */
+#close-toolbar-btn {
+    display: none; /* 桌面版預設隱藏 */
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+    border-radius: var(--radius-sm);
+    align-items: center;
+    justify-content: center;
+}
+
+#close-toolbar-btn:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--danger-color);
+    transform: scale(1.05);
+}
+
+#close-toolbar-btn svg {
+    display: block;
+}
+
+/* 手機模式下顯示關閉按鈕 */
+@media (max-width: 768px) {
+    #close-toolbar-btn {
+        display: flex;
+        width: 36px;
+        height: 36px;
+    }
+    
+    #toolbar .title-container {
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+}
+/* 關閉按鈕懸停效果 */
+#close-toolbar-btn:hover {
+    background-color: #f3f4f6 !important;
+    color: #ef4444 !important;
+    transform: scale(1.05);
+}
+
+#close-toolbar-btn:active {
+    transform: scale(0.95);
+}
+
+/* 桌面版隱藏關閉按鈕(可選) */
+@media (min-width: 769px) {
+    #close-toolbar-btn {
+        display: none !important;
+    }
+}
