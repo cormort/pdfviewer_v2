@@ -1,4 +1,4 @@
-// script.js - 優化版 (已加入關閉幫助圖示功能)
+// script.js - 優化版
 
 import { initDB, saveFiles, getFiles } from './db.js';
 
@@ -9,7 +9,7 @@ let globalTotalPages = 0;
 let currentPage = 1;
 let pageRendering = false;
 let searchResults = [];
-let currentFileFilter = 'all';
+let currentFileFilter = 'all'; 
 
 let currentZoomMode = 'height';
 let currentScale = 1.0;
@@ -27,7 +27,6 @@ const toolbarToggleTab = document.getElementById('toolbar-toggle-tab');
 const appContainer = document.getElementById('app-container');
 const pdfContainer = document.getElementById('pdf-container');
 const textLayerDivGlobal = document.getElementById('text-layer');
-const helpLink = document.getElementById('help-link'); // [新增] 幫助圖示
 
 // 導航控制
 const goToFirstPageBtn = document.getElementById('go-to-first-page');
@@ -127,10 +126,6 @@ function resetApp() {
     }
     if (fileInputLabel) fileInputLabel.style.display = 'block';
     if (clearSessionBtn) clearSessionBtn.style.display = 'none';
-
-    // [新增] 重設幫助圖示
-    const helpWidget = document.getElementById('help-widget-container');
-    if (helpWidget) helpWidget.style.display = 'flex';
 
     updatePageControls();
     updateResultsNav();
@@ -423,7 +418,7 @@ function updatePageControls() {
     
     pageNumDisplay.textContent = fullDisplayText;
     pageNumDisplay.title = `${pageInfoText} (檔案: ${fullDocNameForTitle})`;
-    
+   
     if (pageToGoInput) {
         pageToGoInput.value = currentPage;
         pageToGoInput.max = globalTotalPages;
@@ -1800,42 +1795,6 @@ document.addEventListener('keydown', e => {
     }
 });
 
-// === [新增] 初始化幫助圖示小工具 ===
-/**
- * [新增] 初始化幫助圖示小工具
- * - 建立一個容器
- * - 建立一個關閉按鈕
- * - 將現有的 #help-link 和新的關閉按鈕移入容器
- */
-function initHelpWidget() {
-  if (!helpLink) return;
-
-  // 1. 建立容器
-  const widgetContainer = document.createElement('div');
-  widgetContainer.id = 'help-widget-container';
-
-  // 2. 建立關閉按鈕
-  const closeHelpBtn = document.createElement('button');
-  closeHelpBtn.id = 'close-help-btn';
-  closeHelpBtn.innerHTML = '×';
-  closeHelpBtn.setAttribute('aria-label', '關閉幫助圖示');
-  closeHelpBtn.title = '隱藏幫助圖示';
-
-  // 3. 綁定點擊事件
-  closeHelpBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    widgetContainer.style.display = 'none';
-  });
-
-  // 4. DOM 操作：將容器插入到 helpLink 之前，再將 helpLink 和按鈕移入
-  if (helpLink.parentNode) {
-    helpLink.parentNode.insertBefore(widgetContainer, helpLink);
-    widgetContainer.appendChild(helpLink);
-    widgetContainer.appendChild(closeHelpBtn);
-  }
-}
-
 // === 初始化應用 ===
 async function initializeApp() {
     try {
@@ -2015,7 +1974,6 @@ document.head.appendChild(style);
 initLocalMagnifier();
 updatePageControls();
 initResizer();
-initHelpWidget(); // [新增] 呼叫新的函式
 initializeApp();
 
 console.log('✓ PDF 閱讀器已優化並初始化完成');
