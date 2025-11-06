@@ -1363,3 +1363,28 @@ button:focus-visible {
         display: none !important;
     }
 }
+
+/* 關閉 Help 按鈕樣式 */
+#close-help-btn {
+    display: none !important; /* 桌面版預設隱藏 */
+}
+
+#close-help-btn:hover {
+    background: rgba(239, 68, 68, 1) !important;
+    transform: scale(1.1);
+}
+
+#close-help-btn:active {
+    transform: scale(0.95);
+}
+
+/* 手機模式下顯示關閉按鈕 */
+@media (max-width: 768px) {
+    #close-help-btn {
+        display: flex !important;
+    }
+    
+    #help-container {
+        position: relative;
+    }
+}
