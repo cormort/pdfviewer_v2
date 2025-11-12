@@ -2014,6 +2014,114 @@ console.log('  Ctrl+F : 搜尋');
 console.log('  + / - : 放大 / 縮小');
 console.log('  Ctrl+0 : 重設縮放 (符合頁高)');
 
+// ===================================================================
+// ========== START: 與 Learning Toolkit 整合的程式碼 ==========
+// ===================================================================
+
+/**
+ * 透過 ArrayBuffer 載入單一 PDF 檔案的核心邏輯。
+ * 這是為了讓外部應用 (learning_toolkit) 可以傳送檔案資料來觸發載入。
+ * @param {ArrayBuffer} arrayBuffer - PDF 檔案的 ArrayBuffer 內容。
+ * @param {string} fileName - 檔案的名稱。
+ */
+async function loadPdfFromArrayBuffer(arrayBuffer, fileName = 'document.pdf') {
+    if (!arrayBuffer) return;
+    
+    // 顯示載入動畫
+    showLoadingOverlay('正在從外部載入 PDF...');
+
+    // 重置應用程式狀態
+    resetApp();
+    currentZoomMode = 'height';
+    if (searchInputElem) searchInputElem.value = '';
+    showSearchResultsHighlights = true;
+    textLayerDivGlobal?.classList.remove('highlights-hidden');
+    deactivateAllModes();
+
+    try {
+        const typedarray = new Uint8Array(arrayBuffer);
+        const pdf = await pdfjsLib.getDocument({ 
+            data: typedarray, 
+            isEvalSupported: false, 
+            enableXfa: false 
+        }).promise;
+        
+        // 將載入的 PDF 加入到應用程式的狀態中
+        pdfDocs.push(pdf);
+        for (let i = 1; i <= pdf.numPages; i++) {
+            pageMap.push({ 
+                docIndex: 0, 
+                localPage: i, 
+                docName: fileName 
+            });
+        }
+        
+        globalTotalPages = pageMap.length;
+        
+        hideLoadingOverlay();
+        showNotification(`成功載入 ${fileName}，共 ${globalTotalPages} 頁`, 'success');
+        
+        // 渲染第一頁
+        renderPage(1);
+
+        // 隱藏檔案上傳按鈕，顯示清除按鈕
+        if (fileInput) fileInput.style.display = 'none';
+        if (fileInputLabel) fileInputLabel.style.display = 'none';
+        if (clearSessionBtn) clearSessionBtn.style.display = 'block';
+
+    } catch (error) {
+        hideLoadingOverlay();
+        showNotification('讀取傳入的 PDF 時發生錯誤：' + error, 'error');
+        console.error('Error during ArrayBuffer processing:', error);
+        resetApp();
+    }
+}
+
+
+// 1. 監聽來自父視窗 (learning_toolkit) 的 message 事件
+window.addEventListener('message', (event) => {
+  // **極其重要的安全檢查**：驗證訊息是否來自您預期的來源
+  if (event.origin !== 'https://cormort.github.io') {
+    console.warn('收到來源不明的訊息，已忽略:', event.origin);
+    return;
+  }
+
+  const message = event.data;
+
+  // 檢查訊息類型是否為 'LOAD_PDF'
+  if (message && message.type === 'LOAD_PDF' && message.data) {
+    console.log('收到來自父視窗的 PDF 資料，準備載入...');
+    // `message.data` 就是那個 ArrayBuffer
+    // 呼叫我們上面新增的函數來處理它
+    loadPdfFromArrayBuffer(message.data, 'imported.pdf');
+  }
+});
+
+
+// 2. 當使用者在 PDF 上選取文字時，將訊息傳回給父視窗
+// 我們利用 'mouseup' 事件來偵測文字選取結束
+document.addEventListener('mouseup', () => {
+  // 只有在文字選擇模式啟用時才回傳
+  if (!textSelectionModeActive) return;
+
+  const selectedText = window.getSelection()?.toString();
+  
+  // 確保有選到文字且不是空的
+  if (selectedText && selectedText.trim().length > 0) {
+    // 使用 window.parent 將訊息傳回給 learning_toolkit
+    // **極其重要的安全檢查**：第二個參數指定目標來源
+    window.parent.postMessage({
+      type: 'TEXT_SELECTED',
+      data: selectedText.trim()
+    }, 'https://cormort.github.io');
+  }
+});
+
+console.log('✓ PDF Viewer 已啟用與 Learning Toolkit 的通訊介面');
+
+// ===================================================================
+// ========== END: 與 Learning Toolkit 整合的程式碼 ==========
+// ===================================================================
 
 
 
