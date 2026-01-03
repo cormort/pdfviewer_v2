@@ -1275,6 +1275,13 @@ button:focus-visible {
         justify-content: center;
         cursor: pointer;
         font-weight: 600;
+        white-space: nowrap;
+        /* Prevent wrapping */
+    }
+
+    /* Hide the native file input text on mobile so only the label text shows */
+    #toolbar label[for="fileInput"] input[type="file"] {
+        display: none;
     }
 
     .title-section {
@@ -1309,6 +1316,38 @@ button:focus-visible {
         margin-top: 16px;
         padding-top: 16px;
         border-top: 1px solid var(--border-color);
+        /* Flex Wrap for Mobile Layout */
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    #searchInput {
+        flex: 1 1 100%;
+        width: 100%;
+        order: 1;
+        margin-bottom: 4px;
+    }
+
+    #search-action-button {
+        flex: 1;
+        order: 2;
+    }
+
+    /* Ensure the file filter dropdown inside search section shares space properly */
+    .search-section #fileFilterDropdown {
+        flex: 1;
+        order: 3;
+    }
+
+    /* === Hide Search Results List on Mobile, Force Dropdown === */
+    #results-list {
+        display: none !important;
+    }
+
+    #panel-dropdown-container {
+        display: block !important;
+        border-bottom: none;
+        /* Aesthetic tweak since list is gone */
     }
 
     .nav-section {
@@ -1348,12 +1387,14 @@ button:focus-visible {
         font-size: 0.875rem;
     }
 
+    /* === Compact Search Results Panel (Task 2026-01-03) === */
     #search-results-panel {
         position: fixed;
         left: 0;
         right: 0;
         bottom: 0;
-        height: 70vh;
+        height: auto;
+        /* changed from 70vh */
         width: 100% !important;
         flex: none;
         border-left: none;
@@ -1363,6 +1404,11 @@ button:focus-visible {
         transition: transform var(--transition-normal);
         display: flex !important;
         visibility: hidden;
+        z-index: 1001;
+        /* Ensure it's above other content */
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
     }
 
     #app-container.results-panel-visible #search-results-panel {
@@ -1370,9 +1416,113 @@ button:focus-visible {
         visibility: visible;
     }
 
+    /* Hide the panel title on mobile to save space */
+    #search-results-panel h3 {
+        display: none !important;
+    }
+
+    /* Style the container to look like a bottom bar */
+    #panel-dropdown-container {
+        display: flex !important;
+        flex-direction: row;
+        gap: 8px;
+        padding: 12px 16px;
+        background: transparent;
+        border-bottom: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Make dropdowns share space */
+    #panelFileFilterDropdown {
+        flex: 1;
+        margin-bottom: 0;
+        /* Remove bottom margin if any */
+    }
+
+    #panelResultsDropdown {
+        flex: 2;
+    }
+
+    /* === Refactor Mobile FAB to Aligned Grid (Task 2026-01-03) === */
     #floating-action-buttons {
         bottom: 80px;
         right: 16px;
+        display: flex !important;
+        flex-direction: column-reverse;
+        /* Main FAB at bottom */
+        align-items: flex-end;
+        gap: 16px;
+        z-index: 1001;
+    }
+
+    /* Menu container as the grid wrapper */
+    #floating-action-buttons .fab-menu,
+    #fab-speed-dial {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr);
+        /* 3 columns for strict alignment */
+        width: 240px;
+        /* Fits 3 items (48*3 + gaps) */
+        gap: 12px;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        margin-bottom: 0;
+        justify-items: center;
+    }
+
+    /* Reset button styles to original (avoid stretching) */
+    #fab-speed-dial button {
+        margin: 0 !important;
+        width: 48px !important;
+        /* Force original size */
+        height: 48px !important;
+        border-radius: 50% !important;
+        position: relative !important;
+        order: 10;
+        /* Default order last */
+        flex: none !important;
+    }
+
+    /* Hide divider */
+    .fab-divider {
+        display: none !important;
+    }
+
+    /* === Grouping Logic (Row Breaks) === */
+
+    /* Group 1: Screenshot (Order 1) */
+    #share-page-btn,
+    #export-page-btn {
+        order: 1;
+    }
+
+    /* Group 2: Text Tools (Order 2) */
+    #toggle-underline-btn,
+    #toggle-highlighter-btn,
+    #clear-highlighter-btn {
+        order: 2;
+    }
+
+    /* Force Group 2 to start on a new row */
+    #toggle-underline-btn {
+        grid-column-start: 1;
+    }
+
+    /* Group 3: Selection & Notes (Order 3) */
+    #toggle-text-selection-btn,
+    #toggle-paragraph-selection-btn,
+    #copy-page-text-btn,
+    #toggle-notes-btn,
+    #view-notes-btn,
+    #toggle-local-magnifier-btn {
+        order: 3;
+    }
+
+    /* Force Group 3 Leader to start on a new row */
+    #toggle-text-selection-btn {
+        grid-column-start: 1;
     }
 
     .fab-container {
