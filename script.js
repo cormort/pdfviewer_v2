@@ -421,6 +421,20 @@ function openNoteModal(note = null) {
         if (deleteNoteBtn) deleteNoteBtn.style.display = 'none';
     }
     noteModal?.classList.add('active');
+
+    // Mobile Check: Read-only mode for notes
+    if (window.innerWidth <= 768) {
+        if (noteContentInput) {
+            noteContentInput.readOnly = true;
+            noteContentInput.placeholder = "手機模式下僅供閱讀";
+        }
+    } else {
+        if (noteContentInput) {
+            noteContentInput.readOnly = false;
+            noteContentInput.placeholder = "在此輸入筆記內容...";
+        }
+    }
+
     setTimeout(() => noteContentInput?.focus(), 100);
 }
 
