@@ -1,15 +1,20 @@
-// script.js - 優化版
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile } from './db.js';
 
-import { initDB, saveFiles, getFiles } from './db.js';
+// PDF.js is configured in index.html via ES module import
+// The global pdfjsLib is set there, we just verify it's available
+if (typeof pdfjsLib === 'undefined') {
+    console.error('PDF.js library not loaded! Check index.html script configuration.');
+}
 
-// === 全域變數 ===
+
+// === Global Variables ===
 let pdfDocs = [];
 let pageMap = [];
 let globalTotalPages = 0;
 let currentPage = 1;
 let pageRendering = false;
 let searchResults = [];
-let currentFileFilter = 'all'; 
+let currentFileFilter = 'all';
 
 let currentZoomMode = 'height';
 let currentScale = 1.0;
@@ -19,16 +24,15 @@ let currentPageTextContent = null;
 let currentViewport = null;
 let thumbnailObserver = null;
 
-// === DOM 元素選擇 ===
+// === DOM Element Selection ===
 const canvas = document.getElementById('pdf-canvas');
 const ctx = canvas?.getContext('2d');
 const toolbar = document.getElementById('toolbar');
-const toolbarToggleTab = document.getElementById('toolbar-toggle-tab');
 const appContainer = document.getElementById('app-container');
 const pdfContainer = document.getElementById('pdf-container');
 const textLayerDivGlobal = document.getElementById('text-layer');
 
-// 導航控制
+// Navigation Controls
 const goToFirstPageBtn = document.getElementById('go-to-first-page');
 const prevPageBtn = document.getElementById('prev-page');
 const nextPageBtn = document.getElementById('next-page');
@@ -37,7 +41,7 @@ const pageToGoInput = document.getElementById('page-to-go');
 const goToPageBtn = document.getElementById('go-to-page-btn');
 const pageSlider = document.getElementById('page-slider');
 
-// 搜尋相關
+// Search Related
 const resultsDropdown = document.getElementById('resultsDropdown');
 const panelResultsDropdown = document.getElementById('panelResultsDropdown');
 const fileFilterDropdown = document.getElementById('fileFilterDropdown');
@@ -46,8 +50,9 @@ const searchInputElem = document.getElementById('searchInput');
 const searchActionButton = document.getElementById('search-action-button');
 const searchResultsPanel = document.getElementById('search-results-panel');
 const resultsList = document.getElementById('results-list');
+const fileSwitchDropdown = document.getElementById('fileSwitchDropdown');
 
-// 工具按鈕
+// Tool Buttons
 const exportPageBtn = document.getElementById('export-page-btn');
 const sharePageBtn = document.getElementById('share-page-btn');
 const toggleUnderlineBtn = document.getElementById('toggle-underline-btn');
@@ -57,11 +62,26 @@ const toggleTextSelectionBtn = document.getElementById('toggle-text-selection-bt
 const copyPageTextBtn = document.getElementById('copy-page-text-btn');
 const toggleParagraphSelectionBtn = document.getElementById('toggle-paragraph-selection-btn');
 
-// 繪圖畫布
+// Notes Related
+const notesLayer = document.getElementById('notes-layer');
+const toggleNotesBtn = document.getElementById('toggle-notes-btn');
+const viewNotesBtn = document.getElementById('view-notes-btn');
+const noteModal = document.getElementById('note-modal');
+const noteContentInput = document.getElementById('note-content');
+const saveNoteBtn = document.getElementById('save-note-btn');
+const cancelNoteBtn = document.getElementById('cancel-note-btn');
+const deleteNoteBtn = document.getElementById('delete-note-btn');
+const closeNoteModal = document.getElementById('close-note-modal');
+const noteModalTitle = document.getElementById('note-modal-title');
+const notesListPanel = document.getElementById('notes-list-panel');
+const notesListContainer = document.getElementById('notes-list-container');
+const closeNotesList = document.getElementById('close-notes-list');
+
+// Drawing Canvas
 const drawingCanvas = document.getElementById('drawing-canvas');
 const drawingCtx = drawingCanvas?.getContext('2d');
 
-// 放大鏡
+// Magnifier
 const magnifierGlass = document.getElementById('magnifier-glass');
 const magnifierCanvas = document.getElementById('magnifier-canvas');
 const localMagnifierCtx = magnifierCanvas?.getContext('2d');
@@ -69,21 +89,26 @@ const toggleLocalMagnifierBtn = document.getElementById('toggle-local-magnifier-
 const localMagnifierZoomControlsDiv = document.getElementById('local-magnifier-zoom-controls');
 const localMagnifierZoomSelector = document.getElementById('local-magnifier-zoom-selector');
 
-// 縮放控制
-const zoomOutBtn = document.getElementById('zoom-out-btn');
-const zoomInBtn = document.getElementById('zoom-in-btn');
+// Zoom Controls
+// *** 修正：全部改用 querySelectorAll 來選取 class ***
+const zoomOutBtns = document.querySelectorAll('.zoom-out-btn');
+const zoomInBtns = document.querySelectorAll('.zoom-in-btn');
 const fitWidthBtns = document.querySelectorAll('.fit-width-btn');
 const fitHeightBtns = document.querySelectorAll('.fit-height-btn');
 const zoomLevelDisplay = document.getElementById('zoom-level-display');
 
-// 其他
+// Others
 const resizer = document.getElementById('resizer');
 const mainContent = document.getElementById('main-content');
 const fileInput = document.getElementById('fileInput');
 const fileInputLabel = document.querySelector('label[for="fileInput"]');
 const clearSessionBtn = document.getElementById('clear-session-btn');
+const restoreSessionBtn = document.getElementById('restore-session-btn');
+const emptyState = document.getElementById('empty-state');
+const canvasWrapper = document.getElementById('canvas-wrapper');
+const toolbarToggleTab = document.getElementById('toolbar-toggle-tab');
 
-// === 模式狀態 ===
+// === Mode Status ===
 let localMagnifierEnabled = false;
 let LOCAL_MAGNIFIER_SIZE = 120;
 let LOCAL_MAGNIFIER_ZOOM_LEVEL = 2.5;
@@ -91,11 +116,14 @@ let LOCAL_MAGNIFIER_ZOOM_LEVEL = 2.5;
 let showSearchResultsHighlights = true;
 let highlighterEnabled = false;
 let textSelectionModeActive = false;
+let notesModeActive = false;
+let currentEditingNote = null;
+let currentNotePosition = null;
 let isDrawing = false;
 let lastX = 0;
 let lastY = 0;
 
-// === 核心功能：重置應用 ===
+// === Core Function: Reset App ===
 function resetApp() {
     pdfDocs = [];
     pageMap = [];
@@ -103,12 +131,15 @@ function resetApp() {
     currentPage = 1;
     searchResults = [];
     currentFileFilter = 'all';
+    notesModeActive = false;
+    currentEditingNote = null;
 
     ctx?.clearRect(0, 0, canvas.width, canvas.height);
     if (textLayerDivGlobal) textLayerDivGlobal.innerHTML = '';
     if (resultsList) resultsList.innerHTML = '';
-    
-    // 重置下拉選單
+    if (notesLayer) notesLayer.innerHTML = '';
+
+    // Reset dropdowns
     const dropdowns = [
         { elem: resultsDropdown, default: '<option value="">搜尋結果</option>' },
         { elem: panelResultsDropdown, default: '<option value="">搜尋結果</option>' },
@@ -119,37 +150,59 @@ function resetApp() {
         if (elem) elem.innerHTML = defaultHTML;
     });
 
-    // 顯示/隱藏檔案輸入
-    if (fileInput) {
-        fileInput.style.display = 'block';
-        fileInput.value = null;
-    }
-    if (fileInputLabel) fileInputLabel.style.display = 'block';
+    // Toggle Empty State UI
+    if (emptyState) emptyState.style.display = 'flex';
+    if (canvasWrapper) canvasWrapper.style.display = 'none';
+
+    // Show/hide file input
+    if (fileInputLabel) fileInputLabel.style.display = 'inline-flex';
     if (clearSessionBtn) clearSessionBtn.style.display = 'none';
+    if (restoreSessionBtn) restoreSessionBtn.style.display = 'inline-block';
 
     updatePageControls();
     updateResultsNav();
 }
 
-// === 核心功能：載入和處理檔案 ===
+// === Core Function: Load and Process Files ===
 async function loadAndProcessFiles(files) {
     if (!files?.length) return;
-    
-    if (typeof pdfjsLib === 'undefined') {
-        showNotification('PDF 函式庫載入失敗，請重新整理頁面', 'error');
-        return;
+
+    // Show loading animation
+    showLoadingOverlay('載入 PDF 中...');
+    console.log('Starting loadAndProcessFiles...');
+
+    try {
+        resetApp();
+        console.log('App reset complete.');
+    } catch (e) {
+        console.error('Error in resetApp:', e);
+        throw e;
     }
-    
-    // 顯示載入動畫
-    showLoadingOverlay('正在載入 PDF...');
-    
-    resetApp();
-    
-    currentZoomMode = 'height';
+
+    currentZoomMode = 'width'; // 預設改為符合寬度
     if (searchInputElem) searchInputElem.value = '';
+
+    // Set default zoom mode based on device and orientation
+    // Mobile portrait: fit width, Mobile landscape: fit height, Desktop: fit width
+    if (window.innerWidth <= 768) {
+        if (window.innerHeight > window.innerWidth) {
+            currentZoomMode = 'width'; // Portrait mode - fit width
+        } else {
+            currentZoomMode = 'height'; // Landscape mode - fit height
+        }
+    } else {
+        currentZoomMode = 'width'; // Desktop - fit width (修正：配合右側縮圖面板)
+    }
     showSearchResultsHighlights = true;
     textLayerDivGlobal?.classList.remove('highlights-hidden');
-    deactivateAllModes();
+
+    try {
+        deactivateAllModes();
+        console.log('Modes deactivated.');
+    } catch (e) {
+        console.error('Error in deactivateAllModes:', e);
+        throw e;
+    }
 
     const loadingPromises = Array.from(files).map(file => {
         return new Promise((resolve) => {
@@ -158,12 +211,12 @@ async function loadAndProcessFiles(files) {
                 return;
             }
             const reader = new FileReader();
-            reader.onload = function() {
+            reader.onload = function () {
                 const typedarray = new Uint8Array(this.result);
-                pdfjsLib.getDocument({ 
-                    data: typedarray, 
-                    isEvalSupported: false, 
-                    enableXfa: false 
+                window.pdfjsLib.getDocument({
+                    data: typedarray,
+                    isEvalSupported: false,
+                    enableXfa: false
                 }).promise.then(pdf => {
                     resolve({ pdf, name: file.name });
                 }).catch(reason => {
@@ -181,7 +234,7 @@ async function loadAndProcessFiles(files) {
 
         if (loadedPdfs.length === 0) {
             hideLoadingOverlay();
-            showNotification('未選擇任何有效的 PDF 檔案', 'error');
+            showNotification('未選取有效的 PDF 檔案。', 'error');
             resetApp();
             return;
         }
@@ -189,62 +242,129 @@ async function loadAndProcessFiles(files) {
         loadedPdfs.forEach((result, docIndex) => {
             pdfDocs.push(result.pdf);
             for (let i = 1; i <= result.pdf.numPages; i++) {
-                pageMap.push({ 
-                    docIndex, 
-                    localPage: i, 
-                    docName: result.name 
+                pageMap.push({
+                    docIndex,
+                    localPage: i,
+                    docName: result.name
                 });
             }
         });
-        
+
         globalTotalPages = pageMap.length;
-        
+
         hideLoadingOverlay();
-        showNotification(`成功載入 ${loadedPdfs.length} 個 PDF，共 ${globalTotalPages} 頁`, 'success');
-        
+        showNotification(`成功載入 ${loadedPdfs.length} 個 PDF 檔案，共 ${globalTotalPages} 頁。`, 'success');
+
+        // Show Canvas UI
+        if (emptyState) emptyState.style.display = 'none';
+        if (canvasWrapper) canvasWrapper.style.display = 'block';
+
         renderPage(1);
 
-        if (fileInput) fileInput.style.display = 'none';
+        // Update file switch dropdown
+        updateFileSwitchDropdown();
+
         if (fileInputLabel) fileInputLabel.style.display = 'none';
-        if (clearSessionBtn) clearSessionBtn.style.display = 'block';
+        if (clearSessionBtn) clearSessionBtn.style.display = 'inline-block';
+        if (restoreSessionBtn) restoreSessionBtn.style.display = 'none';
 
     } catch (error) {
         hideLoadingOverlay();
-        showNotification('讀取 PDF 檔案時發生錯誤：' + error, 'error');
+        showNotification('讀取 PDF 檔案時發生錯誤：' + error.message, 'error');
         console.error('Error during file processing:', error);
         resetApp();
     }
 }
 
-// === 檔案輸入處理 ===
-fileInput?.addEventListener('change', async function(e) {
+// Mobile UI Enhancements
+const mainFab = document.getElementById('main-fab');
+const fabSpeedDial = document.getElementById('fab-speed-dial');
+
+if (mainFab) {
+    mainFab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fabSpeedDial?.classList.toggle('active');
+        mainFab.classList.toggle('active');
+    });
+}
+
+// Close components when clicking outside
+document.addEventListener('click', (e) => {
+    // Close speed dial
+    if (fabSpeedDial?.classList.contains('active') && !e.target.closest('.fab-container')) {
+        fabSpeedDial.classList.remove('active');
+        mainFab?.classList.remove('active');
+    }
+    // Close mobile toolbar
+    if (window.innerWidth <= 768 && toolbar?.classList.contains('active') && !e.target.closest('#toolbar')) {
+        toolbar.classList.remove('active');
+    }
+});
+
+
+// === Navigation Events ===
+goToFirstPageBtn?.addEventListener('click', () => {
+    if (currentPage !== 1) goToPage(1);
+});
+prevPageBtn?.addEventListener('click', () => {
+    if (currentPage > 1) goToPage(currentPage - 1);
+});
+nextPageBtn?.addEventListener('click', () => {
+    if (currentPage < globalTotalPages) goToPage(currentPage + 1);
+});
+goToPageBtn?.addEventListener('click', () => {
+    const p = parseInt(pageToGoInput?.value);
+    if (p >= 1 && p <= globalTotalPages) goToPage(p);
+});
+pageSlider?.addEventListener('input', (e) => {
+    const val = parseInt(e.target.value);
+    if (!pageRendering) goToPage(val);
+});
+
+async function handleRestoreSession() {
+    try {
+        const files = await getFiles();
+        if (files && files.length > 0) {
+            loadAndProcessFiles(files);
+        } else {
+            showNotification('找不到快取的工作階段。', 'info');
+        }
+    } catch (err) {
+        console.error('Restore error:', err);
+    }
+}
+
+restoreSessionBtn?.addEventListener('click', handleRestoreSession);
+
+// === File Input Handling ===
+fileInput?.addEventListener('change', async function (e) {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
-    
+
     try {
         await saveFiles(files);
         const restoreContainer = document.getElementById('restore-session-container');
         if (restoreContainer) restoreContainer.style.display = 'none';
     } catch (dbError) {
-        console.warn("無法儲存工作階段到 IndexedDB", dbError);
+        console.warn("Could not save session to IndexedDB", dbError);
     }
 
     try {
         await loadAndProcessFiles(files);
-        
-        // 手機模式下自動關閉選單
+
+        // Auto-close menu in mobile mode
         if (window.innerWidth <= 768 && appContainer?.classList.contains('menu-active')) {
             appContainer.classList.remove('menu-active');
         }
     } catch (loadError) {
-        console.error("載入或處理 PDF 檔案時失敗:", loadError);
-        showNotification("讀取或處理 PDF 檔案時發生錯誤", 'error');
+        console.error("Failed to load or process PDF files:", loadError);
+        showNotification("載入 PDF 時發生錯誤：" + loadError.message, 'error');
     }
 });
 
 clearSessionBtn?.addEventListener('click', resetApp);
 
-// === 輔助函數：取得文件和頁面資訊 ===
+// === Helper: Get Doc and Local Page Info ===
 function getDocAndLocalPage(globalPage) {
     if (globalPage < 1 || globalPage > globalTotalPages || !pageMap.length) return null;
     const mapping = pageMap[globalPage - 1];
@@ -256,11 +376,244 @@ function getDocAndLocalPage(globalPage) {
     };
 }
 
-// === 放大鏡功能 ===
+// === Notes Functions ===
+
+async function renderNotes() {
+    if (!notesLayer || !pdfDocs.length) return;
+
+    const pageInfo = getDocAndLocalPage(currentPage);
+    if (!pageInfo) return;
+
+    notesLayer.innerHTML = '';
+
+    try {
+        const docId = pageInfo.docName; // Using filename as ID for simplicity
+        const notes = await getNotes(docId, pageInfo.localPage);
+
+        notes.forEach(note => {
+            const marker = document.createElement('div');
+            marker.className = 'note-marker';
+            marker.style.left = `${note.x}%`;
+            marker.style.top = `${note.y}%`;
+            marker.title = note.content;
+
+            marker.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openNoteModal(note);
+            });
+
+            notesLayer.appendChild(marker);
+        });
+    } catch (err) {
+        console.error('Error rendering notes:', err);
+    }
+}
+
+function openNoteModal(note = null) {
+    currentEditingNote = note;
+    if (note) {
+        if (noteModalTitle) noteModalTitle.textContent = '編輯筆記';
+        if (noteContentInput) noteContentInput.value = note.content;
+        if (deleteNoteBtn) deleteNoteBtn.style.display = 'block';
+    } else {
+        if (noteModalTitle) noteModalTitle.textContent = '新增筆記';
+        if (noteContentInput) noteContentInput.value = '';
+        if (deleteNoteBtn) deleteNoteBtn.style.display = 'none';
+    }
+    noteModal?.classList.add('active');
+    setTimeout(() => noteContentInput?.focus(), 100);
+}
+
+function closeNoteModalFunc() {
+    noteModal?.classList.remove('active');
+    currentEditingNote = null;
+    currentNotePosition = null;
+}
+
+async function saveCurrentNote() {
+    const content = noteContentInput?.value.trim();
+    if (!content) {
+        showNotification('筆記內容不能為空', 'error');
+        return;
+    }
+
+    const pageInfo = getDocAndLocalPage(currentPage);
+    if (!pageInfo) return;
+
+    try {
+        if (currentEditingNote) {
+            await updateNote(currentEditingNote.id, content);
+            showNotification('筆記已更新', 'success');
+        } else if (currentNotePosition) {
+            await saveNote({
+                fileId: pageInfo.docName,
+                pageNum: pageInfo.localPage,
+                x: currentNotePosition.x,
+                y: currentNotePosition.y,
+                content: content
+            });
+            showNotification('筆記已儲存', 'success');
+        }
+
+        closeNoteModalFunc();
+        renderNotes();
+    } catch (err) {
+        console.error('Error saving note:', err);
+        showNotification('儲存筆記失敗', 'error');
+    }
+}
+
+async function deleteCurrentNote() {
+    if (!currentEditingNote) return;
+
+    if (confirm('您確定要刪除此筆記嗎？')) {
+        try {
+            await deleteNote(currentEditingNote.id);
+            showNotification('筆記已刪除', 'success');
+            closeNoteModalFunc();
+            renderNotes();
+        } catch (err) {
+            console.error('Error deleting note:', err);
+            showNotification('刪除筆記失敗', 'error');
+        }
+    }
+}
+
+async function showNotesList() {
+    if (!notesListContainer) return;
+
+    notesListContainer.innerHTML = '載入筆記中...';
+    notesListPanel?.classList.add('active');
+
+    try {
+        const importPromises = pdfDocs.map((doc, idx) => {
+            const docName = pageMap.find(m => m.docIndex === idx)?.docName;
+            return docName ? getNotesForFile(docName) : Promise.resolve([]);
+        });
+
+        const allNotesResults = await Promise.all(importPromises);
+        const allNotes = allNotesResults.flat().sort((a, b) => b.createdAt - a.createdAt);
+
+        if (allNotes.length === 0) {
+            notesListContainer.innerHTML = `
+                <div class="empty-notes-message">
+                    <div class="icon">📝</div>
+                    <p>找不到任何載入檔案的筆記。</p>
+                </div>
+            `;
+        } else {
+            notesListContainer.innerHTML = '';
+            allNotes.forEach(note => {
+                const noteItem = document.createElement('div');
+                noteItem.className = 'note-list-item';
+
+                // Find global page number for this note
+                const globalPageNum = pageMap.findIndex(m => m.docName === note.fileId && m.localPage === note.pageNum) + 1;
+
+                noteItem.innerHTML = `
+                    <div class="note-meta">
+                        <span class="note-page">第 ${note.pageNum} 頁</span>
+                        <span>${new Date(note.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div class="note-content-preview">${note.content}</div>
+                `;
+
+                noteItem.addEventListener('click', () => {
+                    notesListPanel?.classList.remove('active');
+                    if (globalPageNum > 0) {
+                        goToPage(globalPageNum);
+                        // Add a small delay to ensure page is rendered before showing note
+                        setTimeout(() => {
+                            openNoteModal(note);
+                        }, 500);
+                    }
+                });
+
+                notesListContainer.appendChild(noteItem);
+            });
+        }
+    } catch (err) {
+        console.error('Error loading notes list:', err);
+        notesListContainer.innerHTML = '載入筆記時發生錯誤。';
+    }
+}
+
+// === Notes Import/Export Handlers ===
+const exportNotesBtn = document.getElementById('export-notes-btn');
+const importNotesTriggerBtn = document.getElementById('import-notes-trigger-btn');
+const importNotesInput = document.getElementById('import-notes-input');
+
+exportNotesBtn?.addEventListener('click', async () => {
+    try {
+        const notes = await exportAllNotes();
+        if (!notes || notes.length === 0) {
+            showNotification('無筆記可供匯出', 'info');
+            return;
+        }
+
+        const dataStr = JSON.stringify(notes, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `pdf_pro_studio_notes_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showNotification('筆記備份匯出成功！', 'success');
+    } catch (err) {
+        console.error('Export failed:', err);
+        showNotification('匯出筆記失敗', 'error');
+    }
+});
+
+importNotesTriggerBtn?.addEventListener('click', () => {
+    const backupWarning = "⚠️ 警告：匯入筆記會將其與現有筆記合併。\n\n格式錯誤的資料可能會導致資料損壞或遺失。強烈建議在繼續之前先匯出目前筆記的備份。\n\n您確定要繼續匯入嗎？";
+
+    if (confirm(backupWarning)) {
+        importNotesInput?.click();
+    }
+});
+
+importNotesInput?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+        try {
+            const notes = JSON.parse(event.target.result);
+            if (!Array.isArray(notes)) {
+                throw new Error('Invalid backup file format (not an array)');
+            }
+
+            showLoadingOverlay('匯入筆記中...');
+            await importAllNotes(notes);
+            hideLoadingOverlay();
+
+            showNotification(`成功匯入 ${notes.length} 則筆記！`, 'success');
+            renderNotes();
+            if (notesListPanel?.classList.contains('active')) {
+                showNotesList();
+            }
+        } catch (err) {
+            console.error('Import failed:', err);
+            hideLoadingOverlay();
+            showNotification('匯入筆記失敗：' + err.message, 'error');
+        } finally {
+            importNotesInput.value = ''; // Reset input
+        }
+    };
+    reader.readAsText(file);
+});
+
+// === Magnifier Function ===
 function initLocalMagnifier() {
     if (magnifierCanvas && magnifierGlass) {
-        magnifierGlass.style.width = `${LOCAL_MAGNIFIER_SIZE}px`;
-        magnifierGlass.style.height = `${LOCAL_MAGNIFIER_SIZE}px`;
+        magnifierGlass.style.width = `${LOCAL_MAGNIFIER_SIZE} px`;
+        magnifierGlass.style.height = `${LOCAL_MAGNIFIER_SIZE} px`;
         magnifierCanvas.width = LOCAL_MAGNIFIER_SIZE;
         magnifierCanvas.height = LOCAL_MAGNIFIER_SIZE;
     }
@@ -273,38 +626,30 @@ function initLocalMagnifier() {
 }
 
 function updateLocalMagnifier(clientX, clientY) {
-    if (!localMagnifierEnabled || !canvas || !magnifierGlass || !localMagnifierCtx || !pdfContainer) {
+    const canvasWrapper = document.getElementById('canvas-wrapper');
+    if (!localMagnifierEnabled || !canvas || !magnifierGlass || !localMagnifierCtx || !canvasWrapper) {
         if (magnifierGlass) magnifierGlass.style.display = 'none';
         return;
     }
-    
-    const pdfContainerRect = pdfContainer.getBoundingClientRect();
-    const pointXInContainer = clientX - pdfContainerRect.left;
-    const pointYInContainer = clientY - pdfContainerRect.top;
-    const canvasRectInContainer = {
-        left: canvas.offsetLeft,
-        top: canvas.offsetTop,
-        right: canvas.offsetLeft + canvas.offsetWidth,
-        bottom: canvas.offsetTop + canvas.offsetHeight
-    };
 
-    if (pointXInContainer < canvasRectInContainer.left || 
-        pointXInContainer > canvasRectInContainer.right || 
-        pointYInContainer < canvasRectInContainer.top || 
-        pointYInContainer > canvasRectInContainer.bottom) {
+    const wrapperRect = canvasWrapper.getBoundingClientRect();
+    const pointXInWrapper = clientX - wrapperRect.left;
+    const pointYInWrapper = clientY - wrapperRect.top;
+
+    // Check if within canvas boundaries
+    if (pointXInWrapper < 0 || pointXInWrapper > canvas.offsetWidth ||
+        pointYInWrapper < 0 || pointYInWrapper > canvas.offsetHeight) {
         magnifierGlass.style.display = 'none';
         return;
     }
-    
+
     magnifierGlass.style.display = 'block';
 
-    const pointXOnCanvasCSS = pointXInContainer - canvas.offsetLeft;
-    const pointYOnCanvasCSS = pointYInContainer - canvas.offsetTop;
     const scaleX = canvas.width / canvas.offsetWidth;
     const scaleY = canvas.height / canvas.offsetHeight;
-    const srcX = pointXOnCanvasCSS * scaleX;
-    const srcY = pointYOnCanvasCSS * scaleY;
-    
+    const srcX = pointXInWrapper * scaleX;
+    const srcY = pointYInWrapper * scaleY;
+
     const srcRectCSSWidth = LOCAL_MAGNIFIER_SIZE / LOCAL_MAGNIFIER_ZOOM_LEVEL;
     const srcRectCSSHeight = LOCAL_MAGNIFIER_SIZE / LOCAL_MAGNIFIER_ZOOM_LEVEL;
     const srcRectPixelWidth = srcRectCSSWidth * scaleX;
@@ -315,17 +660,19 @@ function updateLocalMagnifier(clientX, clientY) {
     localMagnifierCtx.clearRect(0, 0, LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE);
     localMagnifierCtx.fillStyle = 'white';
     localMagnifierCtx.fillRect(0, 0, LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE);
+
+    // Use canvas directly as source
     localMagnifierCtx.drawImage(
-        canvas, 
-        srcRectX, srcRectY, 
+        canvas,
+        srcRectX, srcRectY,
         srcRectPixelWidth, srcRectPixelHeight,
-        0, 0, 
+        0, 0,
         LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE
     );
 
     if (drawingCanvas?.width > 0 && drawingCanvas?.height > 0) {
-        const srcDrawRectX = pointXOnCanvasCSS - (srcRectCSSWidth / 2);
-        const srcDrawRectY = pointYOnCanvasCSS - (srcRectCSSHeight / 2);
+        const srcDrawRectX = pointXInWrapper - (srcRectCSSWidth / 2);
+        const srcDrawRectY = pointYInWrapper - (srcRectCSSHeight / 2);
         localMagnifierCtx.drawImage(
             drawingCanvas,
             srcDrawRectX, srcDrawRectY,
@@ -335,31 +682,106 @@ function updateLocalMagnifier(clientX, clientY) {
         );
     }
 
-    let magnifierTop = pointYInContainer - LOCAL_MAGNIFIER_SIZE - 10;
-    let magnifierLeft = pointXInContainer - (LOCAL_MAGNIFIER_SIZE / 2);
-    magnifierTop = Math.max(0, Math.min(magnifierTop, pdfContainer.clientHeight - LOCAL_MAGNIFIER_SIZE - 5));
-    magnifierLeft = Math.max(0, Math.min(magnifierLeft, pdfContainer.clientWidth - LOCAL_MAGNIFIER_SIZE - 5));
-    magnifierGlass.style.top = `${magnifierTop + pdfContainer.scrollTop}px`;
-    magnifierGlass.style.left = `${magnifierLeft + pdfContainer.scrollLeft}px`;
+    // Position glass relative to its parent (canvas-wrapper)
+    const magnifierTop = pointYInWrapper - (LOCAL_MAGNIFIER_SIZE / 2);
+    const magnifierLeft = pointXInWrapper - (LOCAL_MAGNIFIER_SIZE / 2);
+
+    // Offset the glass slightly to be above the cursor or following it
+    // Here we'll center it on the cursor for direct feedback
+    magnifierGlass.style.top = `${magnifierTop}px`;
+    magnifierGlass.style.left = `${magnifierLeft}px`;
 }
 
-// === 更新 UI 控制 ===
+// === UI Control Updates ===
 function updateZoomControls() {
     if (!zoomLevelDisplay) return;
-    zoomLevelDisplay.textContent = `${Math.round(currentScale * 100)}%`;
+    zoomLevelDisplay.textContent = `${Math.round(currentScale * 100)}% `;
 
     fitWidthBtns?.forEach(btn => {
         btn.classList.toggle('active', currentZoomMode === 'width');
     });
-    
+
     fitHeightBtns?.forEach(btn => {
         btn.classList.toggle('active', currentZoomMode === 'height');
     });
 }
 
+// === File Switch Dropdown ===
+function updateFileSwitchDropdown() {
+    if (!fileSwitchDropdown) return;
+
+    // Clear existing options
+    fileSwitchDropdown.innerHTML = '';
+
+    if (pdfDocs.length === 0) {
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = '-- No Files --';
+        fileSwitchDropdown.appendChild(defaultOption);
+        fileSwitchDropdown.disabled = true;
+        return;
+    }
+
+    fileSwitchDropdown.disabled = false;
+
+    // Build unique file list with their starting page
+    const fileList = [];
+    let pageOffset = 0;
+    pageMap.forEach((mapping, index) => {
+        if (mapping.localPage === 1) {
+            fileList.push({
+                docIndex: mapping.docIndex,
+                docName: mapping.docName,
+                startPage: index + 1  // Global page number (1-indexed)
+            });
+        }
+    });
+
+    // Add options for each file
+    fileList.forEach((file, idx) => {
+        const option = document.createElement('option');
+        option.value = file.startPage;
+        // Truncate long names
+        let displayName = file.docName.replace(/\.pdf$/i, '');
+        if (displayName.length > 30) {
+            displayName = displayName.substring(0, 27) + '...';
+        }
+        option.textContent = `${idx + 1}. ${displayName}`;
+        option.title = file.docName;
+        fileSwitchDropdown.appendChild(option);
+    });
+
+    // Set current selection based on current page
+    updateFileSwitchSelection();
+}
+
+function updateFileSwitchSelection() {
+    if (!fileSwitchDropdown || pdfDocs.length === 0) return;
+
+    const docInfo = getDocAndLocalPage(currentPage);
+    if (!docInfo) return;
+
+    // Find the start page of current file
+    let startPage = 1;
+    for (let i = 0; i < pageMap.length; i++) {
+        if (pageMap[i].docIndex === docInfo.docIndex && pageMap[i].localPage === 1) {
+            startPage = i + 1;
+            break;
+        }
+    }
+    fileSwitchDropdown.value = startPage;
+}
+
+// File switch dropdown event listener
+fileSwitchDropdown?.addEventListener('change', e => {
+    const startPage = parseInt(e.target.value);
+    if (!isNaN(startPage) && startPage > 0) {
+        goToPage(startPage, getPatternFromSearchInput());
+    }
+});
+
 function updatePageControls() {
     const fabContainer = document.getElementById('floating-action-buttons');
-    const helpFab = document.getElementById('help-fab'); // 浮動說明按鈕
     const hasDocs = pdfDocs.length > 0;
 
     if (!pageNumDisplay || !fabContainer) {
@@ -369,19 +791,20 @@ function updatePageControls() {
     }
 
     const allControls = [
-        goToFirstPageBtn, prevPageBtn, nextPageBtn, pageToGoInput, goToPageBtn, 
-        pageSlider, toggleUnderlineBtn, toggleHighlighterBtn, clearHighlighterBtn, 
-        toggleTextSelectionBtn, sharePageBtn, exportPageBtn, toggleLocalMagnifierBtn, 
-        localMagnifierZoomSelector, copyPageTextBtn, zoomInBtn, zoomOutBtn,
+        goToFirstPageBtn, prevPageBtn, nextPageBtn, pageToGoInput, goToPageBtn,
+        pageSlider, toggleUnderlineBtn, toggleHighlighterBtn, clearHighlighterBtn,
+        toggleTextSelectionBtn, sharePageBtn, exportPageBtn, toggleLocalMagnifierBtn,
+        localMagnifierZoomSelector, copyPageTextBtn, toggleNotesBtn, viewNotesBtn,
+        ...zoomInBtns, ...zoomOutBtns, // <-- 修正：使用新的陣列
         ...fitWidthBtns, ...fitHeightBtns, toggleParagraphSelectionBtn
     ];
-    
+
     allControls.forEach(el => {
         if (el) el.disabled = !hasDocs;
     });
 
     if (!hasDocs) {
-        pageNumDisplay.textContent = '- / -';
+        if (pageNumDisplay) pageNumDisplay.textContent = '- / -';
         if (pageToGoInput) {
             pageToGoInput.value = '';
             pageToGoInput.max = 1;
@@ -399,16 +822,16 @@ function updatePageControls() {
     }
 
     const docInfo = getDocAndLocalPage(currentPage);
-    const pageInfoText = `第 ${currentPage} 頁 / 共 ${globalTotalPages} 頁`;
+    const pageInfoText = `第 ${currentPage} / ${globalTotalPages} 頁`;
     let fullDisplayText = pageInfoText;
     const fullDocNameForTitle = docInfo?.docName || 'N/A';
-    
+
     if (docInfo?.docName) {
         const cleanName = docInfo.docName.replace(/\.pdf$/i, '');
         const START_CHARS = 10;
         const END_CHARS = 10;
         let displayDocName = cleanName;
-        
+
         if (cleanName.length > (START_CHARS + END_CHARS)) {
             const startPart = cleanName.substring(0, START_CHARS);
             const endPart = cleanName.slice(-END_CHARS);
@@ -416,19 +839,19 @@ function updatePageControls() {
         }
         fullDisplayText += ` (${displayDocName})`;
     }
-    
-    pageNumDisplay.textContent = fullDisplayText;
-    pageNumDisplay.title = `${pageInfoText} (檔案: ${fullDocNameForTitle})`;
-   
+
+    if (pageNumDisplay) pageNumDisplay.textContent = fullDisplayText;
+    if (pageNumDisplay) pageNumDisplay.title = `${pageInfoText} (檔案：${fullDocNameForTitle})`;
+
     if (pageToGoInput) {
         pageToGoInput.value = currentPage;
         pageToGoInput.max = globalTotalPages;
     }
-    
+
     if (goToFirstPageBtn) goToFirstPageBtn.disabled = (currentPage === 1);
     if (prevPageBtn) prevPageBtn.disabled = (currentPage === 1);
     if (nextPageBtn) nextPageBtn.disabled = (currentPage === globalTotalPages);
-    
+
     if (pageSlider) {
         pageSlider.max = globalTotalPages;
         pageSlider.value = currentPage;
@@ -437,28 +860,33 @@ function updatePageControls() {
 
     fabContainer.style.display = 'flex';
 
-    // 更新按鈕狀態
+    // Update button states
     toggleUnderlineBtn?.classList.toggle('active', showSearchResultsHighlights);
-    
+
     if (toggleHighlighterBtn) {
         toggleHighlighterBtn.classList.toggle('active', highlighterEnabled);
-        toggleHighlighterBtn.title = highlighterEnabled ? '停用螢光筆' : '啟用螢光筆';
+        toggleHighlighterBtn.title = highlighterEnabled ? '關閉螢光筆' : '開啟螢光筆';
     }
-    
+
     if (toggleTextSelectionBtn) {
         toggleTextSelectionBtn.classList.toggle('active', textSelectionModeActive);
-        toggleTextSelectionBtn.title = textSelectionModeActive ? '停用文字選擇' : '啟用文字選擇';
+        toggleTextSelectionBtn.title = textSelectionModeActive ? '關閉文字選取' : '開啟文字選取';
     }
-    
+
     toggleParagraphSelectionBtn?.classList.toggle('active', paragraphSelectionModeActive);
-    
+
     if (sharePageBtn) sharePageBtn.disabled = !navigator.share;
-    
+
     if (toggleLocalMagnifierBtn) {
         toggleLocalMagnifierBtn.classList.toggle('active', localMagnifierEnabled);
-        toggleLocalMagnifierBtn.title = localMagnifierEnabled ? '停用放大鏡' : '啟用放大鏡';
+        toggleLocalMagnifierBtn.title = localMagnifierEnabled ? '關閉放大鏡' : '開啟放大鏡';
     }
-    
+
+    if (toggleNotesBtn) {
+        toggleNotesBtn.classList.toggle('active', notesModeActive);
+        toggleNotesBtn.title = notesModeActive ? '關閉筆記模式' : '開啟筆記模式';
+    }
+
     if (localMagnifierZoomControlsDiv) {
         localMagnifierZoomControlsDiv.style.display = (hasDocs && localMagnifierEnabled) ? 'flex' : 'none';
     }
@@ -466,112 +894,57 @@ function updatePageControls() {
     const isTSModeActive = textSelectionModeActive;
     if (copyPageTextBtn) {
         copyPageTextBtn.disabled = !hasDocs || !isTSModeActive;
-        copyPageTextBtn.title = isTSModeActive ? '複製本頁文字' : '請先啟用文字選擇 (TS) 模式';
+        copyPageTextBtn.title = isTSModeActive ? '複製頁面文字' : '請先開啟文字選取模式';
     }
-    
+
     if (toggleParagraphSelectionBtn) {
         toggleParagraphSelectionBtn.disabled = !hasDocs || !isTSModeActive;
-        toggleParagraphSelectionBtn.title = isTSModeActive ? '啟用段落選擇' : '請先啟用文字選擇 (TS) 模式';
-    }
-    
-    // 如果 helpFab 存在且未永久隱藏，則顯示它
-    if (helpFab && localStorage.getItem('helpIconHidden') !== 'true') {
-        helpFab.style.display = 'flex';
+        toggleParagraphSelectionBtn.title = isTSModeActive ? '開啟段落選取' : '請先開啟文字選取模式';
     }
 
     updateResultsNav();
     updateZoomControls();
+    updateFileSwitchSelection();
 }
 
-// === 工具列切換 ===
-toolbarToggleTab?.addEventListener('click', () => {
-    appContainer?.classList.toggle('menu-active');
-});
+
 
 pdfContainer?.addEventListener('click', (e) => {
-    if (window.innerWidth <= 768 && 
-        appContainer?.classList.contains('menu-active') && 
+    // Mobile menu auto-hide
+    if (window.innerWidth <= 768 &&
+        appContainer?.classList.contains('menu-active') &&
         !toolbar?.contains(e.target)) {
         appContainer.classList.remove('menu-active');
     }
 });
 
-// ==========================================================
-// === 方案一：浮動說明按鈕邏輯優化 ===
-// ==========================================================
-const helpContainer = document.getElementById('help-container');
-const helpFab = document.getElementById('help-fab'); // 假設這是新的浮動按鈕
-const permanentCloseBtn = document.getElementById('permanent-close-btn'); // 假設這是說明區塊內的永久關閉按鈕
+// Dedicated listener for adding notes on the notes layer
+notesLayer?.addEventListener('click', (e) => {
+    if (!notesModeActive) return;
 
-// 頁面載入時，檢查是否要永久隱藏 Fab
-if (localStorage.getItem('helpIconHidden') === 'true') {
-    if (helpContainer) helpContainer.style.display = 'none';
-    if (helpFab) helpFab.style.display = 'none';
-} else {
-    // 預設隱藏詳細說明，只顯示 FAB (在 updatePageControls 中處理 FAB 顯示)
-    if (helpContainer) helpContainer.style.display = 'none';
-}
+    // Prevent adding note when clicking on existing markers
+    if (e.target.classList.contains('note-marker')) return;
 
-// 點擊浮動按鈕：顯示完整的說明區塊 (Modal/Sidebar)
-helpFab?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (helpContainer) {
-        // 這裡可以換成顯示一個 Modal 效果
-        helpContainer.style.display = 'block'; 
-        showNotification('顯示應用程式說明', 'info');
-    }
+    const rect = canvasWrapper.getBoundingClientRect();
+    const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+    const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+
+    currentNotePosition = { x: xPercent, y: yPercent };
+    openNoteModal();
 });
 
-// 點擊「退出說明」按鈕（例如 #close-help-btn 或永久關閉按鈕旁邊的關閉按鈕）
-const closeHelpBtn = document.getElementById('close-help-btn');
-
-closeHelpBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (helpContainer) {
-        helpContainer.style.display = 'none';
-        showNotification('已退出說明', 'info');
-    }
-});
-
-// 點擊「永久隱藏」按鈕 (新按鈕)
-permanentCloseBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (helpContainer) helpContainer.style.display = 'none';
-    if (helpFab) helpFab.style.display = 'none';
-    
-    // 執行永久儲存
-    localStorage.setItem('helpIconHidden', 'true');
-    showNotification('說明按鈕已永久隱藏', 'info');
-});
-
-// ==========================================================
-// === END: 方案一：浮動說明按鈕邏輯優化 ===
-// ==========================================================
-
-// === 關閉按鈕功能 (關閉側邊欄) ===
-const closeToolbarBtn = document.getElementById('close-toolbar-btn');
-
-closeToolbarBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (appContainer) {
-        appContainer.classList.remove('menu-active');
-    }
-});
-// === 渲染頁面 ===
+// === Page Rendering ===
 function renderPage(globalPageNum, highlightPattern = null) {
     if (!pdfDocs.length || !pdfContainer || !canvas || !ctx) return;
-    
+
     pageRendering = true;
     currentPageTextContent = null;
     currentViewport = null;
     updatePageControls();
-    
+
     drawingCtx?.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     clearParagraphHighlights();
+    if (notesLayer) notesLayer.innerHTML = '';
 
     const pageInfo = getDocAndLocalPage(globalPageNum);
     if (!pageInfo) {
@@ -627,7 +1000,7 @@ function renderPage(globalPageNum, highlightPattern = null) {
 
             const canvasOffsetTop = canvas.offsetTop;
             const canvasOffsetLeft = canvas.offsetLeft;
-            
+
             if (textLayerDivGlobal) {
                 textLayerDivGlobal.style.width = `${viewportCss.width}px`;
                 textLayerDivGlobal.style.height = `${viewportCss.height}px`;
@@ -642,8 +1015,16 @@ function renderPage(globalPageNum, highlightPattern = null) {
                 drawingCanvas.style.left = `${canvasOffsetLeft}px`;
             }
 
+            if (notesLayer) {
+                notesLayer.style.width = `${viewportCss.width}px`;
+                notesLayer.style.height = `${viewportCss.height}px`;
+                notesLayer.style.top = `${canvasOffsetTop}px`;
+                notesLayer.style.left = `${canvasOffsetLeft}px`;
+                renderNotes();
+            }
+
             if (drawingCtx) {
-                drawingCtx.strokeStyle = 'rgba(255, 255, 0, 0.05)';
+                drawingCtx.strokeStyle = 'rgba(255, 255, 0, 0.1)';
                 drawingCtx.lineWidth = 15;
                 drawingCtx.lineJoin = 'round';
                 drawingCtx.lineCap = 'round';
@@ -663,50 +1044,72 @@ function renderPage(globalPageNum, highlightPattern = null) {
 }
 
 function renderTextLayer(page, viewport, highlightPattern) {
-    if (!textLayerDivGlobal || !pdfjsLib?.Util) return Promise.resolve();
-    
+    if (!textLayerDivGlobal) return Promise.resolve();
+
+    // Clear existing text layer
+    textLayerDivGlobal.innerHTML = '';
+
+    // Check if pdfjsLib.Util is available
+    if (!pdfjsLib?.Util) {
+        console.warn('pdfjsLib.Util not available, skipping text layer rendering');
+        return Promise.resolve();
+    }
+
     return page.getTextContent().then(textContent => {
         currentPageTextContent = textContent;
-        textLayerDivGlobal.innerHTML = '';
-        
+
+        // Handle empty text content (scanned PDFs / image-based PDFs)
+        if (!textContent || !textContent.items || textContent.items.length === 0) {
+            console.log('No text content found on this page (possibly a scanned PDF)');
+            return;
+        }
+
         textContent.items.forEach(item => {
+            // Skip empty strings
+            if (!item.str || item.str.trim() === '') return;
+
             const textDiv = document.createElement('div');
             const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
             let defaultFontSize = item.height * viewport.scale;
             if (defaultFontSize <= 0) defaultFontSize = 10;
-            
-            const style = `
+
+            // Set inline style for positioning
+            textDiv.style.cssText = `
                 position: absolute;
                 left: ${tx[4]}px;
                 top: ${tx[5] - (item.height * viewport.scale)}px;
                 height: ${item.height * viewport.scale}px;
-                width: ${item.width * viewport.scale}px;
                 font-size: ${defaultFontSize}px;
                 line-height: 1;
                 white-space: pre;
                 font-family: ${item.fontName ? item.fontName.split(',')[0] : 'sans-serif'};
+                transform-origin: 0% 0%;
             `;
-            
-            textDiv.setAttribute('style', style);
+
             textDiv.textContent = item.str;
 
-            if (highlightPattern && highlightPattern.test(item.str)) {
-                textDiv.classList.add('wavy-underline');
+            // Highlight matching text (reset lastIndex for global regex)
+            if (highlightPattern) {
+                highlightPattern.lastIndex = 0;
+                if (highlightPattern.test(item.str)) {
+                    textDiv.classList.add('wavy-underline');
+                }
             }
-            
+
             textLayerDivGlobal.appendChild(textDiv);
         });
     }).catch(reason => {
-        console.error('Error rendering text layer:', reason);
+        console.warn('Text layer rendering skipped:', reason.message || reason);
+        // Don't throw - text layer is optional, page render should still complete
     });
 }
 
-// === 繪圖功能 ===
+// === Drawing Function ===
 function getEventPosition(canvasElem, evt) {
     if (!canvasElem) return { x: 0, y: 0 };
     const rect = canvasElem.getBoundingClientRect();
     let clientX, clientY;
-    
+
     if (evt.touches?.length > 0) {
         clientX = evt.touches[0].clientX;
         clientY = evt.touches[0].clientY;
@@ -714,7 +1117,7 @@ function getEventPosition(canvasElem, evt) {
         clientX = evt.clientX;
         clientY = evt.clientY;
     }
-    
+
     return {
         x: clientX - rect.left,
         y: clientY - rect.top
@@ -756,21 +1159,29 @@ if (drawingCanvas) {
     drawingCanvas.addEventListener('touchcancel', stopDrawing);
 }
 
-// === 縮圖渲染 ===
+// === Thumbnail Rendering ===
 async function renderThumbnail(docIndex, localPageNum, canvasEl) {
     try {
         const doc = pdfDocs[docIndex];
         if (!doc || !canvasEl) return;
-        
+
+        // Guard: If parent width is 0 or too small, wait and retry
+        const parentWidth = canvasEl.parentElement?.clientWidth || 0;
+        if (parentWidth <= 30) {
+            setTimeout(() => renderThumbnail(docIndex, localPageNum, canvasEl), 150);
+            return;
+        }
+
         const page = await doc.getPage(localPageNum);
         const viewport = page.getViewport({ scale: 1 });
-        const scale = (canvasEl.parentElement.clientWidth - 20) / viewport.width;
+        const scale = (parentWidth - 20) / viewport.width;
         const scaledViewport = page.getViewport({ scale });
         const thumbnailCtx = canvasEl.getContext('2d');
-        
+
         canvasEl.height = scaledViewport.height;
         canvasEl.width = scaledViewport.width;
-        
+
+
         const renderContext = {
             canvasContext: thumbnailCtx,
             viewport: scaledViewport
@@ -799,7 +1210,8 @@ function initThumbnailObserver() {
     }, { root: resultsList, rootMargin: '0px 0px 200px 0px' });
 }
 
-// === 搜尋功能 ===
+
+// === Search Function ===
 function searchKeyword() {
     const input = searchInputElem?.value.trim();
     searchResults = [];
@@ -810,13 +1222,13 @@ function searchKeyword() {
     if (panelResultsDropdown) panelResultsDropdown.innerHTML = searchingOption;
     if (fileFilterDropdown) fileFilterDropdown.innerHTML = '<option value="all">所有檔案</option>';
     if (panelFileFilterDropdown) panelFileFilterDropdown.innerHTML = '<option value="all">所有檔案</option>';
-    if (resultsList) resultsList.innerHTML = '正在搜尋，請稍候...';
+    if (resultsList) resultsList.innerHTML = '搜尋中，請稍候...';
     updateResultsNav();
 
     if (!pdfDocs.length || !input) {
         if (pdfDocs.length > 0) renderPage(currentPage, null);
-        if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-        if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+        if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">Search Results</option>';
+        if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">Search Results</option>';
         if (resultsList) resultsList.innerHTML = '';
         updateResultsNav();
         return;
@@ -832,8 +1244,8 @@ function searchKeyword() {
             const keywords = escapedInput.split(/\s+/).filter(k => k.length > 0);
             if (!keywords.length) {
                 if (pdfDocs.length > 0) renderPage(currentPage, null);
-                if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-                if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+                if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">Search Results</option>';
+                if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">Search Results</option>';
                 if (resultsList) resultsList.innerHTML = '';
                 updateResultsNav();
                 return;
@@ -841,9 +1253,9 @@ function searchKeyword() {
             pattern = new RegExp(keywords.join('.*?'), 'gi');
         }
     } catch (e) {
-        showNotification('無效的正規表示式：' + e.message, 'error');
-        if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
-        if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">搜尋結果</option>';
+        showNotification('Invalid Regular Expression: ' + e.message, 'error');
+        if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">Search Results</option>';
+        if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">Search Results</option>';
         if (resultsList) resultsList.innerHTML = '';
         updateResultsNav();
         return;
@@ -856,7 +1268,7 @@ function searchKeyword() {
         for (let i = 1; i <= doc.numPages; i++) {
             const currentGlobalPageForSearch = globalPageOffset + i;
             const pageInfo = pageMap[currentGlobalPageForSearch - 1];
-            
+
             promises.push(
                 doc.getPage(i)
                     .then(p => p.getTextContent())
@@ -866,8 +1278,8 @@ function searchKeyword() {
                         if (pattern.test(pageText)) {
                             pattern.lastIndex = 0;
                             const matchResult = pattern.exec(pageText);
-                            let foundMatchSummary = '找到相符結果';
-                            
+                            let foundMatchSummary = '找到符合項目';
+
                             if (matchResult) {
                                 const matchedText = matchResult[0];
                                 const matchIndex = matchResult.index;
@@ -902,7 +1314,7 @@ function searchKeyword() {
         searchResults = allPageResults
             .filter(r => r !== null)
             .sort((a, b) => a.page - b.page);
-        
+
         if (resultsDropdown) resultsDropdown.innerHTML = '';
         if (panelResultsDropdown) panelResultsDropdown.innerHTML = '';
         if (resultsList) resultsList.innerHTML = '';
@@ -915,15 +1327,21 @@ function searchKeyword() {
             if (panelFileFilterDropdown) panelFileFilterDropdown.innerHTML = '<option value="all">所有檔案</option>';
             if (resultsList) resultsList.innerHTML = '<p style="padding: 10px;">找不到關鍵字。</p>';
             renderPage(currentPage, null);
-            showNotification('找不到符合的搜尋結果', 'info');
+            showNotification('找不到符合結果', 'info');
         } else {
+            // IMPORTANT: Expand the panel BEFORE populating results
+            // This ensures the container has proper width when thumbnails are observed
+            updateResultsNav();
             updateFilterAndResults('all');
             if (searchResults.length > 0) {
                 goToPage(searchResults[0].page, pattern);
             }
             showNotification(`找到 ${searchResults.length} 個符合結果`, 'success');
         }
-        updateResultsNav();
+        // Also call for the no-results case
+        if (searchResults.length === 0) {
+            updateResultsNav();
+        }
 
         if (window.innerWidth <= 768 && appContainer?.classList.contains('menu-active')) {
             appContainer.classList.remove('menu-active');
@@ -936,7 +1354,7 @@ function searchKeyword() {
         if (resultsList) resultsList.innerHTML = '<p style="padding: 10px;">搜尋時發生錯誤。</p>';
         renderPage(currentPage, null);
         updateResultsNav();
-        showNotification('搜尋時發生錯誤', 'error');
+        showNotification('An error occurred during search', 'error');
     });
 }
 
@@ -945,6 +1363,7 @@ function updateResultsNav() {
     document.body.classList.toggle('results-bar-visible', hasResults);
     appContainer?.classList.toggle('results-panel-visible', hasResults);
 }
+
 
 function updateFilterAndResults(selectedFile = 'all') {
     currentFileFilter = selectedFile;
@@ -972,21 +1391,21 @@ function updateFilterAndResults(selectedFile = 'all') {
         if (!dropdown) return;
         dropdown.innerHTML = '';
         if (filteredResults.length === 0) {
-            dropdown.innerHTML = '<option value="">此檔案無搜尋結果</option>';
+            dropdown.innerHTML = '<option value="">此檔案中無符合結果</option>';
         } else {
             filteredResults.forEach(result => {
                 const option = document.createElement('option');
                 option.value = result.page;
-                option.innerHTML = `第 ${result.page} 頁: ${result.summary}`;
+                option.innerHTML = `第 ${result.page} 頁：${result.summary}`;
                 dropdown.appendChild(option);
             });
         }
     });
-    
+
     if (resultsList) {
         resultsList.innerHTML = '';
         if (filteredResults.length === 0) {
-             resultsList.innerHTML = '<p style="padding: 10px;">在此檔案中找不到結果。</p>';
+            resultsList.innerHTML = '<p style="padding: 10px;">此檔案中找不到符合結果。</p>';
         } else {
             initThumbnailObserver();
             filteredResults.forEach(result => {
@@ -1006,7 +1425,7 @@ function updateFilterAndResults(selectedFile = 'all') {
             });
         }
     }
-    
+
     const currentPageResult = filteredResults.find(r => r.page === currentPage);
     if (currentPageResult) {
         summaryDropdowns.forEach(d => {
@@ -1015,7 +1434,7 @@ function updateFilterAndResults(selectedFile = 'all') {
     }
 }
 
-// === 搜尋事件監聽 ===
+// === Search Event Listeners ===
 searchActionButton?.addEventListener('click', searchKeyword);
 searchInputElem?.addEventListener('keypress', e => {
     if (e.key === 'Enter') {
@@ -1049,31 +1468,27 @@ function goToPageDropdown(pageNumStr) {
 
 function goToPage(globalPageNum, highlightPatternForPage = null) {
     if (!pdfDocs.length || isNaN(globalPageNum)) return;
-    
+
     const n = Math.max(1, Math.min(globalPageNum, globalTotalPages));
     const currentGlobalPattern = getPatternFromSearchInput();
-    
-    const isSamePage = currentPage === n;
-    // 檢查高亮模式是否相同，使用 JSON.stringify 進行模式比較
-    const isSameHighlight = JSON.stringify(highlightPatternForPage) === JSON.stringify(currentGlobalPattern);
-    
-    if (isSamePage && isSameHighlight) {
-        // 如果頁碼和高亮模式都相同，直接返回，避免不必要的渲染
+
+    if (pageRendering && currentPage === n &&
+        JSON.stringify(highlightPatternForPage) === JSON.stringify(currentGlobalPattern)) {
         return;
     }
-    
-    if (pageRendering) {
-        // 如果頁面正在渲染中，除非是強制刷新同頁的高亮，否則忽略新請求
-        if (!isSamePage || isSameHighlight) return;
+
+    if (pageRendering && !(currentPage === n &&
+        JSON.stringify(highlightPatternForPage) !== JSON.stringify(currentGlobalPattern))) {
+        return;
     }
-    
+
     currentPage = n;
-    const finalHighlightPattern = highlightPatternForPage !== null 
-        ? highlightPatternForPage 
+    const finalHighlightPattern = highlightPatternForPage !== null
+        ? highlightPatternForPage
         : currentGlobalPattern;
-    
+
     renderPage(currentPage, finalHighlightPattern);
-    
+
     if (pageToGoInput) pageToGoInput.value = currentPage;
     if (pageSlider) pageSlider.value = currentPage;
     if (resultsDropdown) resultsDropdown.value = currentPage;
@@ -1081,17 +1496,17 @@ function goToPage(globalPageNum, highlightPatternForPage = null) {
 }
 
 function getPatternFromSearchInput() {
-    const input = searchInputElem?.value.trim();
-    if (!input) return null;
-    
+    const i = searchInputElem?.value.trim();
+    if (!i) return null;
+
     try {
-        if (input.startsWith('/') && input.lastIndexOf('/') > 0) {
-            const lastSlashIndex = input.lastIndexOf('/');
-            return new RegExp(input.slice(1, lastSlashIndex), input.slice(lastSlashIndex + 1));
+        if (i.startsWith('/') && i.lastIndexOf('/') > 0) {
+            const ls = i.lastIndexOf('/');
+            return new RegExp(i.slice(1, ls), i.slice(ls + 1));
         } else {
-            const escapedInput = input.replace(/[/\\^$*+?.()|[\]{}]/g, '\\$&');
-            const keywords = escapedInput.split(/\s+/).filter(keyword => keyword.length > 0);
-            if (keywords.length > 0) return new RegExp(keywords.join('.*?'), 'gi');
+            const es = i.replace(/[/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const k = es.split(/\s+/).filter(ky => ky.length > 0);
+            if (k.length > 0) return new RegExp(k.join('.*?'), 'gi');
         }
     } catch (e) {
         console.warn('Could not create regex from input:', e);
@@ -1100,7 +1515,7 @@ function getPatternFromSearchInput() {
     return null;
 }
 
-// === 頁面導航 ===
+// === Page Navigation ===
 goToFirstPageBtn?.addEventListener('click', () => {
     if (pdfDocs.length > 0) goToPage(1, getPatternFromSearchInput());
 });
@@ -1116,8 +1531,8 @@ nextPageBtn?.addEventListener('click', () => {
 });
 
 goToPageBtn?.addEventListener('click', () => {
-    const pageNumber = parseInt(pageToGoInput?.value);
-    if (!isNaN(pageNumber)) goToPage(pageNumber, getPatternFromSearchInput());
+    const pn = parseInt(pageToGoInput?.value);
+    if (!isNaN(pn)) goToPage(pn, getPatternFromSearchInput());
 });
 
 pageToGoInput?.addEventListener('keypress', e => {
@@ -1133,14 +1548,14 @@ pageSlider?.addEventListener('input', () => {
     if (currentPage !== newPage) goToPage(newPage, getPatternFromSearchInput());
 });
 
-// === 匯出頁面 ===
+// === Export Page ===
 exportPageBtn?.addEventListener('click', async () => {
     if (!pdfDocs.length || !canvas) {
-        showNotification('請先載入 PDF 檔案', 'error');
+        showNotification('Please load a PDF file first', 'error');
         return;
     }
     if (pageRendering) {
-        showNotification('頁面仍在渲染中，請稍候', 'warning');
+        showNotification('Page is still rendering, please wait', 'warning');
         return;
     }
 
@@ -1151,18 +1566,18 @@ exportPageBtn?.addEventListener('click', async () => {
 
     try {
         const pageInfo = getDocAndLocalPage(currentPage);
-        if (!pageInfo) throw new Error('無法取得目前頁面資訊');
+        if (!pageInfo) throw new Error('無法獲取目前頁面資訊');
 
         const page = await pageInfo.doc.getPage(pageInfo.localPage);
-        const exportViewport = page.getViewport({ 
-            scale: currentScale * EXPORT_RESOLUTION_MULTIPLIER 
+        const exportViewport = page.getViewport({
+            scale: currentScale * EXPORT_RESOLUTION_MULTIPLIER
         });
 
         const tc = document.createElement('canvas');
-        tc.width = exportViewport.width;
-        tc.height = exportViewport.height;
-        const tctx = tc.getContext('2d');
-        if (!tctx) throw new Error('無法為匯出的畫布取得渲染環境');
+        tctx.width = exportViewport.width;
+        tctx.height = exportViewport.height;
+        const tctx_ctx = tc.getContext('2d');
+        if (!tctx_ctx) throw new Error('無法獲取匯出畫布的渲染上下文');
 
         const renderContext = {
             canvasContext: tctx,
@@ -1186,18 +1601,18 @@ exportPageBtn?.addEventListener('click', async () => {
         document.body.appendChild(l);
         l.click();
         document.body.removeChild(l);
-        
-        showNotification('頁面已成功匯出', 'success');
+
+        showNotification('Page exported successfully', 'success');
     } catch (er) {
         console.error('Export error:', er);
-        showNotification('匯出圖片失敗: ' + er.message, 'error');
+        showNotification('Failed to export image: ' + er.message, 'error');
     } finally {
         exportPageBtn.disabled = false;
         exportPageBtn.innerHTML = originalBtnText;
     }
 });
 
-// === 工具按鈕 ===
+// === Tool Buttons ===
 toggleUnderlineBtn?.addEventListener('click', () => {
     if (!pdfDocs.length) return;
     showSearchResultsHighlights = !showSearchResultsHighlights;
@@ -1205,26 +1620,30 @@ toggleUnderlineBtn?.addEventListener('click', () => {
 });
 
 function deactivateAllModes(except = null) {
-    if (except !== 'highlighter' && highlighterEnabled) {
+    if (except !== 'highlighter') {
         highlighterEnabled = false;
-        if (drawingCanvas) drawingCanvas.style.pointerEvents = 'none';
+        if (toggleHighlighterBtn) toggleHighlighterBtn.classList.remove('active');
     }
-    if (except !== 'textSelection' && textSelectionModeActive) {
-        textSelectionModeActive = false;
-        if (textLayerDivGlobal) {
-            textLayerDivGlobal.style.pointerEvents = 'none';
-            textLayerDivGlobal.classList.remove('text-selection-active');
-        }
-        if (canvas) canvas.style.visibility = 'visible';
-    }
-    if (except !== 'localMagnifier' && localMagnifierEnabled) {
+    if (except !== 'magnifier') {
         localMagnifierEnabled = false;
+        if (toggleLocalMagnifierBtn) toggleLocalMagnifierBtn.classList.remove('active');
         if (magnifierGlass) magnifierGlass.style.display = 'none';
+        if (localMagnifierZoomControlsDiv) localMagnifierZoomControlsDiv.style.display = 'none';
     }
-    if (except !== 'paragraphSelection' && paragraphSelectionModeActive) {
+    if (except !== 'selection') {
+        textSelectionModeActive = false;
+        if (toggleTextSelectionBtn) toggleTextSelectionBtn.classList.remove('active');
+        if (textLayerDivGlobal) textLayerDivGlobal.classList.remove('text-selection-active');
         paragraphSelectionModeActive = false;
-        if (pdfContainer) pdfContainer.classList.remove('paragraph-selection-mode');
+        if (toggleParagraphSelectionBtn) toggleParagraphSelectionBtn.classList.remove('active');
         clearParagraphHighlights();
+    }
+    if (except !== 'notes') {
+        notesModeActive = false;
+        if (toggleNotesBtn) toggleNotesBtn.classList.remove('active');
+        if (pdfContainer) pdfContainer.classList.remove('notes-mode');
+        if (canvasWrapper) canvasWrapper.classList.remove('notes-mode');
+        if (notesLayer) notesLayer.classList.remove('active');
     }
     updatePageControls();
 }
@@ -1240,6 +1659,27 @@ toggleHighlighterBtn?.addEventListener('click', () => {
     updatePageControls();
 });
 
+toggleNotesBtn?.addEventListener('click', () => {
+    if (!pdfDocs.length) return;
+    const wasActive = notesModeActive;
+    deactivateAllModes();
+    if (!wasActive) {
+        notesModeActive = true;
+        if (pdfContainer) pdfContainer.classList.add('notes-mode');
+        if (canvasWrapper) canvasWrapper.classList.add('notes-mode');
+        if (notesLayer) notesLayer.classList.add('active');
+    }
+    updatePageControls();
+});
+
+viewNotesBtn?.addEventListener('click', () => {
+    if (!pdfDocs.length) return;
+    notesListPanel?.classList.toggle('active');
+    if (notesListPanel?.classList.contains('active')) {
+        showNotesList();
+    }
+});
+
 toggleTextSelectionBtn?.addEventListener('click', () => {
     if (!pdfDocs.length) return;
     const wasActive = textSelectionModeActive;
@@ -1250,7 +1690,7 @@ toggleTextSelectionBtn?.addEventListener('click', () => {
             textLayerDivGlobal.style.pointerEvents = 'auto';
             textLayerDivGlobal.classList.add('text-selection-active');
         }
-        if (canvas) canvas.style.visibility = 'hidden';
+        // Keep canvas visible - text layer is transparent overlay
     }
     updatePageControls();
 });
@@ -1276,48 +1716,59 @@ toggleParagraphSelectionBtn?.addEventListener('click', () => {
         if (pdfContainer) pdfContainer.classList.remove('paragraph-selection-mode');
         clearParagraphHighlights();
     }
-    
+
     updatePageControls();
 });
 
 clearHighlighterBtn?.addEventListener('click', () => {
     if (!pdfDocs.length) return;
     drawingCtx?.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-    showNotification('螢光筆標記已清除', 'success');
+    showNotification('Highlighter marks cleared', 'success');
+});
+
+// Note Modal Actions
+saveNoteBtn?.addEventListener('click', saveCurrentNote);
+cancelNoteBtn?.addEventListener('click', closeNoteModalFunc);
+closeNoteModal?.addEventListener('click', closeNoteModalFunc);
+deleteNoteBtn?.addEventListener('click', deleteCurrentNote);
+
+// Close Notes List
+closeNotesList?.addEventListener('click', () => {
+    notesListPanel?.classList.remove('active');
 });
 
 copyPageTextBtn?.addEventListener('click', async () => {
     if (!pdfDocs.length || pageRendering) return;
-    
+
     const pageInfo = getDocAndLocalPage(currentPage);
     if (!pageInfo) {
-        showNotification('無法取得目前頁面資訊', 'error');
+        showNotification('Could not get current page information', 'error');
         return;
     }
-    
+
     try {
         const page = await pageInfo.doc.getPage(pageInfo.localPage);
         const textContent = await page.getTextContent();
         const pageText = textContent.items.map(item => item.str).join('\n');
         await navigator.clipboard.writeText(pageText);
-        showNotification('本頁文字已複製到剪貼簿！', 'success');
+        showNotification('Page text copied to clipboard!', 'success');
     } catch (err) {
         console.error('Failed to copy text:', err);
-        showNotification('複製本頁文字時發生錯誤', 'error');
+        showNotification('Error copying page text', 'error');
     }
 });
 
 sharePageBtn?.addEventListener('click', async () => {
     if (!pdfDocs.length || !canvas) {
-        showNotification('請先載入 PDF 檔案', 'error');
+        showNotification('Please load a PDF file first', 'error');
         return;
     }
     if (pageRendering) {
-        showNotification('頁面仍在渲染中，請稍候', 'warning');
+        showNotification('Page is still rendering, please wait', 'warning');
         return;
     }
     if (!navigator.share) {
-        showNotification('您的瀏覽器不支援 Web Share API', 'error');
+        showNotification('Your browser does not support the Web Share API', 'error');
         return;
     }
 
@@ -1328,18 +1779,18 @@ sharePageBtn?.addEventListener('click', async () => {
 
     try {
         const pageInfo = getDocAndLocalPage(currentPage);
-        if (!pageInfo) throw new Error('無法取得目前頁面資訊');
+        if (!pageInfo) throw new Error('Could not get current page information');
 
         const page = await pageInfo.doc.getPage(pageInfo.localPage);
-        const shareViewport = page.getViewport({ 
-            scale: currentScale * SHARE_RESOLUTION_MULTIPLIER 
+        const shareViewport = page.getViewport({
+            scale: currentScale * SHARE_RESOLUTION_MULTIPLIER
         });
 
         const tc = document.createElement('canvas');
         tc.width = shareViewport.width;
         tc.height = shareViewport.height;
-        const tctx = tc.getContext('2d');
-        if (!tctx) throw new Error('無法為分享的畫布取得渲染環境');
+        const tctx_share = tc.getContext('2d');
+        if (!tctx_share) throw new Error('無法獲取分享畫布的渲染上下文');
 
         const renderContext = {
             canvasContext: tctx,
@@ -1356,13 +1807,13 @@ sharePageBtn?.addEventListener('click', async () => {
         }
 
         const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/png'));
-        if (!blob) throw new Error('無法從畫布建立圖片資料。');
+        if (!blob) throw new Error('Could not create image data from canvas.');
 
         const docNamePart = pageInfo.docName.replace(/\.pdf$/i, '');
         const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated_HD.png`;
         const f = new File([blob], fn, { type: 'image/png' });
         const sd = {
-            title: `PDF 全域頁碼 ${currentPage}`,
+            title: `PDF 全域第 ${currentPage} 頁`,
             text: `來自 ${docNamePart} 的第 ${pageInfo.localPage} 頁 (PDF 工具)`,
             files: [f]
         };
@@ -1370,12 +1821,12 @@ sharePageBtn?.addEventListener('click', async () => {
         if (navigator.canShare && navigator.canShare({ files: [f] })) {
             await navigator.share(sd);
         } else {
-            showNotification('您的瀏覽器不支援分享檔案', 'error');
+            showNotification('Your browser does not support file sharing', 'error');
         }
     } catch (er) {
         console.error('Share error:', er);
         if (er.name !== 'AbortError') {
-            showNotification('分享失敗: ' + er.message, 'error');
+            showNotification('Share failed: ' + er.message, 'error');
         }
     } finally {
         sharePageBtn.disabled = false;
@@ -1390,7 +1841,7 @@ localMagnifierZoomSelector?.addEventListener('change', e => {
 function handlePointerMoveForLocalMagnifier(e) {
     if (!localMagnifierEnabled) return;
     if (e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
-    
+
     let clientX, clientY;
     if (e.touches?.length > 0) {
         clientX = e.touches[0].clientX;
@@ -1401,7 +1852,7 @@ function handlePointerMoveForLocalMagnifier(e) {
     } else {
         return;
     }
-    
+
     updateLocalMagnifier(clientX, clientY);
 }
 
@@ -1420,7 +1871,7 @@ if (pdfContainer) {
     pdfContainer.addEventListener('touchcancel', handlePointerLeaveForLocalMagnifier);
 }
 
-// === 視窗調整大小 ===
+// === Window Resizing ===
 let resizeTimeout;
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
@@ -1431,7 +1882,8 @@ window.addEventListener('resize', () => {
     }, 250);
 });
 
-// === 縮放控制 ===
+// === Zoom Controls ===
+// *** 修正：全部改用 forEach 迴圈 ***
 fitWidthBtns?.forEach(btn => {
     btn.addEventListener('click', () => {
         currentZoomMode = 'width';
@@ -1446,26 +1898,30 @@ fitHeightBtns?.forEach(btn => {
     });
 });
 
-zoomInBtn?.addEventListener('click', () => {
-    currentZoomMode = 'custom';
-    currentScale += 0.2;
-    renderPage(currentPage, getPatternFromSearchInput());
+zoomInBtns?.forEach(btn => {
+    btn.addEventListener('click', () => {
+        currentZoomMode = 'custom';
+        currentScale += 0.2;
+        renderPage(currentPage, getPatternFromSearchInput());
+    });
 });
 
-zoomOutBtn?.addEventListener('click', () => {
-    currentZoomMode = 'custom';
-    currentScale = Math.max(0.1, currentScale - 0.2);
-    renderPage(currentPage, getPatternFromSearchInput());
+zoomOutBtns?.forEach(btn => {
+    btn.addEventListener('click', () => {
+        currentZoomMode = 'custom';
+        currentScale = Math.max(0.1, currentScale - 0.2);
+        renderPage(currentPage, getPatternFromSearchInput());
+    });
 });
 
-// === 搜尋結果導航 ===
+// === Search Result Navigation ===
 function navigateToNextResult() {
     if (!searchResults.length) return;
     const nextResult = searchResults.find(r => r.page > currentPage);
     if (nextResult) {
         goToPage(nextResult.page, getPatternFromSearchInput());
     } else {
-        showNotification('已到達最後一筆結果', 'info');
+        showNotification('Already at the last result', 'info');
     }
 }
 
@@ -1475,11 +1931,11 @@ function navigateToPreviousResult() {
     if (prevResult) {
         goToPage(prevResult.page, getPatternFromSearchInput());
     } else {
-        showNotification('已到達第一筆結果', 'info');
+        showNotification('Already at the first result', 'info');
     }
 }
 
-// === 通知系統 (優化版) ===
+// === Notification System (Optimized) ===
 function showNotification(message, type = 'info') {
     let notificationContainer = document.getElementById('notification-container');
     if (!notificationContainer) {
@@ -1500,26 +1956,26 @@ function showNotification(message, type = 'info') {
 
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
-    
+
     const icons = {
         success: '✓',
         error: '✕',
         warning: '⚠',
         info: 'ℹ'
     };
-    
+
     notification.innerHTML = `
         <span class="notification-icon">${icons[type] || icons.info}</span>
         <span class="notification-message">${message}</span>
         <button class="notification-close" onclick="this.parentElement.remove()">×</button>
     `;
-    
+
     Object.assign(notification.style, {
         padding: '12px 16px',
         borderRadius: '8px',
         backgroundColor: type === 'success' ? '#10b981' :
-                         type === 'error' ? '#ef4444' :
-                         type ==='warning' ? '#f59e0b' : '#3b82f6',
+            type === 'error' ? '#ef4444' :
+                type === 'warning' ? '#f59e0b' : '#3b82f6',
         color: 'white',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         display: 'flex',
@@ -1528,16 +1984,16 @@ function showNotification(message, type = 'info') {
         animation: 'slideIn 0.3s ease-out',
         fontSize: '14px'
     });
-    
+
     notificationContainer.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-in';
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
 
-// 載入覆蓋層
+// Loading Overlay
 function showLoadingOverlay(message = '載入中...') {
     let overlay = document.getElementById('loading-overlay');
     if (!overlay) {
@@ -1563,7 +2019,11 @@ function showLoadingOverlay(message = '載入中...') {
         });
         document.body.appendChild(overlay);
     } else {
-        overlay.querySelector('.loading-message').textContent = message;
+        // Support both id and class selectors for loading-message element
+        const messageEl = overlay.querySelector('.loading-message') || overlay.querySelector('#loading-message');
+        if (messageEl) {
+            messageEl.textContent = message;
+        }
         overlay.style.display = 'flex';
     }
 }
@@ -1575,7 +2035,12 @@ function hideLoadingOverlay() {
     }
 }
 
-// === 觸控手勢 ===
+// Simple Feedback Message (for legacy compatibility)
+function showFeedback(message) {
+    showNotification(message, 'info');
+}
+
+// === Touch Gestures ===
 let touchStartX = 0;
 let touchStartY = 0;
 let isSwiping = false;
@@ -1584,8 +2049,8 @@ const MAX_SWIPE_DISTANCE_Y = 60;
 
 if (pdfContainer) {
     pdfContainer.addEventListener('touchstart', e => {
-        if (highlighterEnabled || textSelectionModeActive || 
-            localMagnifierEnabled || paragraphSelectionModeActive || 
+        if (highlighterEnabled || textSelectionModeActive ||
+            localMagnifierEnabled || paragraphSelectionModeActive ||
             e.touches.length !== 1) {
             isSwiping = false;
             return;
@@ -1594,7 +2059,7 @@ if (pdfContainer) {
         touchStartY = e.touches[0].clientY;
         isSwiping = true;
     }, { passive: true });
-    
+
     pdfContainer.addEventListener('touchend', e => {
         if (!isSwiping || e.changedTouches.length !== 1) {
             isSwiping = false;
@@ -1604,7 +2069,7 @@ if (pdfContainer) {
         const touchEndY = e.changedTouches[0].clientY;
         const diffX = touchEndX - touchStartX;
         const diffY = touchEndY - touchStartY;
-        
+
         if (Math.abs(diffX) > MIN_SWIPE_DISTANCE_X && Math.abs(diffY) < MAX_SWIPE_DISTANCE_Y) {
             const isSearchResultMode = searchResults.length > 0;
             if (diffX < 0) {
@@ -1615,13 +2080,13 @@ if (pdfContainer) {
         }
         isSwiping = false;
     });
-    
+
     pdfContainer.addEventListener('touchcancel', () => {
         isSwiping = false;
     });
 }
 
-// === 段落選擇功能 ===
+// === Paragraph Selection Function ===
 function clearParagraphHighlights() {
     document.querySelectorAll('.paragraph-highlight, #copy-paragraph-btn').forEach(el => el.remove());
 }
@@ -1658,7 +2123,7 @@ function handleParagraphSelection(e) {
     let currentLine = [];
     let lastY = -1;
 
-    currentPageTextContent.items.sort((a, b) => 
+    currentPageTextContent.items.sort((a, b) =>
         a.transform[5] - b.transform[5] || a.transform[4] - b.transform[4]
     );
 
@@ -1696,12 +2161,12 @@ function handleParagraphSelection(e) {
     for (let i = paragraphStartLine; i <= paragraphEndLine; i++) {
         const line = lines[i];
         if (!line.length) continue;
-        
+
         const firstItem = line[0];
         const lastItem = line[line.length - 1];
         const txFirst = pdfjsLib.Util.transform(currentViewport.transform, firstItem.transform);
         const txLast = pdfjsLib.Util.transform(currentViewport.transform, lastItem.transform);
-        
+
         const highlight = document.createElement('div');
         highlight.className = 'paragraph-highlight';
         highlight.style.left = `${txFirst[4]}px`;
@@ -1709,7 +2174,7 @@ function handleParagraphSelection(e) {
         highlight.style.width = `${(txLast[4] + lastItem.width * currentViewport.scale) - txFirst[4]}px`;
         highlight.style.height = `${firstItem.height * currentViewport.scale}px`;
         textLayerDivGlobal.appendChild(highlight);
-        
+
         paragraphText += line.map(item => item.str).join('') + '\n';
     }
 
@@ -1717,7 +2182,7 @@ function handleParagraphSelection(e) {
     if (lastLineOfParagraph.length > 0) {
         const lastItemOfParagraph = lastLineOfParagraph[lastLineOfParagraph.length - 1];
         const tx = pdfjsLib.Util.transform(currentViewport.transform, lastItemOfParagraph.transform);
-        
+
         const copyBtn = document.createElement('button');
         copyBtn.id = 'copy-paragraph-btn';
         copyBtn.textContent = '複製';
@@ -1726,10 +2191,10 @@ function handleParagraphSelection(e) {
         copyBtn.onclick = async () => {
             try {
                 await navigator.clipboard.writeText(paragraphText.trim());
-                showNotification('段落已複製！', 'success');
+                showNotification('Paragraph copied!', 'success');
                 clearParagraphHighlights();
             } catch (err) {
-                showNotification('複製失敗', 'error');
+                showNotification('Copy failed', 'error');
                 console.error('Copy failed:', err);
             }
         };
@@ -1741,12 +2206,12 @@ if (pdfContainer) {
     textLayerDivGlobal?.addEventListener('click', handleParagraphSelection);
 }
 
-// === 縮圖重新渲染 ===
+// === Thumbnail Rerendering ===
 function rerenderAllThumbnails() {
     if (!resultsList) return;
     initThumbnailObserver();
     const resultItems = resultsList.querySelectorAll('.result-item');
-    
+
     resultItems.forEach(item => {
         const canvasEl = item.querySelector('.thumbnail-canvas');
         if (canvasEl) {
@@ -1755,7 +2220,7 @@ function rerenderAllThumbnails() {
     });
 }
 
-// === 面板調整大小 ===
+// === Panel Resizing ===
 function initResizer() {
     if (!resizer || !searchResultsPanel || !mainContent) return;
 
@@ -1767,7 +2232,7 @@ function initResizer() {
         x = e.clientX;
         const panelStyles = window.getComputedStyle(searchResultsPanel);
         panelWidth = parseInt(panelStyles.width, 10);
-        
+
         document.body.style.userSelect = 'none';
         document.body.style.pointerEvents = 'none';
 
@@ -1778,11 +2243,11 @@ function initResizer() {
     const mouseMoveHandler = function (e) {
         const dx = e.clientX - x;
         const newWidth = panelWidth - dx;
-        
+
         const minWidth = 200;
         const maxWidth = mainContent.clientWidth * 0.7;
         if (newWidth > minWidth && newWidth < maxWidth) {
-             searchResultsPanel.style.flexBasis = `${newWidth}px`;
+            searchResultsPanel.style.flexBasis = `${newWidth}px`;
         }
     };
 
@@ -1804,14 +2269,14 @@ function initResizer() {
     resizer.addEventListener('mousedown', mouseDownHandler);
 }
 
-// === 鍵盤快捷鍵 ===
+// === Keyboard Shortcuts ===
 document.addEventListener('keydown', e => {
-    // 忽略在輸入框中的按鍵
+    // Ignore keydown events in input fields
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    
+
     if (!pdfDocs.length) return;
 
-    switch(e.key) {
+    switch (e.key) {
         case 'ArrowLeft':
         case 'PageUp':
             e.preventDefault();
@@ -1849,11 +2314,11 @@ document.addEventListener('keydown', e => {
         case '+':
         case '=':
             e.preventDefault();
-            zoomInBtn?.click();
+            zoomInBtns[0]?.click(); // Trigger the first button in the list
             break;
         case '-':
             e.preventDefault();
-            zoomOutBtn?.click();
+            zoomOutBtns[0]?.click(); // Trigger the first button in the list
             break;
         case '0':
             if (e.ctrlKey || e.metaKey) {
@@ -1865,7 +2330,7 @@ document.addEventListener('keydown', e => {
     }
 });
 
-// === 初始化應用 ===
+// === Initialize App ===
 async function initializeApp() {
     try {
         await initDB();
@@ -1886,7 +2351,7 @@ async function initializeApp() {
     }
 }
 
-// === CSS 動畫注入 ===
+// === CSS Animation Injection ===
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideIn {
@@ -1976,7 +2441,7 @@ style.textContent = `
         vertical-align: middle;
     }
     
-    /* 改善按鈕視覺回饋 */
+    /* Improve button visual feedback */
     button:not(:disabled):active {
         transform: scale(0.95);
         transition: transform 0.1s;
@@ -1987,25 +2452,25 @@ style.textContent = `
         cursor: not-allowed;
     }
     
-    /* 改善工具列按鈕的視覺效果 */
+    /* Improve toolbar button visual style */
     .toolbar button.active {
         background-color: #3b82f6;
         color: white;
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
     }
     
-    /* 改善搜尋結果項目的懸停效果 */
+    /* Improve search result item hover effect */
     .result-item {
         transition: all 0.2s;
         cursor: pointer;
     }
     
     .result-item:hover {
-        transform: translateX(5px); /* 調整為向右移動 */
+        transform: translateX(5px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     
-    /* 改善頁面滑桿的視覺效果 */
+    /* Improve page slider visual style */
     input[type="range"]::-webkit-slider-thumb {
         transition: all 0.2s;
     }
@@ -2014,7 +2479,7 @@ style.textContent = `
         transform: scale(1.2);
     }
     
-    /* 改善捲軸樣式 (Webkit) */
+    /* Improve scrollbar style (Webkit) */
     ::-webkit-scrollbar {
         width: 10px;
         height: 10px;
@@ -2033,179 +2498,35 @@ style.textContent = `
         background: #555;
     }
     
-    /* 平滑滾動 */
+    /* Smooth scrolling */
     html {
         scroll-behavior: smooth;
-    }
-    
-    /* 浮動說明按鈕樣式 */
-    #help-fab {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background-color: #f59e0b; /* 警示色/說明色 */
-        color: white;
-        font-size: 20px;
-        font-weight: bold;
-        display: none; /* 預設在 updatePageControls 中控制顯示 */
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        z-index: 9999; 
-        border: none;
-        transition: transform 0.2s;
-    }
-    
-    #help-fab:hover {
-        transform: scale(1.05);
-    }
-    
-    /* 將 #help-container 轉為 Modal 樣式 (僅建議在手機模式下) */
-    @media (max-width: 768px) {
-        #help-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.85); /* 全屏覆蓋 */
-            z-index: 10002;
-            padding: 20px;
-            overflow-y: auto;
-            color: white;
-            display: none; /* 由 JS 控制 */
-        }
-        
-        #help-container h2 {
-            color: white;
-        }
     }
 `;
 document.head.appendChild(style);
 
-// === 啟動應用 ===
+// === Mobile Menu Toggle ===
+toolbarToggleTab?.addEventListener('click', () => {
+    appContainer?.classList.toggle('menu-active');
+});
+
+// Close menu when clicking outside on mobile
+pdfContainer?.addEventListener('click', () => {
+    if (window.innerWidth <= 768 && appContainer?.classList.contains('menu-active')) {
+        appContainer.classList.remove('menu-active');
+    }
+});
+
+// === Start Application ===
 initLocalMagnifier();
 updatePageControls();
 initResizer();
 initializeApp();
 
-console.log('✓ PDF 閱讀器已優化並初始化完成');
-console.log('快捷鍵提示:');
-console.log('  ← / → : 上一頁 / 下一頁 (或上/下一個搜尋結果)');
-console.log('  Home / End : 第一頁 / 最後一頁');
-console.log('  Ctrl+F : 搜尋');
-console.log('  + / - : 放大 / 縮小');
-console.log('  Ctrl+0 : 重設縮放 (符合頁高)');
-
-// ===================================================================
-// ========== START: 與 Learning Toolkit 整合的程式碼 ==========
-// ===================================================================
-
-/**
- * 透過 ArrayBuffer 載入單一 PDF 檔案的核心邏輯。
- * 這是為了讓外部應用 (learning_toolkit) 可以傳送檔案資料來觸發載入。
- * @param {ArrayBuffer} arrayBuffer - PDF 檔案的 ArrayBuffer 內容。
- * @param {string} fileName - 檔案的名稱。
- */
-async function loadPdfFromArrayBuffer(arrayBuffer, fileName = 'document.pdf') {
-    if (!arrayBuffer) return;
-    
-    // 顯示載入動畫
-    showLoadingOverlay('正在從外部載入 PDF...');
-
-    // 重置應用程式狀態
-    resetApp();
-    currentZoomMode = 'height';
-    if (searchInputElem) searchInputElem.value = '';
-    showSearchResultsHighlights = true;
-    textLayerDivGlobal?.classList.remove('highlights-hidden');
-    deactivateAllModes();
-
-    try {
-        const typedarray = new Uint8Array(arrayBuffer);
-        const pdf = await pdfjsLib.getDocument({ 
-            data: typedarray, 
-            isEvalSupported: false, 
-            enableXfa: false 
-        }).promise;
-        
-        // 將載入的 PDF 加入到應用程式的狀態中
-        pdfDocs.push(pdf);
-        for (let i = 1; i <= pdf.numPages; i++) {
-            pageMap.push({ 
-                docIndex: 0, 
-                localPage: i, 
-                docName: fileName 
-            });
-        }
-        
-        globalTotalPages = pageMap.length;
-        
-        hideLoadingOverlay();
-        showNotification(`成功載入 ${fileName}，共 ${globalTotalPages} 頁`, 'success');
-        
-        // 渲染第一頁
-        renderPage(1);
-
-        // 隱藏檔案上傳按鈕，顯示清除按鈕
-        if (fileInput) fileInput.style.display = 'none';
-        if (fileInputLabel) fileInputLabel.style.display = 'none';
-        if (clearSessionBtn) clearSessionBtn.style.display = 'block';
-
-    } catch (error) {
-        hideLoadingOverlay();
-        showNotification('讀取傳入的 PDF 時發生錯誤：' + error, 'error');
-        console.error('Error during ArrayBuffer processing:', error);
-        resetApp();
-    }
-}
-
-
-// 1. 監聽來自父視窗 (learning_toolkit) 的 message 事件
-window.addEventListener('message', (event) => {
-  // **極其重要的安全檢查**：驗證訊息是否來自您預期的來源
-  if (event.origin !== 'https://cormort.github.io') {
-    console.warn('收到來源不明的訊息，已忽略:', event.origin);
-    return;
-  }
-
-  const message = event.data;
-
-  // 檢查訊息類型是否為 'LOAD_PDF'
-  if (message && message.type === 'LOAD_PDF' && message.data) {
-    console.log('收到來自父視窗的 PDF 資料，準備載入...');
-    // `message.data` 就是那個 ArrayBuffer
-    // 呼叫我們上面新增的函數來處理它
-    loadPdfFromArrayBuffer(message.data, 'imported.pdf');
-  }
-});
-
-
-// 2. 當使用者在 PDF 上選取文字時，將訊息傳回給父視窗
-// 我們利用 'mouseup' 事件來偵測文字選取結束
-document.addEventListener('mouseup', () => {
-  // 只有在文字選擇模式啟用時才回傳
-  if (!textSelectionModeActive) return;
-
-  const selectedText = window.getSelection()?.toString();
-  
-  // 確保有選到文字且不是空的
-  if (selectedText && selectedText.trim().length > 0) {
-    // 使用 window.parent 將訊息傳回給 learning_toolkit
-    // **極其重要的安全檢查**：第二個參數指定目標來源
-    window.parent.postMessage({
-      type: 'TEXT_SELECTED',
-      data: selectedText.trim()
-    }, 'https://cormort.github.io');
-  }
-});
-
-console.log('✓ PDF Viewer 已啟用與 Learning Toolkit 的通訊介面');
-
-// ===================================================================
-// ========== END: 與 Learning Toolkit 整合的程式碼 ==========
-// ===================================================================
+console.log('✓ PDF 閱讀器已優化並初始化。');
+console.log('鍵盤快速鍵：');
+console.log('  ← / → ：上一頁 / 下一頁 (或上一個/下一個搜尋結果)');
+console.log('  Home / End ：第一頁 / 最後一頁');
+console.log('  Ctrl+F ：搜尋');
+console.log('  + / - ：放大 / 縮小');
+console.log('  Ctrl+0 ：重設縮放 (符合高度)');
