@@ -1,153 +1,228 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF關鍵字搜尋平台</title>
+  <title>PDF 專業工作室 - 關鍵字搜尋與註解</title>
   <link rel="stylesheet" href="style.css">
+  <script type="module">
+    // Load PDF.js from local files (ES Module)
+    import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
+    window.pdfjsLib = pdfjsLib;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
+  </script>
 </head>
+
 <body>
   <div id="app-container">
-    <div id="toolbar-toggle-tab">
-        <span class="icon">›</span>
+    <div id="toolbar-toggle-tab" title="切換選單">
+      <span class="icon">☰</span>
     </div>
-
-    <div id="toolbar">
-      <div class="title-container">
-        <div id="help-container" style="display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: rgba(79, 70, 229, 0.1); border-radius: 8px;">
-          <a href="instructions.html" target="_blank" rel="noopener noreferrer" title="在新分頁中開啟使用說明" id="help-link">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-              <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
-            </svg>
-          </a>
-          <button id="close-help-btn" title="關閉說明圖示" class="mobile-only-btn" style="display: none; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.8); border: none; padding: 2px; cursor: pointer; color: white; transition: all 0.15s; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; line-height: 1;">
-            ×
-          </button>
-        </div>
-      </div>
-      
-      <div id="restore-session-container" style="display: none; width: 100%; text-align: center; margin-bottom: 10px;">
-        <button id="restore-session-btn" style="width: 100%; padding: 10px; background-color: #28a745; color: white; border-color: #28a745; cursor: pointer;">載入前次檔案</button>
-      </div>
-      
-      <div id="file-selection-container">
-        <input type="file" id="fileInput" accept="application/pdf" multiple />
-        <button id="clear-session-btn" style="display: none; width: 100%; margin-top: 5px;">清除選擇</button>
+    <header id="toolbar">
+      <div class="title-section">
+        <div class="app-logo">PDF</div>
+        <h1 class="app-title">專業工作室</h1>
       </div>
 
-      <input type="text" id="searchInput" placeholder="關鍵字或RE" />
-      <button id="search-action-button">搜尋</button>
-      
-      <div id="desktop-zoom-controls" class="zoom-controls">
-        <button id="zoom-out-btn" title="縮小">-</button>
-        <button class="fit-width-btn">符合頁寬</button>
-        <button class="fit-height-btn">符合頁高</button>
-        <button id="zoom-in-btn" title="放大">+</button>
+      <div class="file-section">
+        <button id="restore-session-btn" class="btn-secondary" title="恢復上一個工作階段">🔄 恢復</button>
+        <button id="clear-session-btn" class="btn-danger" style="display: none;" title="清除工作階段">🗑️
+          清除</button>
+        <label for="fileInput" class="custom-file-upload">
+          <span>📁 上傳 PDF</span>
+          <input type="file" id="fileInput" multiple accept="application/pdf">
+        </label>
       </div>
 
-      <div id="local-magnifier-zoom-controls" style="display: none; align-items: center; gap: 5px;">
-        <label for="local-magnifier-zoom-selector" style="white-space: nowrap; font-size: 0.9em;">放大鏡倍率:</label>
-        <select id="local-magnifier-zoom-selector" style="padding: 6px;">
-            <option value="1.5">1.5x</option>
-            <option value="2.0">2.0x</option>
-            <option value="2.5" selected>2.5x</option>
-            <option value="3.0">3.0x</option>
-            <option value="3.5">3.5x</option>
+      <div class="search-section">
+        <input type="text" id="searchInput" placeholder="搜尋關鍵字..." autocomplete="off">
+        <button id="search-action-button" class="btn-primary">搜尋</button>
+        <select id="fileFilterDropdown">
+          <option value="all">所有檔案</option>
         </select>
       </div>
 
-      <div id="mobile-zoom-controls" class="zoom-controls">
-        <button id="mobile-zoom-out-btn" title="縮小">-</button>
-        <button class="fit-width-btn">符合頁寬</button>
-        <button class="fit-height-btn">符合頁高</button>
-        <button id="mobile-zoom-in-btn" title="放大">+</button>
+      <div class="file-switch-section">
+        <select id="fileSwitchDropdown" title="在已載入的檔案之間切換">
+          <option value="">-- 選擇檔案 --</option>
+        </select>
       </div>
 
-      <div id="page-navigation">
-        <button id="go-to-first-page">首頁</button>
-        <button id="prev-page">上頁</button>
-        <input type="range" id="page-slider" min="1" max="1" value="1" disabled>
-        <span id="page-num-display">- / -</span>
-        <button id="next-page">下頁</button>
+      <div class="nav-section">
+        <button id="go-to-first-page" title="第一頁">«</button>
+        <button id="prev-page" title="上一頁">‹</button>
+        <div id="page-num-display">第 - / - 頁</div>
+        <button id="next-page" title="下一頁">›</button>
+        <input type="number" id="page-to-go" min="1" value="1" title="前往頁面">
+        <button id="go-to-page-btn" class="btn-secondary">前往</button>
       </div>
-    </div>
 
-    <div id="main-content">
-        <div id="pdf-container">
+      <a href="https://github.com/hsiehminchieh" target="_blank" id="help-link" title="說明與支援">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </a>
+    </header>
+
+    <main id="main-content">
+      <section id="pdf-container">
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state-guide">
+          <div class="icon">📄</div>
+          <h2>開始您的專案</h2>
+          <p>上傳 PDF 以啟用關鍵字搜尋、分頁筆記等功能。</p>
+        </div>
+
+        <!-- PDF Content Wrapper -->
+        <div id="canvas-wrapper" style="position: relative; display: none;">
           <canvas id="pdf-canvas"></canvas>
-          <div id="text-layer" class="textLayer"></div>
+          <div id="text-layer"></div>
           <canvas id="drawing-canvas"></canvas>
           <div id="magnifier-glass">
             <canvas id="magnifier-canvas"></canvas>
           </div>
+          <div id="notes-layer"></div>
         </div>
-        <div id="resizer"></div>
-        <div id="search-results-panel">
-            <h3>書籤 / 搜尋結果</h3>
-            <div id="panel-dropdown-container">
-                <select id="panelFileFilterDropdown">
-                    <option value="all">所有檔案</option>
-                </select>
-                <select id="panelResultsDropdown">
-                    <option value="">搜尋結果</option>
-                </select>
-            </div>
-            <div id="results-list"></div>
+      </section>
+
+      <div id="resizer"></div>
+
+      <div id="search-results-panel">
+        <h3>🔍 搜尋結果</h3>
+        <div id="panel-dropdown-container">
+          <select id="panelFileFilterDropdown">
+            <option value="all">所有檔案</option>
+          </select>
+          <select id="panelResultsDropdown">
+            <option value="">搜尋結果</option>
+          </select>
         </div>
+        <div id="results-list"></div>
+      </div>
+    </main>
+
+    <!-- Floating Action Buttons -->
+    <div id="floating-action-buttons" class="fab-container">
+      <!-- Overlay Panel Trigger (Mobile Speed Dial) -->
+      <button id="main-fab" class="btn-primary" title="工具選單">
+        <span class="icon">🛠️</span>
+      </button>
+
+      <div class="fab-menu" id="fab-speed-dial">
+        <button id="toggle-underline-btn" class="btn-secondary" title="切換搜尋底線">
+          <span class="icon">S̲</span>
+        </button>
+        <div class="fab-divider"></div>
+        <button id="toggle-notes-btn" class="btn-secondary" title="新增筆記 (點擊 PDF)">
+          <span class="icon">📌</span>
+        </button>
+        <button id="view-notes-btn" class="btn-secondary" title="所有分頁筆記">
+          <span class="icon">📝</span>
+        </button>
+        <button id="toggle-highlighter-btn" class="btn-secondary" title="螢光筆標記選擇內容">
+          <span class="icon">🖍️</span>
+        </button>
+        <button id="clear-highlighter-btn" class="btn-secondary" title="清除所有標記">
+          <span class="icon">🧹</span>
+        </button>
+        <div class="fab-divider"></div>
+        <button id="toggle-text-selection-btn" class="btn-secondary" title="選擇文字">
+          <span class="icon">📄</span>
+        </button>
+        <button id="toggle-paragraph-selection-btn" class="btn-secondary" title="選擇段落">
+          <span class="icon">¶</span>
+        </button>
+        <button id="copy-page-text-btn" class="btn-secondary" title="複製選擇內容">
+          <span class="icon">📋</span>
+        </button>
+        <div class="fab-divider"></div>
+        <button id="share-page-btn" class="btn-secondary" title="分享 PDF">
+          <span class="icon">🔗</span>
+        </button>
+        <button id="export-page-btn" class="btn-secondary" title="匯出為 Word/Excel">
+          <span class="icon">📤</span>
+        </button>
+        <button id="toggle-local-magnifier-btn" class="btn-secondary" title="放大鏡 (點擊 PDF)">
+          <span class="icon">🔍</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Zoom Controls Overlay -->
+    <div class="page-nav-overlay">
+      <button id="zoom-out-btn" class="zoom-out-btn" title="縮小">-</button>
+      <div id="zoom-level-display">100%</div>
+      <button id="zoom-in-btn" class="zoom-in-btn" title="放大">+</button>
+      <div class="toolbar-divider"></div>
+      <button id="fit-width-btn" class="fit-width-btn">寬度</button>
+      <button id="fit-height-btn" class="fit-height-btn">高度</button>
+      <div class="toolbar-divider"></div>
+      <input type="range" id="page-slider" min="1" max="1" value="1" disabled>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+      <div class="loading-content">
+        <div class="loading-spinner-large"></div>
+        <div id="loading-message">載入中...</div>
+      </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="note-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="note-modal-title">新增筆記</h3>
+          <button id="close-note-modal" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <textarea id="note-content" placeholder="在此輸入筆記內容..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button id="delete-note-btn" class="btn-danger" style="display:none;">刪除</button>
+          <button id="cancel-note-btn" class="btn-secondary">取消</button>
+          <button id="save-note-btn" class="btn-primary">儲存筆記</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes List Panel -->
+    <div id="notes-list-panel" class="modal-overlay">
+      <div class="modal-content side-panel">
+        <div class="modal-header">
+          <h3>所有分頁筆記</h3>
+          <button id="close-notes-list" class="close-btn">&times;</button>
+        </div>
+        <div id="notes-list-container" class="modal-body">
+          <!-- Notes will be loaded here -->
+        </div>
+        <div class="modal-footer backup-actions">
+          <button id="export-notes-btn" class="btn-secondary" title="將所有筆記匯出為 JSON 檔案">📤 匯出備份</button>
+          <button id="import-notes-trigger-btn" class="btn-secondary" title="從 JSON 備份檔案匯入筆記">📥 匯入備份</button>
+          <input type="file" id="import-notes-input" accept=".json" style="display: none;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Magnifier Zoom Controls -->
+    <div id="local-magnifier-zoom-controls" class="magnifier-zoom-overlay" style="display: none;">
+      <label>縮放：</label>
+      <select id="local-magnifier-zoom-selector">
+        <option value="1.5">1.5x</option>
+        <option value="2.0">2.0x</option>
+        <option value="2.5" selected>2.5x</option>
+        <option value="3.0">3.0x</option>
+        <option value="3.5">3.5x</option>
+      </select>
     </div>
   </div>
 
-  <div id="floating-action-buttons">
-    <button id="toggle-underline-btn" title="切換搜尋結果底線">
-        <span class="toggle-underline-icon">S</span>
-    </button>
-    <div class="fab-button-group">
-        <button id="toggle-paragraph-selection-btn" title="啟用段落選擇">¶</button>
-        <button id="copy-page-text-btn" title="複製本頁文字">📋</button>
-        <button id="toggle-text-selection-btn" title="啟用文字選擇">TS</button>
-    </div>
-    <div class="fab-button-group">
-        <button id="toggle-highlighter-btn" title="啟用螢光筆">🖌️</button>
-        <button id="clear-highlighter-btn" title="清除螢光筆標記">🗑️</button>
-    </div>
-    <button id="toggle-local-magnifier-btn" title="切換放大鏡">🔍</button>
-    <div class="fab-button-group">
-        <button id="export-page-btn" title="將目前頁面匯出為圖片">📷</button>
-        <button id="share-page-btn" title="分享目前頁面">🔗</button>
-    </div>
-  </div>
-
-<div id="bottom-results-bar">
-  <div id="result-nav-wrapper">
-    <select id="fileFilterDropdown">
-      <option value="all">所有檔案</option>
-    </select>
-    <select id="resultsDropdown">
-      <option value="">搜尋結果</option>
-    </select>
-  </div>
-</div>
-
-  <script type="module">
-    import { GlobalWorkerOptions } from './lib/pdfjs/pdf.mjs'; 
-    GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.mjs';
-  </script>
-  <script type="module" src="./script.js"></script>
-  <script>
-    // 關閉按鈕功能
-    document.addEventListener('DOMContentLoaded', () => {
-      const closeBtn = document.getElementById('close-toolbar-btn');
-      const appContainer = document.getElementById('app-container');
-      
-      if (closeBtn && appContainer) {
-        closeBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          appContainer.classList.remove('menu-active');
-        });
-      }
-    });
-  </script>
+  <!-- Scripts -->
+  <script type="module" src="./script.js?v=2"></script>
 </body>
+
 </html>
