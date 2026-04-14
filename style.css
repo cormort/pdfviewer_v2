@@ -1487,14 +1487,14 @@ button:focus-visible {
         bottom: 0;
         width: 100%;
         max-height: 75vh;
-        padding: 16px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+        padding: 14px 12px calc(10px + env(safe-area-inset-bottom, 0px));
         background: rgba(255, 255, 255, 0.72);
         -webkit-backdrop-filter: blur(18px) saturate(1.6);
         backdrop-filter: blur(18px) saturate(1.6);
         border-top-left-radius: 20px;
         border-top-right-radius: 20px;
         box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.10);
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         column-gap: 6px;
         row-gap: 8px;
         z-index: 1050;
@@ -1528,8 +1528,19 @@ button:focus-visible {
         padding: 0 2px;
     }
 
-    /* Hide dividers inside sheet — group labels handle separation */
-    #fab-speed-dial.active .fab-divider {
+    /* Hide dividers and group labels inside sheet — 4 flat buttons need no sections */
+    #fab-speed-dial.active .fab-divider,
+    #fab-speed-dial.active .fab-group-label {
+        display: none !important;
+    }
+
+    /* Mobile: only show the 4 essential buttons */
+    #fab-speed-dial #toggle-underline-btn,
+    #fab-speed-dial #toggle-text-selection-btn,
+    #fab-speed-dial #toggle-paragraph-selection-btn,
+    #fab-speed-dial #copy-page-text-btn,
+    #fab-speed-dial #view-notes-btn,
+    #fab-speed-dial #toggle-notes-btn {
         display: none !important;
     }
 
