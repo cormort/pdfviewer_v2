@@ -1483,6 +1483,20 @@ button:focus-visible {
         order: 10;
         /* Default order last */
         flex: none !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px !important;
+        line-height: 1 !important;
+        box-sizing: border-box;
+    }
+
+    #fab-speed-dial .btn-secondary span,
+    #fab-speed-dial button span.icon {
+        display: inline-flex !important;
+        font-size: 22px !important;
+        line-height: 1 !important;
     }
 
     /* Hide divider */
