@@ -1487,14 +1487,16 @@ button:focus-visible {
         bottom: 0;
         width: 100%;
         max-height: 75vh;
-        padding: 28px 16px calc(20px + env(safe-area-inset-bottom, 0px));
-        background: white;
+        padding: 16px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+        background: rgba(255, 255, 255, 0.72);
+        -webkit-backdrop-filter: blur(18px) saturate(1.6);
+        backdrop-filter: blur(18px) saturate(1.6);
         border-top-left-radius: 20px;
         border-top-right-radius: 20px;
-        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.10);
         grid-template-columns: repeat(3, 1fr);
-        column-gap: 8px;
-        row-gap: 14px;
+        column-gap: 6px;
+        row-gap: 8px;
         z-index: 1050;
         overflow-y: auto;
         justify-items: stretch;
@@ -1518,11 +1520,11 @@ button:focus-visible {
     #fab-speed-dial.active .fab-group-label {
         display: block;
         grid-column: 1 / -1;
-        font-size: 0.75rem;
+        font-size: 0.70rem;
         font-weight: 600;
         color: var(--text-secondary, #6b7280);
         letter-spacing: 0.04em;
-        margin: 4px 0 -4px;
+        margin: 2px 0 -4px;
         padding: 0 2px;
     }
 
@@ -1537,14 +1539,14 @@ button:focus-visible {
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 6px !important;
+        gap: 4px !important;
         width: 100% !important;
         height: auto !important;
-        min-height: 84px !important;
-        border-radius: 14px !important;
-        padding: 12px 6px !important;
-        background: var(--bg-tertiary, #f3f4f6) !important;
-        border: 1px solid var(--border-color) !important;
+        min-height: 64px !important;
+        border-radius: 12px !important;
+        padding: 8px 4px !important;
+        background: rgba(243, 244, 246, 0.75) !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
         box-shadow: none !important;
         transform: none !important;
         color: var(--text-primary) !important;
@@ -1559,7 +1561,7 @@ button:focus-visible {
 
     #fab-speed-dial.active button span.icon {
         display: inline-flex !important;
-        font-size: 26px !important;
+        font-size: 22px !important;
         line-height: 1 !important;
     }
 
@@ -1572,13 +1574,13 @@ button:focus-visible {
         visibility: visible !important;
         background: transparent !important;
         color: inherit !important;
-        font-size: 11px !important;
+        font-size: 10px !important;
         font-weight: 500 !important;
         padding: 0 !important;
         box-shadow: none !important;
         white-space: normal !important;
         text-align: center !important;
-        line-height: 1.25 !important;
+        line-height: 1.2 !important;
         max-width: 100% !important;
     }
 
@@ -1591,7 +1593,7 @@ button:focus-visible {
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.45);
+        background: rgba(0, 0, 0, 0.20);
         z-index: 1049;
         animation: fadeIn 0.2s ease-out;
     }
