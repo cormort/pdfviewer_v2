@@ -1493,8 +1493,7 @@ button:focus-visible {
     /* === Grouping Logic (Row Breaks) === */
 
     /* Group 1: Screenshot (Order 1) */
-    #share-page-btn,
-    #export-page-btn {
+    #share-page-btn {
         order: 1;
     }
 

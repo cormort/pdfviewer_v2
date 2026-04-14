@@ -53,7 +53,6 @@ const resultsList = document.getElementById('results-list');
 const fileSwitchDropdown = document.getElementById('fileSwitchDropdown');
 
 // Tool Buttons
-const exportPageBtn = document.getElementById('export-page-btn');
 const sharePageBtn = document.getElementById('share-page-btn');
 const toggleUnderlineBtn = document.getElementById('toggle-underline-btn');
 const toggleHighlighterBtn = document.getElementById('toggle-highlighter-btn');
@@ -807,7 +806,7 @@ function updatePageControls() {
     const allControls = [
         goToFirstPageBtn, prevPageBtn, nextPageBtn, pageToGoInput, goToPageBtn,
         pageSlider, toggleUnderlineBtn, toggleHighlighterBtn, clearHighlighterBtn,
-        toggleTextSelectionBtn, sharePageBtn, exportPageBtn, toggleLocalMagnifierBtn,
+        toggleTextSelectionBtn, sharePageBtn, toggleLocalMagnifierBtn,
         localMagnifierZoomSelector, copyPageTextBtn, toggleNotesBtn, viewNotesBtn,
         ...zoomInBtns, ...zoomOutBtns, // <-- 修正：使用新的陣列
         ...fitWidthBtns, ...fitHeightBtns, toggleParagraphSelectionBtn
@@ -1560,70 +1559,6 @@ pageSlider?.addEventListener('input', () => {
     const newPage = parseInt(pageSlider.value);
     if (pageToGoInput) pageToGoInput.value = newPage;
     if (currentPage !== newPage) goToPage(newPage, getPatternFromSearchInput());
-});
-
-// === Export Page ===
-exportPageBtn?.addEventListener('click', async () => {
-    if (!pdfDocs.length || !canvas) {
-        showNotification('Please load a PDF file first', 'error');
-        return;
-    }
-    if (pageRendering) {
-        showNotification('Page is still rendering, please wait', 'warning');
-        return;
-    }
-
-    const EXPORT_RESOLUTION_MULTIPLIER = 2.5;
-    const originalBtnText = exportPageBtn.innerHTML;
-    exportPageBtn.disabled = true;
-    exportPageBtn.innerHTML = '<span class="loading-spinner"></span> 匯出中...';
-
-    try {
-        const pageInfo = getDocAndLocalPage(currentPage);
-        if (!pageInfo) throw new Error('無法獲取目前頁面資訊');
-
-        const page = await pageInfo.doc.getPage(pageInfo.localPage);
-        const exportViewport = page.getViewport({
-            scale: currentScale * EXPORT_RESOLUTION_MULTIPLIER
-        });
-
-        const tc = document.createElement('canvas');
-        tctx.width = exportViewport.width;
-        tctx.height = exportViewport.height;
-        const tctx_ctx = tc.getContext('2d');
-        if (!tctx_ctx) throw new Error('無法獲取匯出畫布的渲染上下文');
-
-        const renderContext = {
-            canvasContext: tctx,
-            viewport: exportViewport
-        };
-        await page.render(renderContext).promise;
-
-        if (drawingCanvas?.width > 0) {
-            tctx.drawImage(
-                drawingCanvas,
-                0, 0, drawingCanvas.width, drawingCanvas.height,
-                0, 0, tc.width, tc.height
-            );
-        }
-
-        const idu = tc.toDataURL('image/png');
-        const l = document.createElement('a');
-        l.href = idu;
-        const docNamePart = pageInfo.docName.replace(/\.pdf$/i, '');
-        l.download = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated_HD.png`;
-        document.body.appendChild(l);
-        l.click();
-        document.body.removeChild(l);
-
-        showNotification('Page exported successfully', 'success');
-    } catch (er) {
-        console.error('Export error:', er);
-        showNotification('Failed to export image: ' + er.message, 'error');
-    } finally {
-        exportPageBtn.disabled = false;
-        exportPageBtn.innerHTML = originalBtnText;
-    }
 });
 
 // === Tool Buttons ===
