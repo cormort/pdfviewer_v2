@@ -1186,33 +1186,43 @@ button:focus-visible {
 
 @media screen and (max-width: 768px) {
 
-    /* Mobile Menu Toggle Tab */
+    /* Mobile Menu Toggle — circular button matching FAB style */
     #toolbar-toggle-tab {
         display: flex;
         position: fixed;
-        top: 80px;
-        left: 0;
-        transition: left var(--transition-slow);
+        top: 16px;
+        left: 12px;
+        transition: left var(--transition-slow), transform var(--transition-fast);
         z-index: 9999;
-        background: linear-gradient(135deg, var(--accent-color), #ea580c);
+        background: var(--primary-color);
         border: none;
-        border-radius: 0 var(--radius-md) var(--radius-md) 0;
-        padding: 10px 14px;
+        border-radius: 50%;
+        padding: 0;
         cursor: pointer;
-        font-size: 1.2em;
-        height: 48px;
+        font-size: 18px;
+        width: 44px;
+        height: 44px;
         align-items: center;
         justify-content: center;
-        box-shadow: var(--shadow-lg);
+        box-shadow: var(--shadow-xl);
         color: white;
+    }
+
+    #toolbar-toggle-tab:active {
+        transform: scale(0.92);
     }
 
     #toolbar-toggle-tab .icon {
         transition: transform var(--transition-slow);
+        line-height: 1;
     }
 
     #app-container.menu-active #toolbar-toggle-tab {
-        left: 280px;
+        left: 292px;
+    }
+
+    #app-container.menu-active #toolbar-toggle-tab .icon {
+        transform: rotate(90deg);
     }
 
     /* Mobile Sidebar Menu */
