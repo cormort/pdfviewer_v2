@@ -1807,13 +1807,13 @@ sharePageBtn?.addEventListener('click', async () => {
         if (!tctx_share) throw new Error('無法獲取分享畫布的渲染上下文');
 
         const renderContext = {
-            canvasContext: tctx,
+            canvasContext: tctx_share,
             viewport: shareViewport
         };
         await page.render(renderContext).promise;
 
         if (drawingCanvas?.width > 0) {
-            tctx.drawImage(
+            tctx_share.drawImage(
                 drawingCanvas,
                 0, 0, drawingCanvas.width, drawingCanvas.height,
                 0, 0, tc.width, tc.height
