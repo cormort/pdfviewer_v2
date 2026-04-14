@@ -275,43 +275,37 @@ async function loadAndProcessFiles(files) {
     }
 }
 
-// Mobile UI Enhancements
+// Mobile UI Enhancements — floating panel above FAB
 const mainFab = document.getElementById('main-fab');
 const fabSpeedDial = document.getElementById('fab-speed-dial');
-const fabBackdrop = document.getElementById('fab-backdrop');
 
-const closeFabSheet = () => {
+const closeFabPanel = () => {
     fabSpeedDial?.classList.remove('active');
     mainFab?.classList.remove('active');
-    fabBackdrop?.classList.remove('active');
 };
 
-const openFabSheet = () => {
+const openFabPanel = () => {
     fabSpeedDial?.classList.add('active');
     mainFab?.classList.add('active');
-    fabBackdrop?.classList.add('active');
 };
 
 if (mainFab) {
     mainFab.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (fabSpeedDial?.classList.contains('active')) closeFabSheet();
-        else openFabSheet();
+        if (fabSpeedDial?.classList.contains('active')) closeFabPanel();
+        else openFabPanel();
     });
 }
 
-fabBackdrop?.addEventListener('click', closeFabSheet);
-
-// Close sheet after tapping any action button inside it
+// Close panel after tapping any action button inside it
 fabSpeedDial?.addEventListener('click', (e) => {
-    if (e.target.closest('button')) closeFabSheet();
+    if (e.target.closest('button')) closeFabPanel();
 });
 
-// Close components when clicking outside
+// Close panel when clicking outside
 document.addEventListener('click', (e) => {
-    // Close speed dial if clicking outside (desktop fallback)
-    if (fabSpeedDial?.classList.contains('active') && !e.target.closest('.fab-container') && !e.target.closest('#fab-backdrop')) {
-        closeFabSheet();
+    if (fabSpeedDial?.classList.contains('active') && !e.target.closest('.fab-container')) {
+        closeFabPanel();
     }
     // Close mobile toolbar
     if (window.innerWidth <= 768 && toolbar?.classList.contains('active') && !e.target.closest('#toolbar')) {
