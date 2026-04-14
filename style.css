@@ -1665,6 +1665,11 @@ button:focus-visible {
         display: none;
     }
 
+    #fab-speed-dial .btn-secondary span,
+    #main-fab span {
+        display: inline-flex !important;
+    }
+
     .app-logo {
         width: 32px;
         height: 32px;
