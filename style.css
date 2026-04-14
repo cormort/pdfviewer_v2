@@ -758,6 +758,11 @@ body.results-bar-visible #floating-action-buttons {
     margin: 4px 0;
 }
 
+/* Group label — hidden on desktop (dividers already separate groups) */
+.fab-group-label {
+    display: none;
+}
+
 #fab-backdrop {
     display: none;
 }
@@ -1507,6 +1512,23 @@ button:focus-visible {
         height: 4px;
         border-radius: 2px;
         background: var(--border-color);
+    }
+
+    /* Group labels inside the bottom sheet */
+    #fab-speed-dial.active .fab-group-label {
+        display: block;
+        grid-column: 1 / -1;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary, #6b7280);
+        letter-spacing: 0.04em;
+        margin: 4px 0 -4px;
+        padding: 0 2px;
+    }
+
+    /* Hide dividers inside sheet — group labels handle separation */
+    #fab-speed-dial.active .fab-divider {
+        display: none !important;
     }
 
     /* Tile-style buttons with icon + label */

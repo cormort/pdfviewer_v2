@@ -1285,7 +1285,7 @@ function searchKeyword() {
             pattern = new RegExp(keywords.join('.*?'), 'gi');
         }
     } catch (e) {
-        showNotification('Invalid Regular Expression: ' + e.message, 'error');
+        showNotification('正規表達式錯誤：' + e.message, 'error');
         if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">Search Results</option>';
         if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">Search Results</option>';
         if (resultsList) resultsList.innerHTML = '';
@@ -1386,7 +1386,7 @@ function searchKeyword() {
         if (resultsList) resultsList.innerHTML = '<p style="padding: 10px;">搜尋時發生錯誤。</p>';
         renderPage(currentPage, null);
         updateResultsNav();
-        showNotification('An error occurred during search', 'error');
+        showNotification('搜尋時發生錯誤', 'error');
     });
 }
 
@@ -1691,7 +1691,7 @@ toggleParagraphSelectionBtn?.addEventListener('click', () => {
 clearHighlighterBtn?.addEventListener('click', () => {
     if (!pdfDocs.length) return;
     drawingCtx?.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-    showNotification('Highlighter marks cleared', 'success');
+    showNotification('已清除螢光筆標記', 'success');
 });
 
 // Note Modal Actions
@@ -1710,7 +1710,7 @@ copyPageTextBtn?.addEventListener('click', async () => {
 
     const pageInfo = getDocAndLocalPage(currentPage);
     if (!pageInfo) {
-        showNotification('Could not get current page information', 'error');
+        showNotification('無法取得目前頁面資訊', 'error');
         return;
     }
 
@@ -1719,24 +1719,24 @@ copyPageTextBtn?.addEventListener('click', async () => {
         const textContent = await page.getTextContent();
         const pageText = textContent.items.map(item => item.str).join('\n');
         await navigator.clipboard.writeText(pageText);
-        showNotification('Page text copied to clipboard!', 'success');
+        showNotification('已複製整頁文字到剪貼簿', 'success');
     } catch (err) {
         console.error('Failed to copy text:', err);
-        showNotification('Error copying page text', 'error');
+        showNotification('複製頁面文字失敗', 'error');
     }
 });
 
 sharePageBtn?.addEventListener('click', async () => {
     if (!pdfDocs.length || !canvas) {
-        showNotification('Please load a PDF file first', 'error');
+        showNotification('請先載入 PDF 檔案', 'error');
         return;
     }
     if (pageRendering) {
-        showNotification('Page is still rendering, please wait', 'warning');
+        showNotification('頁面仍在渲染中，請稍候', 'warning');
         return;
     }
     if (!navigator.share) {
-        showNotification('Your browser does not support the Web Share API', 'error');
+        showNotification('您的瀏覽器不支援分享功能（需要 HTTPS 網站）', 'error');
         return;
     }
 
@@ -1747,7 +1747,7 @@ sharePageBtn?.addEventListener('click', async () => {
 
     try {
         const pageInfo = getDocAndLocalPage(currentPage);
-        if (!pageInfo) throw new Error('Could not get current page information');
+        if (!pageInfo) throw new Error('無法取得目前頁面資訊');
 
         const page = await pageInfo.doc.getPage(pageInfo.localPage);
         const shareViewport = page.getViewport({
@@ -1775,7 +1775,7 @@ sharePageBtn?.addEventListener('click', async () => {
         }
 
         const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/png'));
-        if (!blob) throw new Error('Could not create image data from canvas.');
+        if (!blob) throw new Error('無法從畫布產生圖片資料');
 
         const docNamePart = pageInfo.docName.replace(/\.pdf$/i, '');
         const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated_HD.png`;
@@ -1789,12 +1789,12 @@ sharePageBtn?.addEventListener('click', async () => {
         if (navigator.canShare && navigator.canShare({ files: [f] })) {
             await navigator.share(sd);
         } else {
-            showNotification('Your browser does not support file sharing', 'error');
+            showNotification('您的瀏覽器不支援檔案分享', 'error');
         }
     } catch (er) {
         console.error('Share error:', er);
         if (er.name !== 'AbortError') {
-            showNotification('Share failed: ' + er.message, 'error');
+            showNotification('分享失敗：' + er.message, 'error');
         }
     } finally {
         sharePageBtn.disabled = false;
@@ -1889,7 +1889,7 @@ function navigateToNextResult() {
     if (nextResult) {
         goToPage(nextResult.page, getPatternFromSearchInput());
     } else {
-        showNotification('Already at the last result', 'info');
+        showNotification('已是最後一個搜尋結果', 'info');
     }
 }
 
@@ -1899,7 +1899,7 @@ function navigateToPreviousResult() {
     if (prevResult) {
         goToPage(prevResult.page, getPatternFromSearchInput());
     } else {
-        showNotification('Already at the first result', 'info');
+        showNotification('已是第一個搜尋結果', 'info');
     }
 }
 
@@ -2159,10 +2159,10 @@ function handleParagraphSelection(e) {
         copyBtn.onclick = async () => {
             try {
                 await navigator.clipboard.writeText(paragraphText.trim());
-                showNotification('Paragraph copied!', 'success');
+                showNotification('已複製段落', 'success');
                 clearParagraphHighlights();
             } catch (err) {
-                showNotification('Copy failed', 'error');
+                showNotification('複製失敗', 'error');
                 console.error('Copy failed:', err);
             }
         };
