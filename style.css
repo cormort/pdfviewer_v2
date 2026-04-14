@@ -1461,7 +1461,14 @@ button:focus-visible {
         flex-direction: column-reverse;
         align-items: flex-end;
         gap: 8px;
-        z-index: 1001;
+        z-index: 1002;
+    }
+
+    /* Keep FAB on-screen when search results panel is visible
+       (override the desktop right: 390px rule and lift above bottom panel) */
+    body.results-bar-visible #floating-action-buttons {
+        right: 16px;
+        bottom: calc(45vh + 16px);
     }
 
     .fab-container {
