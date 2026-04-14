@@ -1050,7 +1050,7 @@ function renderPage(globalPageNum, highlightPattern = null) {
             }
 
             if (drawingCtx) {
-                drawingCtx.strokeStyle = 'rgba(255, 255, 0, 0.1)';
+                drawingCtx.strokeStyle = 'rgba(255, 255, 0, 0.06)';
                 drawingCtx.lineWidth = 15;
                 drawingCtx.lineJoin = 'round';
                 drawingCtx.lineCap = 'round';

@@ -1590,6 +1590,25 @@ button:focus-visible {
         padding: 12px;
         padding-bottom: 100px;
     }
+}
+
+/* === Landscape: put panel to the LEFT of FAB (viewport too short for stacked) === */
+@media screen and (max-width: 896px) and (orientation: landscape) {
+    #floating-action-buttons {
+        flex-direction: row-reverse !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+
+    #fab-speed-dial.active {
+        grid-template-columns: repeat(4, 1fr) !important;
+        width: 296px !important;
+    }
+
+    @keyframes fabPanelIn {
+        from { opacity: 0; transform: scale(0.85) translateX(8px); }
+        to   { opacity: 1; transform: scale(1)    translateX(0); }
+    }
 
     /* Mobile Bottom Navigation Bar */
     .page-nav-overlay {
