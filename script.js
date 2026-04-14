@@ -278,21 +278,40 @@ async function loadAndProcessFiles(files) {
 // Mobile UI Enhancements
 const mainFab = document.getElementById('main-fab');
 const fabSpeedDial = document.getElementById('fab-speed-dial');
+const fabBackdrop = document.getElementById('fab-backdrop');
+
+const closeFabSheet = () => {
+    fabSpeedDial?.classList.remove('active');
+    mainFab?.classList.remove('active');
+    fabBackdrop?.classList.remove('active');
+};
+
+const openFabSheet = () => {
+    fabSpeedDial?.classList.add('active');
+    mainFab?.classList.add('active');
+    fabBackdrop?.classList.add('active');
+};
 
 if (mainFab) {
     mainFab.addEventListener('click', (e) => {
         e.stopPropagation();
-        fabSpeedDial?.classList.toggle('active');
-        mainFab.classList.toggle('active');
+        if (fabSpeedDial?.classList.contains('active')) closeFabSheet();
+        else openFabSheet();
     });
 }
 
+fabBackdrop?.addEventListener('click', closeFabSheet);
+
+// Close sheet after tapping any action button inside it
+fabSpeedDial?.addEventListener('click', (e) => {
+    if (e.target.closest('button')) closeFabSheet();
+});
+
 // Close components when clicking outside
 document.addEventListener('click', (e) => {
-    // Close speed dial
-    if (fabSpeedDial?.classList.contains('active') && !e.target.closest('.fab-container')) {
-        fabSpeedDial.classList.remove('active');
-        mainFab?.classList.remove('active');
+    // Close speed dial if clicking outside (desktop fallback)
+    if (fabSpeedDial?.classList.contains('active') && !e.target.closest('.fab-container') && !e.target.closest('#fab-backdrop')) {
+        closeFabSheet();
     }
     // Close mobile toolbar
     if (window.innerWidth <= 768 && toolbar?.classList.contains('active') && !e.target.closest('#toolbar')) {

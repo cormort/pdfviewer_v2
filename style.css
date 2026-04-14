@@ -758,6 +758,10 @@ body.results-bar-visible #floating-action-buttons {
     margin: 4px 0;
 }
 
+#fab-backdrop {
+    display: none;
+}
+
 /* =================== OVERLAYS =================== */
 .page-nav-overlay {
     position: fixed;
@@ -1444,118 +1448,134 @@ button:focus-visible {
         flex: 2;
     }
 
-    /* === Refactor Mobile FAB to Aligned Grid (Task 2026-01-03) === */
+    /* === Mobile FAB: Bottom Sheet pattern === */
     #floating-action-buttons {
         bottom: 80px;
         right: 16px;
         display: flex !important;
-        flex-direction: column-reverse;
-        /* Main FAB at bottom */
+        flex-direction: column;
         align-items: flex-end;
-        gap: 16px;
+        gap: 0;
         z-index: 1001;
     }
 
-    /* Menu container as the grid wrapper */
-    #floating-action-buttons .fab-menu,
+    .fab-container {
+        position: static;
+    }
+
+    /* Hide speed dial by default; only show when main-fab is active */
     #fab-speed-dial {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr);
-        /* 3 columns for strict alignment */
-        width: 240px;
-        /* Fits 3 items (48*3 + gaps) */
-        gap: 12px;
-        background: transparent;
-        box-shadow: none;
-        padding: 0;
-        margin-bottom: 0;
-        justify-items: center;
+        display: none !important;
     }
 
-    /* Reset button styles to original (avoid stretching) */
-    #fab-speed-dial button {
-        margin: 0 !important;
-        width: 48px !important;
-        /* Force original size */
-        height: 48px !important;
-        border-radius: 50% !important;
-        position: relative !important;
-        order: 10;
-        /* Default order last */
-        flex: none !important;
-        padding: 0 !important;
-        display: inline-flex !important;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px !important;
-        line-height: 1 !important;
-        box-sizing: border-box;
-    }
-
-    #fab-speed-dial .btn-secondary span,
-    #fab-speed-dial button span.icon {
-        display: inline-flex !important;
-        font-size: 22px !important;
-        line-height: 1 !important;
-    }
-
-    /* Hide divider */
+    /* Divider rendered as row-span line inside the sheet */
     .fab-divider {
         display: none !important;
     }
 
-    /* === Grouping Logic (Row Breaks) === */
-
-    /* Group 1: Screenshot (Order 1) */
-    #share-page-btn {
-        order: 1;
-    }
-
-    /* Group 2: Text Tools (Order 2) */
-    #toggle-underline-btn,
-    #toggle-highlighter-btn,
-    #clear-highlighter-btn {
-        order: 2;
-    }
-
-    /* Force Group 2 to start on a new row */
-    #toggle-underline-btn {
-        grid-column-start: 1;
-    }
-
-    /* Group 3: Selection & Notes (Order 3) */
-    #toggle-text-selection-btn,
-    #toggle-paragraph-selection-btn,
-    #copy-page-text-btn,
-    #toggle-notes-btn,
-    #view-notes-btn,
-    #toggle-local-magnifier-btn {
-        order: 3;
-    }
-
-    /* Force Group 3 Leader to start on a new row */
-    #toggle-text-selection-btn {
-        grid-column-start: 1;
-    }
-
-    .fab-container {
-        position: relative;
-    }
-
-    /* FAB Speed Dial Logic (Mobile) */
-    .fab-menu {
-        display: none;
-        flex-direction: column-reverse;
-        gap: 12px;
-        position: absolute;
-        bottom: 100%;
+    /* Bottom sheet: opens from bottom when active */
+    #fab-speed-dial.active {
+        display: grid !important;
+        position: fixed;
+        left: 0;
         right: 0;
-        padding-bottom: 16px;
-        animation: slideInUp 0.3s ease-out;
+        bottom: 0;
+        width: 100%;
+        max-height: 75vh;
+        padding: 28px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+        background: white;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+        grid-template-columns: repeat(3, 1fr);
+        column-gap: 8px;
+        row-gap: 14px;
+        z-index: 1050;
+        overflow-y: auto;
+        justify-items: stretch;
+        animation: slideInUp 0.25s ease-out;
     }
 
-    .fab-menu.active {
-        display: flex;
+    /* Drag handle at top of sheet */
+    #fab-speed-dial.active::before {
+        content: "";
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--border-color);
+    }
+
+    /* Tile-style buttons with icon + label */
+    #fab-speed-dial.active button {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 84px !important;
+        border-radius: 14px !important;
+        padding: 12px 6px !important;
+        background: var(--bg-tertiary, #f3f4f6) !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: none !important;
+        transform: none !important;
+        color: var(--text-primary) !important;
+        box-sizing: border-box;
+    }
+
+    #fab-speed-dial.active button.active {
+        background: var(--primary-color) !important;
+        color: white !important;
+        border-color: var(--primary-color) !important;
+    }
+
+    #fab-speed-dial.active button span.icon {
+        display: inline-flex !important;
+        font-size: 26px !important;
+        line-height: 1 !important;
+    }
+
+    /* Re-purpose tooltip ::after as permanent label */
+    #fab-speed-dial.active button::after {
+        content: attr(title) !important;
+        position: static !important;
+        transform: none !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        background: transparent !important;
+        color: inherit !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        white-space: normal !important;
+        text-align: center !important;
+        line-height: 1.25 !important;
+        max-width: 100% !important;
+    }
+
+    #fab-speed-dial.active button::before {
+        display: none !important;
+    }
+
+    /* Backdrop */
+    #fab-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 1049;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    #fab-backdrop.active {
+        display: block;
     }
 
     #main-fab {
