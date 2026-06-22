@@ -2328,34 +2328,6 @@ pdfContainer?.addEventListener('click', () => {
 initLocalMagnifier();
 updatePageControls();
 
-// === Temporary Debug Overlay ===
-const debugDiv = document.createElement('div');
-debugDiv.style.position = 'fixed';
-debugDiv.style.top = '10px';
-debugDiv.style.right = '10px';
-debugDiv.style.background = 'rgba(0, 0, 0, 0.85)';
-debugDiv.style.color = '#fff';
-debugDiv.style.zIndex = '99999';
-debugDiv.style.padding = '10px';
-debugDiv.style.fontFamily = 'monospace';
-debugDiv.style.fontSize = '12px';
-debugDiv.style.borderRadius = '5px';
-debugDiv.id = 'debug-layout-info';
-document.body.appendChild(debugDiv);
-
-setInterval(() => {
-    const pdfContainer = document.getElementById('pdf-container');
-    const canvas = document.getElementById('pdf-canvas');
-    const wrapper = document.getElementById('canvas-wrapper');
-    debugDiv.innerHTML = `
-        container: ${pdfContainer?.clientWidth}x${pdfContainer?.clientHeight}<br>
-        wrapper: ${wrapper?.clientWidth}x${wrapper?.clientHeight}<br>
-        canvas style: ${canvas?.style.width}x${canvas?.style.height}<br>
-        canvas attr: ${canvas?.width}x${canvas?.height}<br>
-        scale: ${currentScale}<br>
-        zoomMode: ${currentZoomMode}
-    `;
-}, 500);
 initResizer();
 initializeApp();
 
