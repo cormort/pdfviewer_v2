@@ -23,6 +23,14 @@ let paragraphSelectionModeActive = false;
 let currentPageTextContent = null;
 let currentViewport = null;
 let thumbnailObserver = null;
+let currentRenderTask = null; // Item 4: render task cancellation
+const textContentCache = new Map(); // Item 3: search text cache (key: "docIndex:localPage")
+
+// === Mobile Detection Helper (Item 2: unify CSS/JS breakpoints) ===
+function isMobileView() {
+    return window.innerWidth <= 768 ||
+           (window.innerWidth <= 896 && window.innerHeight < window.innerWidth);
+}
 
 // === DOM Element Selection ===
 const canvas = document.getElementById('pdf-canvas');
@@ -132,6 +140,8 @@ function resetApp() {
     currentFileFilter = 'all';
     notesModeActive = false;
     currentEditingNote = null;
+    textContentCache.clear(); // Item 3: clear search cache
+    if (currentRenderTask) { currentRenderTask.cancel(); currentRenderTask = null; } // Item 4
 
     ctx?.clearRect(0, 0, canvas.width, canvas.height);
     if (textLayerDivGlobal) textLayerDivGlobal.innerHTML = '';
@@ -183,7 +193,7 @@ async function loadAndProcessFiles(files) {
 
     // Set default zoom mode based on device and orientation
     // Mobile portrait: fit width, Mobile landscape: fit height, Desktop: fit width
-    if (window.innerWidth <= 768) {
+    if (isMobileView()) {
         if (window.innerHeight > window.innerWidth) {
             currentZoomMode = 'width'; // Portrait mode - fit width
         } else {
@@ -308,30 +318,14 @@ document.addEventListener('click', (e) => {
         closeFabPanel();
     }
     // Close mobile toolbar
-    if (window.innerWidth <= 768 && toolbar?.classList.contains('active') && !e.target.closest('#toolbar')) {
-        toolbar.classList.remove('active');
+    if (isMobileView() &&
+        appContainer?.classList.contains('menu-active') &&
+        !e.target.closest('#toolbar') &&
+        !e.target.closest('#toolbar-toggle-tab')) {
+        appContainer.classList.remove('menu-active');
     }
 });
 
-
-// === Navigation Events ===
-goToFirstPageBtn?.addEventListener('click', () => {
-    if (currentPage !== 1) goToPage(1);
-});
-prevPageBtn?.addEventListener('click', () => {
-    if (currentPage > 1) goToPage(currentPage - 1);
-});
-nextPageBtn?.addEventListener('click', () => {
-    if (currentPage < globalTotalPages) goToPage(currentPage + 1);
-});
-goToPageBtn?.addEventListener('click', () => {
-    const p = parseInt(pageToGoInput?.value);
-    if (p >= 1 && p <= globalTotalPages) goToPage(p);
-});
-pageSlider?.addEventListener('input', (e) => {
-    const val = parseInt(e.target.value);
-    if (!pageRendering) goToPage(val);
-});
 
 async function handleRestoreSession() {
     try {
@@ -365,7 +359,7 @@ fileInput?.addEventListener('change', async function (e) {
         await loadAndProcessFiles(files);
 
         // Auto-close menu in mobile mode
-        if (window.innerWidth <= 768 && appContainer?.classList.contains('menu-active')) {
+        if (isMobileView() && appContainer?.classList.contains('menu-active')) {
             appContainer.classList.remove('menu-active');
         }
     } catch (loadError) {
@@ -435,7 +429,7 @@ function openNoteModal(note = null) {
     noteModal?.classList.add('active');
 
     // Mobile Check: Read-only mode for notes
-    if (window.innerWidth <= 768) {
+    if (isMobileView()) {
         if (noteContentInput) {
             noteContentInput.readOnly = true;
             noteContentInput.placeholder = "手機模式下僅供閱讀";
@@ -536,13 +530,22 @@ async function showNotesList() {
                 // Find global page number for this note
                 const globalPageNum = pageMap.findIndex(m => m.docName === note.fileId && m.localPage === note.pageNum) + 1;
 
-                noteItem.innerHTML = `
-                    <div class="note-meta">
-                        <span class="note-page">第 ${note.pageNum} 頁</span>
-                        <span>${new Date(note.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    <div class="note-content-preview">${note.content}</div>
-                `;
+                const noteMeta = document.createElement('div');
+                noteMeta.className = 'note-meta';
+
+                const notePage = document.createElement('span');
+                notePage.className = 'note-page';
+                notePage.textContent = `第 ${note.pageNum} 頁`;
+
+                const noteDate = document.createElement('span');
+                noteDate.textContent = new Date(note.createdAt).toLocaleDateString();
+
+                const notePreview = document.createElement('div');
+                notePreview.className = 'note-content-preview';
+                notePreview.textContent = note.content || '';
+
+                noteMeta.append(notePage, noteDate);
+                noteItem.append(noteMeta, notePreview);
 
                 noteItem.addEventListener('click', () => {
                     notesListPanel?.classList.remove('active');
@@ -638,8 +641,8 @@ importNotesInput?.addEventListener('change', async (e) => {
 // === Magnifier Function ===
 function initLocalMagnifier() {
     if (magnifierCanvas && magnifierGlass) {
-        magnifierGlass.style.width = `${LOCAL_MAGNIFIER_SIZE} px`;
-        magnifierGlass.style.height = `${LOCAL_MAGNIFIER_SIZE} px`;
+        magnifierGlass.style.width = `${LOCAL_MAGNIFIER_SIZE}px`;
+        magnifierGlass.style.height = `${LOCAL_MAGNIFIER_SIZE}px`;
         magnifierCanvas.width = LOCAL_MAGNIFIER_SIZE;
         magnifierCanvas.height = LOCAL_MAGNIFIER_SIZE;
     }
@@ -933,17 +936,6 @@ function updatePageControls() {
     updateFileSwitchSelection();
 }
 
-
-
-pdfContainer?.addEventListener('click', (e) => {
-    // Mobile menu auto-hide
-    if (window.innerWidth <= 768 &&
-        appContainer?.classList.contains('menu-active') &&
-        !toolbar?.contains(e.target)) {
-        appContainer.classList.remove('menu-active');
-    }
-});
-
 // Dedicated listener for adding notes on the notes layer
 notesLayer?.addEventListener('click', (e) => {
     if (!notesModeActive) return;
@@ -962,6 +954,12 @@ notesLayer?.addEventListener('click', (e) => {
 // === Page Rendering ===
 function renderPage(globalPageNum, highlightPattern = null) {
     if (!pdfDocs.length || !pdfContainer || !canvas || !ctx) return;
+
+    // Item 4: Cancel any in-flight render before starting a new one
+    if (currentRenderTask) {
+        currentRenderTask.cancel();
+        currentRenderTask = null;
+    }
 
     pageRendering = true;
     currentPageTextContent = null;
@@ -1005,8 +1003,9 @@ function renderPage(globalPageNum, highlightPattern = null) {
 
         const viewportCss = page.getViewport({ scale: scaleForCss });
         currentViewport = viewportCss;
+        // Item 5: Dynamic QUALITY_FACTOR — Retina already has high dpr, no need to double
         const devicePixelRatio = window.devicePixelRatio || 1;
-        const QUALITY_FACTOR = 2.0;
+        const QUALITY_FACTOR = devicePixelRatio >= 2 ? 1.0 : 1.5;
         const renderScale = scaleForCss * devicePixelRatio * QUALITY_FACTOR;
         const viewportRender = page.getViewport({ scale: renderScale });
 
@@ -1020,7 +1019,12 @@ function renderPage(globalPageNum, highlightPattern = null) {
             viewport: viewportRender
         };
 
-        page.render(renderContext).promise.then(() => {
+        // Item 4: Track render task for cancellation
+        const renderTask = page.render(renderContext);
+        currentRenderTask = renderTask;
+
+        renderTask.promise.then(() => {
+            currentRenderTask = null;
             pageRendering = false;
             updatePageControls();
 
@@ -1058,6 +1062,12 @@ function renderPage(globalPageNum, highlightPattern = null) {
 
             return renderTextLayer(page, viewportCss, highlightPattern);
         }).catch(reason => {
+            currentRenderTask = null;
+            // Item 4: Gracefully handle cancelled renders
+            if (reason?.name === 'RenderingCancelledException') {
+                console.log('Render cancelled (page switch)');
+                return;
+            }
             console.error(`Error rendering page ${localPage}:`, reason);
             pageRendering = false;
             updatePageControls();
@@ -1067,6 +1077,16 @@ function renderPage(globalPageNum, highlightPattern = null) {
         pageRendering = false;
         updatePageControls();
     });
+}
+
+// Item 3: Cached text content retrieval
+async function getCachedTextContent(docIndex, localPage) {
+    const key = `${docIndex}:${localPage}`;
+    if (textContentCache.has(key)) return textContentCache.get(key);
+    const page = await pdfDocs[docIndex].getPage(localPage);
+    const tc = await page.getTextContent();
+    textContentCache.set(key, tc);
+    return tc;
 }
 
 function renderTextLayer(page, viewport, highlightPattern) {
@@ -1262,21 +1282,14 @@ function searchKeyword() {
 
     let pattern;
     try {
-        if (input.startsWith('/') && input.lastIndexOf('/') > 0) {
-            const lastSlashIndex = input.lastIndexOf('/');
-            pattern = new RegExp(input.slice(1, lastSlashIndex), input.slice(lastSlashIndex + 1));
-        } else {
-            const escapedInput = input.replace(/[/\\^$*+?.()|[\]{}]/g, '\\$&');
-            const keywords = escapedInput.split(/\s+/).filter(k => k.length > 0);
-            if (!keywords.length) {
-                if (pdfDocs.length > 0) renderPage(currentPage, null);
-                if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">Search Results</option>';
-                if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">Search Results</option>';
-                if (resultsList) resultsList.innerHTML = '';
-                updateResultsNav();
-                return;
-            }
-            pattern = new RegExp(keywords.join('.*?'), 'gi');
+        pattern = createSearchPattern(input);
+        if (!pattern) {
+            if (pdfDocs.length > 0) renderPage(currentPage, null);
+            if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">Search Results</option>';
+            if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">Search Results</option>';
+            if (resultsList) resultsList.innerHTML = '';
+            updateResultsNav();
+            return;
         }
     } catch (e) {
         showNotification('正規表達式錯誤：' + e.message, 'error');
@@ -1290,14 +1303,14 @@ function searchKeyword() {
     let promises = [];
     let globalPageOffset = 0;
 
+    // Item 3: Use cached text content for search performance
     pdfDocs.forEach((doc, docIndex) => {
         for (let i = 1; i <= doc.numPages; i++) {
             const currentGlobalPageForSearch = globalPageOffset + i;
             const pageInfo = pageMap[currentGlobalPageForSearch - 1];
 
             promises.push(
-                doc.getPage(i)
-                    .then(p => p.getTextContent())
+                getCachedTextContent(docIndex, i)
                     .then(textContent => {
                         const pageText = textContent.items.map(item => item.str).join('');
                         pattern.lastIndex = 0;
@@ -1369,7 +1382,7 @@ function searchKeyword() {
             updateResultsNav();
         }
 
-        if (window.innerWidth <= 768 && appContainer?.classList.contains('menu-active')) {
+        if (isMobileView() && appContainer?.classList.contains('menu-active')) {
             appContainer.classList.remove('menu-active');
         }
     }).catch(err => {
@@ -1497,14 +1510,16 @@ function goToPage(globalPageNum, highlightPatternForPage = null) {
 
     const n = Math.max(1, Math.min(globalPageNum, globalTotalPages));
     const currentGlobalPattern = getPatternFromSearchInput();
+    const requestedPatternKey = getPatternKey(highlightPatternForPage);
+    const currentPatternKey = getPatternKey(currentGlobalPattern);
 
     if (pageRendering && currentPage === n &&
-        JSON.stringify(highlightPatternForPage) === JSON.stringify(currentGlobalPattern)) {
+        requestedPatternKey === currentPatternKey) {
         return;
     }
 
     if (pageRendering && !(currentPage === n &&
-        JSON.stringify(highlightPatternForPage) !== JSON.stringify(currentGlobalPattern))) {
+        requestedPatternKey !== currentPatternKey)) {
         return;
     }
 
@@ -1526,19 +1541,28 @@ function getPatternFromSearchInput() {
     if (!i) return null;
 
     try {
-        if (i.startsWith('/') && i.lastIndexOf('/') > 0) {
-            const ls = i.lastIndexOf('/');
-            return new RegExp(i.slice(1, ls), i.slice(ls + 1));
-        } else {
-            const es = i.replace(/[/\\^$*+?.()|[\]{}]/g, '\\$&');
-            const k = es.split(/\s+/).filter(ky => ky.length > 0);
-            if (k.length > 0) return new RegExp(k.join('.*?'), 'gi');
-        }
+        return createSearchPattern(i);
     } catch (e) {
         console.warn('Could not create regex from input:', e);
         return null;
     }
-    return null;
+}
+
+function createSearchPattern(input) {
+    if (input.startsWith('/') && input.lastIndexOf('/') > 0) {
+        const lastSlashIndex = input.lastIndexOf('/');
+        return new RegExp(input.slice(1, lastSlashIndex), input.slice(lastSlashIndex + 1));
+    }
+
+    const escapedInput = input.replace(/[/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const keywords = escapedInput.split(/\s+/).filter(keyword => keyword.length > 0);
+    return keywords.length > 0 ? new RegExp(keywords.join('.*?'), 'gi') : null;
+}
+
+function getPatternKey(pattern) {
+    if (!pattern) return '';
+    if (pattern instanceof RegExp) return `/${pattern.source}/${pattern.flags}`;
+    return String(pattern);
 }
 
 // === Page Navigation ===
@@ -1897,23 +1921,13 @@ function navigateToPreviousResult() {
     }
 }
 
-// === Notification System (Optimized) ===
+// === Notification System (Optimized — Item 6: styles now in style.css) ===
 function showNotification(message, type = 'info') {
     let notificationContainer = document.getElementById('notification-container');
     if (!notificationContainer) {
         notificationContainer = document.createElement('div');
         notificationContainer.id = 'notification-container';
         document.body.appendChild(notificationContainer);
-        Object.assign(notificationContainer.style, {
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            zIndex: '10000',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            maxWidth: '350px'
-        });
     }
 
     const notification = document.createElement('div');
@@ -1926,26 +1940,22 @@ function showNotification(message, type = 'info') {
         info: 'ℹ'
     };
 
-    notification.innerHTML = `
-        <span class="notification-icon">${icons[type] || icons.info}</span>
-        <span class="notification-message">${message}</span>
-        <button class="notification-close" onclick="this.parentElement.remove()">×</button>
-    `;
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'notification-icon';
+    iconSpan.textContent = icons[type] || icons.info;
 
-    Object.assign(notification.style, {
-        padding: '12px 16px',
-        borderRadius: '8px',
-        backgroundColor: type === 'success' ? '#10b981' :
-            type === 'error' ? '#ef4444' :
-                type === 'warning' ? '#f59e0b' : '#3b82f6',
-        color: 'white',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        animation: 'slideIn 0.3s ease-out',
-        fontSize: '14px'
-    });
+    const msgSpan = document.createElement('span');
+    msgSpan.className = 'notification-message';
+    msgSpan.textContent = message;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'notification-close';
+    closeBtn.textContent = '×';
+    closeBtn.addEventListener('click', () => notification.remove());
+
+    notification.appendChild(iconSpan);
+    notification.appendChild(msgSpan);
+    notification.appendChild(closeBtn);
 
     notificationContainer.appendChild(notification);
 
@@ -1955,30 +1965,22 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Loading Overlay
+// Loading Overlay (Item 6: styles now in style.css)
 function showLoadingOverlay(message = '載入中...') {
     let overlay = document.getElementById('loading-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'loading-overlay';
-        overlay.innerHTML = `
-            <div class="loading-content">
-                <div class="loading-spinner-large"></div>
-                <p class="loading-message">${message}</p>
-            </div>
-        `;
-        Object.assign(overlay.style, {
-            position: 'fixed',
-            top: '0',
-            left: '0',
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: '10001'
-        });
+        const content = document.createElement('div');
+        content.className = 'loading-content';
+        const spinner = document.createElement('div');
+        spinner.className = 'loading-spinner-large';
+        const msg = document.createElement('p');
+        msg.className = 'loading-message';
+        msg.textContent = message;
+        content.appendChild(spinner);
+        content.appendChild(msg);
+        overlay.appendChild(content);
         document.body.appendChild(overlay);
     } else {
         // Support both id and class selectors for loading-message element
@@ -1995,11 +1997,6 @@ function hideLoadingOverlay() {
     if (overlay) {
         overlay.style.display = 'none';
     }
-}
-
-// Simple Feedback Message (for legacy compatibility)
-function showFeedback(message) {
-    showNotification(message, 'info');
 }
 
 // === Touch Gestures ===
@@ -2313,159 +2310,7 @@ async function initializeApp() {
     }
 }
 
-// === CSS Animation Injection ===
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-    }
-    
-    .notification-close {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 20px;
-        cursor: pointer;
-        padding: 0;
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0.8;
-        transition: opacity 0.2s;
-    }
-    
-    .notification-close:hover {
-        opacity: 1;
-    }
-    
-    .notification-icon {
-        font-weight: bold;
-        font-size: 16px;
-    }
-    
-    .notification-message {
-        flex: 1;
-    }
-    
-    .loading-content {
-        text-align: center;
-        color: white;
-    }
-    
-    .loading-spinner-large {
-        width: 50px;
-        height: 50px;
-        border: 4px solid rgba(255, 255, 255, 0.3);
-        border-top-color: white;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 20px;
-    }
-    
-    .loading-message {
-        font-size: 16px;
-        margin: 0;
-    }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    
-    .loading-spinner {
-        display: inline-block;
-        width: 14px;
-        height: 14px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-top-color: white;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        margin-right: 8px;
-        vertical-align: middle;
-    }
-    
-    /* Improve button visual feedback */
-    button:not(:disabled):active {
-        transform: scale(0.95);
-        transition: transform 0.1s;
-    }
-    
-    button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    
-    /* Improve toolbar button visual style */
-    .toolbar button.active {
-        background-color: #3b82f6;
-        color: white;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
-    }
-    
-    /* Improve search result item hover effect */
-    .result-item {
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-    
-    .result-item:hover {
-        transform: translateX(5px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    
-    /* Improve page slider visual style */
-    input[type="range"]::-webkit-slider-thumb {
-        transition: all 0.2s;
-    }
-    
-    input[type="range"]::-webkit-slider-thumb:hover {
-        transform: scale(1.2);
-    }
-    
-    /* Improve scrollbar style (Webkit) */
-    ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 5px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-    
-    /* Smooth scrolling */
-    html {
-        scroll-behavior: smooth;
-    }
-`;
-document.head.appendChild(style);
+// Item 6: CSS Animation Injection block removed — styles now in style.css
 
 // === Mobile Menu Toggle ===
 toolbarToggleTab?.addEventListener('click', () => {
@@ -2474,7 +2319,7 @@ toolbarToggleTab?.addEventListener('click', () => {
 
 // Close menu when clicking outside on mobile
 pdfContainer?.addEventListener('click', () => {
-    if (window.innerWidth <= 768 && appContainer?.classList.contains('menu-active')) {
+    if (isMobileView() && appContainer?.classList.contains('menu-active')) {
         appContainer.classList.remove('menu-active');
     }
 });
@@ -2482,6 +2327,35 @@ pdfContainer?.addEventListener('click', () => {
 // === Start Application ===
 initLocalMagnifier();
 updatePageControls();
+
+// === Temporary Debug Overlay ===
+const debugDiv = document.createElement('div');
+debugDiv.style.position = 'fixed';
+debugDiv.style.top = '10px';
+debugDiv.style.right = '10px';
+debugDiv.style.background = 'rgba(0, 0, 0, 0.85)';
+debugDiv.style.color = '#fff';
+debugDiv.style.zIndex = '99999';
+debugDiv.style.padding = '10px';
+debugDiv.style.fontFamily = 'monospace';
+debugDiv.style.fontSize = '12px';
+debugDiv.style.borderRadius = '5px';
+debugDiv.id = 'debug-layout-info';
+document.body.appendChild(debugDiv);
+
+setInterval(() => {
+    const pdfContainer = document.getElementById('pdf-container');
+    const canvas = document.getElementById('pdf-canvas');
+    const wrapper = document.getElementById('canvas-wrapper');
+    debugDiv.innerHTML = `
+        container: ${pdfContainer?.clientWidth}x${pdfContainer?.clientHeight}<br>
+        wrapper: ${wrapper?.clientWidth}x${wrapper?.clientHeight}<br>
+        canvas style: ${canvas?.style.width}x${canvas?.style.height}<br>
+        canvas attr: ${canvas?.width}x${canvas?.height}<br>
+        scale: ${currentScale}<br>
+        zoomMode: ${currentZoomMode}
+    `;
+}, 500);
 initResizer();
 initializeApp();
 

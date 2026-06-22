@@ -1129,9 +1129,185 @@ body.results-bar-visible #floating-action-buttons {
     }
 }
 
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* =================== LOADING STATE =================== */
 .loading {
     animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* =================== NOTIFICATION SYSTEM =================== */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 350px;
+}
+
+.notification {
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.3s ease-out;
+    font-size: 14px;
+}
+
+.notification-success {
+    background-color: #10b981;
+}
+
+.notification-error {
+    background-color: #ef4444;
+}
+
+.notification-warning {
+    background-color: #f59e0b;
+}
+
+.notification-info {
+    background-color: #3b82f6;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.notification-close:hover {
+    opacity: 1;
+}
+
+.notification-icon {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.notification-message {
+    flex: 1;
+}
+
+/* =================== LOADING OVERLAY =================== */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10001;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.loading-spinner-large {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+.loading-message {
+    font-size: 16px;
+    margin: 0;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* =================== BUTTON VISUAL FEEDBACK =================== */
+button:not(:disabled):active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.toolbar button.active {
+    background-color: #3b82f6;
+    color: white;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+/* =================== PAGE SLIDER STYLES =================== */
+input[type="range"]::-webkit-slider-thumb {
+    transition: all 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* =================== SMOOTH SCROLLING =================== */
+html {
+    scroll-behavior: smooth;
 }
 
 /* =================== GLOBAL SCROLLBAR STYLES =================== */
@@ -1184,7 +1360,8 @@ button:focus-visible {
     display: none;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 768px),
+       screen and (max-width: 896px) and (orientation: landscape) {
 
     /* Mobile Menu Toggle — circular button matching FAB style */
     #toolbar-toggle-tab {
@@ -1465,7 +1642,7 @@ button:focus-visible {
 
     /* === Mobile FAB: Floating panel above button === */
     #floating-action-buttons {
-        bottom: 80px;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
         right: 16px;
         display: flex !important;
         flex-direction: column-reverse;
@@ -1475,10 +1652,9 @@ button:focus-visible {
     }
 
     /* Keep FAB on-screen when search results panel is visible
-       (override the desktop right: 390px rule and lift above bottom panel) */
+       (override the desktop right: 390px rule) */
     body.results-bar-visible #floating-action-buttons {
         right: 16px;
-        bottom: calc(45vh + 16px);
     }
 
     .fab-container {
