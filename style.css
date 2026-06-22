@@ -1809,7 +1809,8 @@ button:focus-visible {
     }
 
     .page-nav-overlay input[type="range"] {
-        display: none;
+        flex: 1 1 0;
+        min-width: 0;
     }
 
     .page-nav-overlay .toolbar-divider {
@@ -1891,6 +1892,24 @@ button:focus-visible {
     }
 }
 
+
+@media screen and (max-width: 768px) and (orientation: portrait) {
+    /* Bound the bottom nav to the viewport so the page slider isn't clipped */
+    .page-nav-overlay {
+        left: 8px;
+        right: 8px;
+        transform: none;
+        width: auto;
+        padding: 6px 10px;
+        gap: 6px;
+        box-sizing: border-box;
+    }
+
+    .page-nav-overlay input[type="range"] {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}
 
 @media screen and (max-width: 480px) {
     .nav-section button span {
