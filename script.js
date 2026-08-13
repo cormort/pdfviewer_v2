@@ -1028,8 +1028,10 @@ function renderPage(globalPageNum, highlightPattern = null) {
             pageRendering = false;
             updatePageControls();
 
-            const canvasOffsetTop = canvas.offsetTop;
-            const canvasOffsetLeft = canvas.offsetLeft;
+            // offsetTop/Left land on the canvas border box, but the bitmap starts
+            // inside the 1px border set above — clientTop/Left is that border width.
+            const canvasOffsetTop = canvas.offsetTop + canvas.clientTop;
+            const canvasOffsetLeft = canvas.offsetLeft + canvas.clientLeft;
 
             if (textLayerDivGlobal) {
                 textLayerDivGlobal.style.width = `${viewportCss.width}px`;
@@ -1095,9 +1097,8 @@ function renderTextLayer(page, viewport, highlightPattern) {
     // Clear existing text layer
     textLayerDivGlobal.innerHTML = '';
 
-    // Check if pdfjsLib.Util is available
-    if (!pdfjsLib?.Util) {
-        console.warn('pdfjsLib.Util not available, skipping text layer rendering');
+    if (!pdfjsLib?.TextLayer) {
+        console.warn('pdfjsLib.TextLayer not available, skipping text layer rendering');
         return Promise.resolve();
     }
 
@@ -1110,39 +1111,27 @@ function renderTextLayer(page, viewport, highlightPattern) {
             return;
         }
 
-        textContent.items.forEach(item => {
-            // Skip empty strings
-            if (!item.str || item.str.trim() === '') return;
+        // TextLayer emits spans positioned in *unscaled* PDF units: left/top as a
+        // percentage of the container, font-size via --total-scale-factor. It also
+        // does the two things a hand-rolled layer gets wrong — offsetting by the
+        // font's real ascent instead of its full height, and measuring each run to
+        // apply a scaleX that pins its width to the canvas glyph run.
+        textLayerDivGlobal.style.setProperty('--total-scale-factor', viewport.scale);
 
-            const textDiv = document.createElement('div');
-            const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-            let defaultFontSize = item.height * viewport.scale;
-            if (defaultFontSize <= 0) defaultFontSize = 10;
+        const textLayer = new pdfjsLib.TextLayer({
+            textContentSource: textContent,
+            container: textLayerDivGlobal,
+            viewport
+        });
 
-            // Set inline style for positioning
-            textDiv.style.cssText = `
-                position: absolute;
-                left: ${tx[4]}px;
-                top: ${tx[5] - (item.height * viewport.scale)}px;
-                height: ${item.height * viewport.scale}px;
-                font-size: ${defaultFontSize}px;
-                line-height: 1;
-                white-space: pre;
-                font-family: ${item.fontName ? item.fontName.split(',')[0] : 'sans-serif'};
-                transform-origin: 0% 0%;
-            `;
-
-            textDiv.textContent = item.str;
-
-            // Highlight matching text (reset lastIndex for global regex)
-            if (highlightPattern) {
+        return textLayer.render().then(() => {
+            if (!highlightPattern) return;
+            for (const span of textLayerDivGlobal.querySelectorAll('span[role="presentation"]')) {
                 highlightPattern.lastIndex = 0;
-                if (highlightPattern.test(item.str)) {
-                    textDiv.classList.add('wavy-underline');
+                if (highlightPattern.test(span.textContent)) {
+                    span.classList.add('wavy-underline');
                 }
             }
-
-            textLayerDivGlobal.appendChild(textDiv);
         });
     }).catch(reason => {
         console.warn('Text layer rendering skipped:', reason.message || reason);

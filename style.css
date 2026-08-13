@@ -103,9 +103,15 @@ body {
     line-height: 1.0;
     pointer-events: none;
     z-index: 2;
+    /* pdf.js TextLayer sizes the container with round(down, …, var(--scale-round-*));
+       leave these undefined and the width declaration is invalid. */
+    --scale-round-x: 1px;
+    --scale-round-y: 1px;
 }
 
-#text-layer>div {
+/* pdf.js TextLayer emits <span role="presentation">, sometimes nested in
+   .markedContent wrappers — hence descendant, not child. */
+#text-layer span[role="presentation"] {
     color: transparent;
     position: absolute;
     white-space: pre;
@@ -120,12 +126,12 @@ body {
     opacity: 1;
 }
 
-#text-layer.text-selection-active>div {
+#text-layer.text-selection-active span[role="presentation"] {
     color: transparent;
     background: transparent;
 }
 
-#text-layer.text-selection-active>div::selection {
+#text-layer.text-selection-active span[role="presentation"]::selection {
     background: rgba(79, 70, 229, 0.3);
 }
 
