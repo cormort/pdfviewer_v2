@@ -630,6 +630,19 @@ body.results-bar-visible #floating-action-buttons {
     right: 390px;
 }
 
+/* ponytail: 同 .page-nav-overlay 的淡出策略 — idle 讓出頁面，互動或選單展開時恢復 */
+#main-fab {
+    opacity: 0.35;
+    transition: opacity var(--transition-fast);
+}
+
+#main-fab:hover,
+#main-fab:focus-visible,
+#main-fab:active,
+#main-fab.active {
+    opacity: 1;
+}
+
 
 
 .fab {
@@ -774,7 +787,6 @@ body.results-bar-visible #floating-action-buttons {
     bottom: 24px;
     transform: translateX(-50%);
     background: var(--glass-bg);
-    backdrop-filter: blur(8px);
     padding: 8px 24px;
     border-radius: var(--radius-xl);
     border: 1px solid var(--glass-border);
@@ -783,6 +795,18 @@ body.results-bar-visible #floating-action-buttons {
     align-items: center;
     gap: 16px;
     z-index: 900;
+    /* ponytail: idle 時淡出讓出頁面，hover/focus/觸控互動時恢復。
+       0.35 是可調的舒適度旋鈕，太低會找不到列。 */
+    opacity: 0.35;
+    backdrop-filter: none;
+    transition: opacity var(--transition-fast), backdrop-filter var(--transition-fast);
+}
+
+.page-nav-overlay:hover,
+.page-nav-overlay:focus-within,
+.page-nav-overlay:active {
+    opacity: 1;
+    backdrop-filter: blur(8px);
 }
 
 .loading-overlay {
