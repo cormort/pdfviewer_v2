@@ -638,7 +638,7 @@ body.results-bar-visible #floating-action-buttons {
 
 /* ponytail: 同 .page-nav-overlay 的淡出策略 — idle 讓出頁面，互動或選單展開時恢復 */
 #main-fab {
-    opacity: 0.35;
+    opacity: 0.2;
     transition: opacity var(--transition-fast);
 }
 
@@ -1399,7 +1399,7 @@ button:focus-visible {
         position: fixed;
         top: 16px;
         left: 12px;
-        transition: left var(--transition-slow), transform var(--transition-fast);
+        transition: left var(--transition-slow), transform var(--transition-fast), opacity var(--transition-fast);
         z-index: 9999;
         background: var(--primary-color);
         border: none;
@@ -1413,6 +1413,16 @@ button:focus-visible {
         justify-content: center;
         box-shadow: var(--shadow-xl);
         color: white;
+    }
+
+    /* ponytail: 同 #main-fab — idle 讓出頁面，互動或選單展開時恢復 */
+    #toolbar-toggle-tab {
+        opacity: 0.2;
+    }
+
+    #toolbar-toggle-tab:active,
+    #app-container.menu-active #toolbar-toggle-tab {
+        opacity: 1;
     }
 
     #toolbar-toggle-tab:active {
