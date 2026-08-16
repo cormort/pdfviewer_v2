@@ -1314,9 +1314,10 @@ function searchKeyword() {
                                 const contextLength = 40;
                                 const startIndex = Math.max(0, matchIndex - contextLength);
                                 const endIndex = Math.min(pageText.length, matchIndex + matchedText.length + contextLength);
-                                const preMatch = pageText.substring(startIndex, matchIndex).replace(/\n/g, ' ');
-                                const highlightedMatch = matchedText.replace(/\n/g, ' ');
-                                const postMatch = pageText.substring(matchIndex + matchedText.length, endIndex).replace(/\n/g, ' ');
+                                const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                                const preMatch = esc(pageText.substring(startIndex, matchIndex).replace(/\n/g, ' '));
+                                const highlightedMatch = esc(matchedText.replace(/\n/g, ' '));
+                                const postMatch = esc(pageText.substring(matchIndex + matchedText.length, endIndex).replace(/\n/g, ' '));
                                 foundMatchSummary = `${startIndex > 0 ? '... ' : ''}${preMatch}<span class="wavy-underline">${highlightedMatch}</span>${postMatch}${endIndex < pageText.length ? ' ...' : ''}`;
                             }
                             return {
