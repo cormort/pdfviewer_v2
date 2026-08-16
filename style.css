@@ -714,6 +714,13 @@ body.results-bar-visible #floating-action-buttons {
     cursor: pointer;
     transition: all var(--transition-fast);
     box-shadow: var(--shadow-md);
+    opacity: 0.2;
+}
+
+.fab-menu button:hover,
+.fab-menu button:focus-visible,
+.fab-menu button.active {
+    opacity: 1;
 }
 
 .fab-menu button:hover {
@@ -802,8 +809,8 @@ body.results-bar-visible #floating-action-buttons {
     gap: 16px;
     z-index: 900;
     /* ponytail: idle 時淡出讓出頁面，hover/focus/觸控互動時恢復。
-       0.35 是可調的舒適度旋鈕，太低會找不到列。 */
-    opacity: 0.35;
+       0.2 是可調的舒適度旋鈕，太低會找不到列。 */
+    opacity: 0.2;
     backdrop-filter: none;
     transition: opacity var(--transition-fast), backdrop-filter var(--transition-fast);
 }
