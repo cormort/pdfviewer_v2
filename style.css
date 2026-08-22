@@ -2004,3 +2004,22 @@ button:focus-visible {
         box-shadow: none;
     }
 }
+
+#export-results-pdf-btn {
+    display: block;
+    width: calc(100% - 32px);
+    margin: 0 16px 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.938rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+#export-results-pdf-btn:hover {
+    border-color: var(--primary-color);
+}

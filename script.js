@@ -1463,6 +1463,105 @@ function updateFilterAndResults(selectedFile = 'all') {
     }
 }
 
+// === Export Search Results as PDF (with a simple TOC) ===
+// ponytail: TOC pages are drawn on a <canvas> and embedded as images, so we get
+// CJK text for free from the system fonts instead of shipping a ~10MB CJK font
+// for pdf-lib. Upgrade path: embed a subset font if selectable TOC text matters.
+const TOC_ITEMS_PER_PAGE = 22;
+
+function plainSummary(html) {
+    const d = document.createElement('div');
+    d.innerHTML = html;
+    return (d.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function drawTocPage(entries, startIndex, keyword, pageNo, pageCount) {
+    // A4 portrait at ~150dpi
+    const c = document.createElement('canvas');
+    c.width = 1240; c.height = 1754;
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = '#111';
+    g.font = 'bold 44px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif';
+    g.fillText(pageNo === 1 ? `搜尋結果目錄：${keyword}` : `搜尋結果目錄（續 ${pageNo}/${pageCount}）`, 80, 120);
+    g.strokeStyle = '#888'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(80, 150); g.lineTo(c.width - 80, 150); g.stroke();
+
+    let y = 220;
+    const clip = (text, maxWidth) => {
+        if (g.measureText(text).width <= maxWidth) return text;
+        let t = text;
+        while (t.length > 1 && g.measureText(t + '…').width > maxWidth) t = t.slice(0, -1);
+        return t + '…';
+    };
+    entries.slice(startIndex, startIndex + TOC_ITEMS_PER_PAGE).forEach(e => {
+        g.fillStyle = '#111';
+        g.font = 'bold 26px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif';
+        g.fillText(clip(`第 ${e.newPage} 頁 ← 原第 ${e.page} 頁 — ${e.docName}`, c.width - 160), 80, y);
+        g.fillStyle = '#555';
+        g.font = '22px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif';
+        g.fillText(clip(e.snippet, c.width - 200), 110, y + 34);
+        y += 66;
+    });
+    return c.toDataURL('image/png');
+}
+
+async function exportResultsToPdf() {
+    const results = currentFileFilter === 'all'
+        ? searchResults
+        : searchResults.filter(r => r.docName === currentFileFilter);
+    if (!results.length) {
+        showNotification('沒有可匯出的搜尋結果', 'info');
+        return;
+    }
+    showNotification('正在產生 PDF…', 'info');
+    try {
+        const { PDFDocument } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
+        const keyword = searchInputElem?.value.trim() || '';
+        const tocPages = Math.ceil(results.length / TOC_ITEMS_PER_PAGE);
+        const entries = results.map((r, i) => ({
+            page: r.page,
+            docName: r.docName,
+            snippet: plainSummary(r.summary),
+            newPage: tocPages + i + 1
+        }));
+
+        const out = await PDFDocument.create();
+        for (let i = 0; i < tocPages; i++) {
+            const png = await out.embedPng(drawTocPage(entries, i * TOC_ITEMS_PER_PAGE, keyword, i + 1, tocPages));
+            const page = out.addPage([595.28, 841.89]);
+            page.drawImage(png, { x: 0, y: 0, width: 595.28, height: 841.89 });
+        }
+
+        // Group by source doc so each source PDF is parsed once
+        const sources = new Map();
+        for (const r of results) {
+            if (!sources.has(r.docIndex)) {
+                const bytes = await pdfDocs[r.docIndex].getData();
+                sources.set(r.docIndex, await PDFDocument.load(bytes, { ignoreEncryption: true }));
+            }
+        }
+        for (const r of results) {
+            const [copied] = await out.copyPages(sources.get(r.docIndex), [r.localPage - 1]);
+            out.addPage(copied);
+        }
+
+        const blob = new Blob([await out.save()], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `搜尋結果_${keyword || 'export'}.pdf`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showNotification(`已匯出 ${results.length} 頁`, 'success');
+    } catch (err) {
+        console.error('Export results PDF failed:', err);
+        showNotification('匯出 PDF 失敗', 'error');
+    }
+}
+
+document.getElementById('export-results-pdf-btn')?.addEventListener('click', exportResultsToPdf);
+
 // === Search Event Listeners ===
 searchActionButton?.addEventListener('click', searchKeyword);
 searchInputElem?.addEventListener('keypress', e => {

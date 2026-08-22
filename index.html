@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF 專業工作室 - 關鍵字搜尋與註解</title>
   <!-- Bump ?v= on every style.css / script.js change, or browsers keep the old copy -->
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -111,6 +111,7 @@
             <option value="">搜尋結果</option>
           </select>
         </div>
+        <button id="export-results-pdf-btn" title="把搜尋到的頁面匯出成一份含目錄的 PDF">📄 匯出結果 PDF</button>
         <div id="results-list"></div>
       </div>
     </main>
@@ -236,7 +237,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=3"></script>
+  <script type="module" src="./script.js?v=4"></script>
 </body>
 
 </html>
