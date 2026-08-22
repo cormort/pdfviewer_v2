@@ -278,13 +278,13 @@ body {
 
 /* =================== TOOLBAR =================== */
 #toolbar {
-    padding: 12px 24px;
+    padding: 12px 20px;
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     flex-wrap: nowrap;
-    gap: 16px;
+    gap: 12px;
     align-items: center;
     flex-shrink: 0;
     overflow: visible;
@@ -295,8 +295,9 @@ body {
 .title-section {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-right: 16px;
+    gap: 10px;
+    margin-right: 8px;
+    flex-shrink: 0;
 }
 
 .app-logo {
@@ -328,6 +329,40 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+/* 工具列區塊收縮策略：僅 search 與 nav 允許縮小，其餘保持固定寬度避免按鈕被壓扁 */
+.file-section,
+.file-switch-section,
+.title-section {
+    flex-shrink: 0;
+}
+
+/* 桌面版自訂檔案上傳按鈕（替代原生 file input，節省 250px+ 工具列空間） */
+.custom-file-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.938rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.custom-file-upload:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.custom-file-upload input[type="file"] {
+    display: none;
 }
 
 .file-switch-section {
@@ -363,6 +398,7 @@ body {
 .search-section {
     flex: 1;
     max-width: 600px;
+    min-width: 0;
 }
 
 input[type="text"],
@@ -384,8 +420,16 @@ select:focus {
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
+.search-section input,
+.search-section button,
+.search-section select {
+    flex-shrink: 0;
+}
+
 #searchInput {
     flex: 1;
+    flex-shrink: 1;
+    min-width: 120px;
 }
 
 button {
@@ -399,6 +443,7 @@ button {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    white-space: nowrap;
 }
 
 .btn-primary {
@@ -430,20 +475,36 @@ button {
 /* =================== NAVIGATION CONTROLS =================== */
 .nav-section {
     background: var(--bg-tertiary);
-    padding: 4px 12px;
+    padding: 4px 8px;
     border-radius: var(--radius-lg);
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.nav-section button {
+    flex-shrink: 0;
 }
 
 #page-num-display {
     font-weight: 600;
-    min-width: 80px;
+    min-width: 60px;
+    max-width: 220px;
     text-align: center;
     font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
 }
 
 #page-to-go {
-    width: 60px;
+    width: 56px;
     text-align: center;
+    flex-shrink: 0;
+}
+
+#go-to-page-btn {
+    flex-shrink: 0;
 }
 
 #help-link {
@@ -452,6 +513,14 @@ button {
     color: var(--text-secondary);
     border-radius: 50%;
     transition: all var(--transition-fast);
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+#help-link svg {
+    width: 18px;
+    height: 18px;
+    display: block;
 }
 
 #help-link:hover {
@@ -1391,6 +1460,26 @@ button:focus-visible {
 
 /* =================== PERFORMANCE UTILITIES =================== */
 /* =================== MEDIA QUERIES (MOBILE OPTIMIZATION) =================== */
+
+/* 窄桌面（769-920px）：隱藏標題文字與「前往」按鈕，避免工具列溢位 */
+@media screen and (min-width: 769px) and (max-width: 920px) {
+    .app-title {
+        display: none;
+    }
+
+    #go-to-page-btn {
+        display: none;
+    }
+
+    #toolbar {
+        padding: 12px 12px;
+        gap: 8px;
+    }
+
+    .title-section {
+        margin-right: 4px;
+    }
+}
 
 /* Hide toolbar toggle tab on desktop */
 #toolbar-toggle-tab {
