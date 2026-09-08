@@ -1394,7 +1394,8 @@ function updateResultsNav() {
     appContainer?.classList.toggle('results-panel-visible', hasResults);
     // ponytail: bottom bars need the sheet's real height; measure after layout
     requestAnimationFrame(() => {
-        const h = hasResults && searchResultsPanel ? searchResultsPanel.offsetHeight : 0;
+        // +12 matches the mobile sheet's bottom gutter
+        const h = hasResults && searchResultsPanel ? searchResultsPanel.offsetHeight + 12 : 0;
         document.body.style.setProperty('--panel-h', `${h}px`);
     });
 }
