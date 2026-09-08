@@ -2471,3 +2471,6 @@ resultsViewToggle?.addEventListener('click', () => {
     applyResultsView(next);
     highlightCurrentResult();
 });
+
+// Tapping the empty state is the same as hitting 開啟 PDF
+emptyState?.addEventListener('click', () => fileInput?.click());
