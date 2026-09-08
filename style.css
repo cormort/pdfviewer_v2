@@ -1981,11 +1981,6 @@ button:focus-visible {
         display: none !important;
     }
 
-    /* 2. Hide Thumbnails */
-    .result-item .thumbnail-canvas {
-        display: none !important;
-    }
-
     /* 3. Position Dropdown Menu Centered at Bottom */
     .file-switch-section {
         position: fixed;
@@ -2171,6 +2166,63 @@ button:focus-visible {
     }
 
     #export-results-pdf-btn {
+        display: none;
+    }
+}
+
+/* === Mobile search results: one mode per orientation ===
+   Portrait has the height for a text list; landscape does not, so it gets a
+   thumbnail strip instead. Either way the result dropdown is redundant. */
+@media screen and (max-width: 768px),
+       screen and (orientation: landscape) and (max-height: 500px) {
+    #panelResultsDropdown {
+        display: none;
+    }
+
+    #panelFileFilterDropdown {
+        flex: 1;
+    }
+}
+
+@media screen and (max-width: 768px) and (orientation: portrait) {
+    .result-item .thumbnail-canvas {
+        display: none;
+    }
+}
+
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    #results-list {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        max-height: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 0 12px 10px;
+    }
+
+    #panel-dropdown-container {
+        padding: 8px 12px;
+    }
+
+    .result-item {
+        flex: 0 0 72px;
+        margin-bottom: 0;
+        padding: 6px;
+    }
+
+    .result-item .thumbnail-canvas {
+        min-height: 0;
+        margin-bottom: 4px;
+    }
+
+    .result-item .page-info {
+        font-size: 0.7rem;
+        margin-bottom: 0;
+        text-align: center;
+    }
+
+    .result-item .context-snippet {
         display: none;
     }
 }
