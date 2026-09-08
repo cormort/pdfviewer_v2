@@ -2279,3 +2279,21 @@ button:focus-visible {
 #app-container:not(.has-docs) #floating-action-buttons {
     display: none;
 }
+
+/* Version line: only in the mobile drawer, so users can report what they see */
+.app-version {
+    display: none;
+}
+
+@media screen and (max-width: 768px),
+       screen and (orientation: landscape) and (max-height: 500px) {
+    .app-version {
+        display: block;
+        order: 20;
+        margin-top: auto;
+        padding-top: 12px;
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        text-align: center;
+    }
+}
