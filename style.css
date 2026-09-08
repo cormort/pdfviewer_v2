@@ -1,20 +1,20 @@
 /* =================== GLOBAL VARIABLES & THEMING =================== */
 :root {
-    /* HeroUI secondary (purple) theme tokens */
-    --primary-color: #7828C8;      /* secondary-500 */
-    --primary-hover: #6020A0;      /* secondary-600 */
-    --primary-light: #9353D3;      /* secondary-400 */
-    --primary-soft: #f2eafa;       /* secondary-50  */
+    /* Low-glare theme: muted teal on warm off-white */
+    --primary-color: #0E7C86;
+    --primary-hover: #0A5F67;
+    --primary-light: #35A2AB;
+    --primary-soft: #e6f3f4;
     --secondary-color: #17c964;    /* success-500 */
     --accent-color: #f5a524;       /* warning-500 */
     --danger-color: #f31260;       /* danger-500  */
 
-    --bg-primary: #ffffff;         /* content1 */
-    --bg-secondary: #f4f4f5;       /* content2 / default-100 */
-    --bg-tertiary: #e4e4e7;        /* content3 / default-200 */
+    --bg-primary: #fbfbf9;         /* content1, warm off-white (less glare) */
+    --bg-secondary: #f3f3f0;       /* content2 */
+    --bg-tertiary: #e6e6e1;        /* content3 */
     --bg-dark: #11181C;            /* foreground */
 
-    --text-primary: #11181C;       /* foreground */
+    --text-primary: #1f2427;       /* softened foreground */
     --text-secondary: #71717a;     /* default-500 */
     --text-tertiary: #a1a1aa;      /* default-400 */
 
@@ -38,7 +38,7 @@
     --transition-normal: 250ms ease;
     --transition-slow: 350ms ease;
 
-    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-bg: rgba(251, 251, 249, 0.7);
     --glass-border: rgba(255, 255, 255, 0.5);
 
     --focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px var(--primary-color);
