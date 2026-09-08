@@ -2477,3 +2477,21 @@ resultsViewToggle?.addEventListener('click', () => {
 
 // Tapping the empty state is the same as hitting 開啟 PDF
 emptyState?.addEventListener('click', () => fileInput?.click());
+
+// Clear button inside the search box
+const clearSearchBtn = document.getElementById('clear-search-btn');
+
+function syncClearSearchBtn() {
+    if (clearSearchBtn) clearSearchBtn.hidden = !searchInputElem?.value;
+}
+
+searchInputElem?.addEventListener('input', syncClearSearchBtn);
+syncClearSearchBtn();
+
+clearSearchBtn?.addEventListener('click', () => {
+    if (!searchInputElem) return;
+    searchInputElem.value = '';
+    syncClearSearchBtn();
+    searchKeyword();   // empty input resets results, dropdowns and highlights
+    searchInputElem.focus();
+});
