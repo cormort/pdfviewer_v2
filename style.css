@@ -1610,7 +1610,10 @@ button:focus-visible {
     }
 
     .app-logo {
-        font-size: 1.5rem;
+        width: 44px;
+        height: 44px;
+        font-size: 1rem;
+        flex-shrink: 0;
     }
 
     .app-title {
@@ -2046,8 +2049,9 @@ button:focus-visible {
     }
 
     .app-logo {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
+        font-size: 0.9rem;
     }
 
     #pdf-container {
@@ -2268,4 +2272,10 @@ button:focus-visible {
 
 .empty-state-guide {
     cursor: pointer;
+}
+
+/* Nothing to zoom or annotate before a file is open */
+#app-container:not(.has-docs) .page-nav-overlay,
+#app-container:not(.has-docs) #floating-action-buttons {
+    display: none;
 }
