@@ -2089,8 +2089,8 @@ button:focus-visible {
 
 #export-results-pdf-btn {
     display: block;
-    width: calc(100% - 32px);
-    margin: 0 16px 12px;
+    width: 100%;
+    margin: 10px 0 0;
     padding: 10px 12px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -2152,10 +2152,15 @@ button:focus-visible {
        screen and (orientation: landscape) and (max-height: 500px) {
     #export-results-pdf-btn {
         width: auto;
-        align-self: flex-end;
-        margin: 0 16px 8px;
+        flex: 0 0 auto;
+        margin: 0;
         padding: 6px 10px;
         font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    #panel-dropdown-container {
+        flex-wrap: nowrap;
     }
 }
 
@@ -2163,10 +2168,6 @@ button:focus-visible {
 @media screen and (orientation: landscape) and (max-height: 500px) {
     #results-list {
         max-height: 22vh;
-    }
-
-    #export-results-pdf-btn {
-        display: none;
     }
 }
 
