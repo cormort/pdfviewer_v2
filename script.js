@@ -2427,3 +2427,9 @@ console.log('  Home / End ：第一頁 / 最後一頁');
 console.log('  Ctrl+F ：搜尋');
 console.log('  + / - ：放大 / 縮小');
 console.log('  Ctrl+0 ：重設縮放 (符合高度)');
+
+// ponytail: landscape search panel is faded until touched, opaque while in use
+document.addEventListener('pointerdown', (e) => {
+    if (!searchResultsPanel) return;
+    searchResultsPanel.classList.toggle('panel-focused', searchResultsPanel.contains(e.target));
+}, true);

@@ -2119,3 +2119,15 @@ button:focus-visible {
 #export-results-pdf-btn:hover {
     border-color: var(--primary-color);
 }
+
+/* === Landscape: fade the search panel until touched so it doesn't block the page === */
+@media screen and (max-width: 896px) and (orientation: landscape) {
+    #app-container.results-panel-visible #search-results-panel {
+        opacity: 0.35;
+        transition: transform var(--transition-normal), opacity var(--transition-fast);
+    }
+
+    #app-container.results-panel-visible #search-results-panel.panel-focused {
+        opacity: 1;
+    }
+}
