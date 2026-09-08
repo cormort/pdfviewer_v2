@@ -1460,7 +1460,7 @@ function updateFilterAndResults(selectedFile = 'all') {
                 resultItem.dataset.page = result.page;
                 resultItem.innerHTML = `
                     <canvas class="thumbnail-canvas" data-doc-index="${result.docIndex}" data-local-page="${result.localPage}"></canvas>
-                    <div class="page-info">第 ${result.page} 頁 (檔案: ${result.docName})</div>
+                    <div class="page-info">第 ${result.page} 頁 <span class="doc-name">(檔案: ${result.docName})</span></div>
                     <div class="context-snippet">${result.summary}</div>
                 `;
                 resultItem.addEventListener('click', () => {
