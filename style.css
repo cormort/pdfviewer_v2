@@ -2208,7 +2208,7 @@ button:focus-visible {
     }
 
     #results-list.mode-thumb .result-item {
-        flex: 0 0 72px;
+        flex: 0 0 92px;
         margin-bottom: 0;
         padding: 6px;
     }
@@ -2224,8 +2224,19 @@ button:focus-visible {
         text-align: center;
     }
 
-    #results-list.mode-thumb .context-snippet {
+    /* The filename is redundant here; keep the keyword context instead */
+    #results-list.mode-thumb .doc-name {
         display: none;
+    }
+
+    #results-list.mode-thumb .context-snippet {
+        font-size: 0.65rem;
+        line-height: 1.3;
+        text-align: center;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 }
 
@@ -2236,6 +2247,12 @@ button:focus-visible {
 
     #results-list.mode-list {
         max-height: 22vh;
+    }
+
+    /* Short screen: cap the thumbnail so the snippet still fits */
+    #results-list.mode-thumb .thumbnail-canvas {
+        max-height: 76px;
+        object-fit: contain;
     }
 }
 
