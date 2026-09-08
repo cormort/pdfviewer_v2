@@ -1392,6 +1392,11 @@ function updateResultsNav() {
     const hasResults = searchResults.length > 0;
     document.body.classList.toggle('results-bar-visible', hasResults);
     appContainer?.classList.toggle('results-panel-visible', hasResults);
+    // ponytail: bottom bars need the sheet's real height; measure after layout
+    requestAnimationFrame(() => {
+        const h = hasResults && searchResultsPanel ? searchResultsPanel.offsetHeight : 0;
+        document.body.style.setProperty('--panel-h', `${h}px`);
+    });
 }
 
 

@@ -1655,10 +1655,13 @@ button:focus-visible {
         order: 3;
     }
 
-    /* === Hide Search Results List on Mobile, Force Dropdown === */
+    /* Keep a short, scrollable result list so pages have context */
     #results-list {
-        display: none !important;
+        display: block;
+        max-height: 26vh;
+        padding: 0 16px 12px;
     }
+
 
     #panel-dropdown-container {
         display: block !important;
@@ -1706,6 +1709,7 @@ button:focus-visible {
     /* === Compact Search Results Panel (Task 2026-01-03) === */
     #search-results-panel {
         position: fixed;
+        max-width: none;
         left: 0;
         right: 0;
         bottom: 0;
@@ -1775,6 +1779,16 @@ button:focus-visible {
        (override the desktop right: 390px rule) */
     body.results-bar-visible #floating-action-buttons {
         right: 16px;
+    }
+
+    /* Stack above the results sheet instead of underneath it.
+       --panel-h is measured in JS when the panel opens. */
+    body.results-bar-visible .page-nav-overlay {
+        bottom: calc(var(--panel-h, 0px) + 12px);
+    }
+
+    body.results-bar-visible #floating-action-buttons {
+        bottom: calc(var(--panel-h, 0px) + 72px);
     }
 
     .fab-container {
@@ -2134,5 +2148,29 @@ button:focus-visible {
         order: 3;
         flex-grow: 0;
         align-content: flex-start;
+    }
+}
+
+/* Low-frequency action on mobile: shrink the export button to a chip
+   (declared last so it beats the base #export-results-pdf-btn width) */
+@media screen and (max-width: 768px),
+       screen and (orientation: landscape) and (max-height: 500px) {
+    #export-results-pdf-btn {
+        width: auto;
+        align-self: flex-end;
+        margin: 0 16px 8px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Landscape is short: keep the sheet to a third of the screen */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    #results-list {
+        max-height: 22vh;
+    }
+
+    #export-results-pdf-btn {
+        display: none;
     }
 }
