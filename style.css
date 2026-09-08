@@ -1494,7 +1494,7 @@ button:focus-visible {
 }
 
 @media screen and (max-width: 768px),
-       screen and (max-width: 896px) and (orientation: landscape) {
+       screen and (orientation: landscape) and (max-height: 500px) {
 
     /* Mobile Menu Toggle — circular button matching FAB style */
     #toolbar-toggle-tab {
@@ -1922,7 +1922,7 @@ button:focus-visible {
 }
 
 /* === Landscape: put panel to the LEFT of FAB (viewport too short for stacked) === */
-@media screen and (max-width: 896px) and (orientation: landscape) {
+@media screen and (orientation: landscape) and (max-height: 500px) {
     #floating-action-buttons {
         flex-direction: row-reverse !important;
         align-items: center !important;
@@ -2121,7 +2121,7 @@ button:focus-visible {
 }
 
 /* === Landscape: fade the search panel until touched so it doesn't block the page === */
-@media screen and (max-width: 896px) and (orientation: landscape) {
+@media screen and (orientation: landscape) and (max-height: 500px) {
     #app-container.results-panel-visible #search-results-panel {
         opacity: 0.35;
         transition: transform var(--transition-normal), opacity var(--transition-fast);
