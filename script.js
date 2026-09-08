@@ -812,6 +812,7 @@ fileSwitchDropdown?.addEventListener('change', e => {
 function updatePageControls() {
     const fabContainer = document.getElementById('floating-action-buttons');
     const hasDocs = pdfDocs.length > 0;
+    appContainer?.classList.toggle('has-docs', hasDocs);
 
     if (!pageNumDisplay || !fabContainer) {
         if (!hasDocs && pageNumDisplay) pageNumDisplay.textContent = '- / -';

@@ -2131,3 +2131,31 @@ button:focus-visible {
         opacity: 1;
     }
 }
+
+/* === Mobile drawer follows the actual flow: 開檔 → 切換檔案 → 搜尋 === */
+@media screen and (max-width: 768px),
+       screen and (orientation: landscape) and (max-height: 500px) {
+
+    /* Page navigation lives in the bottom slider bar; drop the duplicate here */
+    #toolbar .nav-section {
+        display: none !important;
+    }
+
+    /* Nothing to switch or search until a file is open */
+    #toolbar .file-switch-section,
+    #toolbar .search-section {
+        display: none;
+    }
+
+    #app-container.has-docs #toolbar .file-switch-section {
+        display: block;
+        order: 2;
+    }
+
+    #app-container.has-docs #toolbar .search-section {
+        display: flex;
+        order: 3;
+        flex-grow: 0;
+        align-content: flex-start;
+    }
+}
