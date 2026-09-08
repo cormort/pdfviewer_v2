@@ -2164,16 +2164,7 @@ button:focus-visible {
     }
 }
 
-/* Landscape is short: keep the sheet to a third of the screen */
-@media screen and (orientation: landscape) and (max-height: 500px) {
-    #results-list {
-        max-height: 22vh;
-    }
-}
-
-/* === Mobile search results: one mode per orientation ===
-   Portrait has the height for a text list; landscape does not, so it gets a
-   thumbnail strip instead. Either way the result dropdown is redundant. */
+/* === Mobile search results: the list replaces the result dropdown === */
 @media screen and (max-width: 768px),
        screen and (orientation: landscape) and (max-height: 500px) {
     #panelResultsDropdown {
@@ -2185,14 +2176,28 @@ button:focus-visible {
     }
 }
 
-@media screen and (max-width: 768px) and (orientation: portrait) {
-    .result-item .thumbnail-canvas {
-        display: none;
-    }
+
+/* Mode is the user's choice (see #results-view-toggle), not the device's */
+#results-list.mode-list .thumbnail-canvas {
+    display: none;
 }
 
-@media screen and (orientation: landscape) and (max-height: 500px) {
-    #results-list {
+#results-view-toggle {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+@media screen and (max-width: 768px),
+       screen and (orientation: landscape) and (max-height: 500px) {
+    /* Thumbnails become a horizontal strip so the sheet stays short */
+    #results-list.mode-thumb {
         display: flex;
         flex-direction: row;
         gap: 8px;
@@ -2202,29 +2207,35 @@ button:focus-visible {
         padding: 0 12px 10px;
     }
 
-    #panel-dropdown-container {
-        padding: 8px 12px;
-    }
-
-    .result-item {
+    #results-list.mode-thumb .result-item {
         flex: 0 0 72px;
         margin-bottom: 0;
         padding: 6px;
     }
 
-    .result-item .thumbnail-canvas {
+    #results-list.mode-thumb .thumbnail-canvas {
         min-height: 0;
         margin-bottom: 4px;
     }
 
-    .result-item .page-info {
+    #results-list.mode-thumb .page-info {
         font-size: 0.7rem;
         margin-bottom: 0;
         text-align: center;
     }
 
-    .result-item .context-snippet {
+    #results-list.mode-thumb .context-snippet {
         display: none;
+    }
+}
+
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    #panel-dropdown-container {
+        padding: 8px 12px;
+    }
+
+    #results-list.mode-list {
+        max-height: 22vh;
     }
 }
 
