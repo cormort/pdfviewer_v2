@@ -809,10 +809,20 @@ fileSwitchDropdown?.addEventListener('change', e => {
     }
 });
 
+// Mark (and scroll to) the result item for the page being viewed
+function highlightCurrentResult() {
+    resultsList?.querySelectorAll('.result-item').forEach(item => {
+        const isCurrent = Number(item.dataset.page) === currentPage;
+        item.classList.toggle('is-current', isCurrent);
+        if (isCurrent) item.scrollIntoView({ block: 'nearest', inline: 'center' });
+    });
+}
+
 function updatePageControls() {
     const fabContainer = document.getElementById('floating-action-buttons');
     const hasDocs = pdfDocs.length > 0;
     appContainer?.classList.toggle('has-docs', hasDocs);
+    highlightCurrentResult();
 
     if (!pageNumDisplay || !fabContainer) {
         if (!hasDocs && pageNumDisplay) pageNumDisplay.textContent = '- / -';
@@ -1447,6 +1457,7 @@ function updateFilterAndResults(selectedFile = 'all') {
             filteredResults.forEach(result => {
                 const resultItem = document.createElement('div');
                 resultItem.className = 'result-item';
+                resultItem.dataset.page = result.page;
                 resultItem.innerHTML = `
                     <canvas class="thumbnail-canvas" data-doc-index="${result.docIndex}" data-local-page="${result.localPage}"></canvas>
                     <div class="page-info">第 ${result.page} 頁 (檔案: ${result.docName})</div>
@@ -1461,6 +1472,8 @@ function updateFilterAndResults(selectedFile = 'all') {
             });
         }
     }
+
+    highlightCurrentResult();
 
     const currentPageResult = filteredResults.find(r => r.page === currentPage);
     if (currentPageResult) {
