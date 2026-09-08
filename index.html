@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF 專業工作室 - 關鍵字搜尋與註解</title>
   <!-- Bump ?v= on every style.css / script.js change, or browsers keep the old copy -->
-  <link rel="stylesheet" href="style.css?v=29">
+  <link rel="stylesheet" href="style.css?v=30">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -46,7 +46,10 @@
       </div>
 
       <div class="search-section">
-        <input type="text" id="searchInput" placeholder="搜尋關鍵字..." autocomplete="off">
+        <div class="search-input-wrap">
+          <input type="text" id="searchInput" placeholder="搜尋關鍵字..." autocomplete="off">
+          <button id="clear-search-btn" type="button" title="清除搜尋" hidden>×</button>
+        </div>
         <button id="search-action-button" class="btn-primary">搜尋</button>
         <select id="fileFilterDropdown">
           <option value="all">所有檔案</option>
@@ -231,7 +234,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=13"></script>
+  <script type="module" src="./script.js?v=14"></script>
 </body>
 
 </html>
