@@ -2453,3 +2453,21 @@ document.addEventListener('pointerdown', (e) => {
     if (!searchResultsPanel) return;
     searchResultsPanel.classList.toggle('panel-focused', searchResultsPanel.contains(e.target));
 }, true);
+
+// === Search results: list vs thumbnail mode (user's choice, kept per browser) ===
+const resultsViewToggle = document.getElementById('results-view-toggle');
+
+function applyResultsView(mode) {
+    resultsList?.classList.toggle('mode-thumb', mode === 'thumb');
+    resultsList?.classList.toggle('mode-list', mode !== 'thumb');
+    if (resultsViewToggle) resultsViewToggle.textContent = mode === 'thumb' ? '☰ 列表' : '▦ 縮圖';
+}
+
+applyResultsView(localStorage.getItem('resultsView') || 'list');
+
+resultsViewToggle?.addEventListener('click', () => {
+    const next = resultsList?.classList.contains('mode-thumb') ? 'list' : 'thumb';
+    localStorage.setItem('resultsView', next);
+    applyResultsView(next);
+    highlightCurrentResult();
+});

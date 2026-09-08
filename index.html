@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF 專業工作室 - 關鍵字搜尋與註解</title>
   <!-- Bump ?v= on every style.css / script.js change, or browsers keep the old copy -->
-  <link rel="stylesheet" href="style.css?v=19">
+  <link rel="stylesheet" href="style.css?v=20">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -102,6 +102,7 @@
           <select id="panelResultsDropdown">
             <option value="">搜尋結果</option>
           </select>
+        <button id="results-view-toggle" title="切換列表／縮圖：橫式（寬）的文件建議用列表，直式（長）的文件建議用縮圖">▦ 縮圖</button>
         <button id="export-results-pdf-btn" title="把搜尋到的頁面匯出成一份含目錄的 PDF">📄 匯出結果 PDF</button>
         </div>
         <div id="results-list"></div>
@@ -229,7 +230,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=9"></script>
+  <script type="module" src="./script.js?v=10"></script>
 </body>
 
 </html>
