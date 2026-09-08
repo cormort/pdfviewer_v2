@@ -525,28 +525,6 @@ button {
     flex-shrink: 0;
 }
 
-#help-link {
-    display: inline-flex;
-    padding: 8px;
-    color: var(--text-secondary);
-    border-radius: 50%;
-    transition: all var(--transition-fast);
-    flex-shrink: 0;
-    margin-left: auto;
-}
-
-#help-link svg {
-    width: 18px;
-    height: 18px;
-    display: block;
-}
-
-#help-link:hover {
-    background: var(--bg-tertiary);
-    color: var(--primary-color);
-    transform: scale(1.1);
-}
-
 /* =================== SEARCH RESULTS PANEL =================== */
 #search-results-panel {
     display: none;
@@ -1578,8 +1556,7 @@ button:focus-visible {
         flex-shrink: 0;
     }
 
-    /* Hide help link icon and session buttons on mobile */
-    #help-link,
+    /* Hide session buttons on mobile */
     #restore-session-btn,
     #clear-session-btn {
         display: none !important;
