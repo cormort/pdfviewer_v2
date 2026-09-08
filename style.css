@@ -2182,6 +2182,10 @@ button:focus-visible {
     display: none;
 }
 
+#results-list.single-doc .doc-name {
+    display: none;
+}
+
 #results-view-toggle {
     flex: 0 0 auto;
     white-space: nowrap;

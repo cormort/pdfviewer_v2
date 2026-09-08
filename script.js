@@ -1432,6 +1432,9 @@ function updateFilterAndResults(selectedFile = 'all') {
         ? searchResults
         : searchResults.filter(r => r.docName === currentFileFilter);
 
+    // Only one file in play: the filename tells the user nothing
+    resultsList?.classList.toggle('single-doc', docNames.length <= 1);
+
     const summaryDropdowns = [resultsDropdown, panelResultsDropdown];
     summaryDropdowns.forEach(dropdown => {
         if (!dropdown) return;
