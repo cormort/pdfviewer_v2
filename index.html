@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF 專業工作室 - 關鍵字搜尋與註解</title>
   <!-- Bump ?v= on every style.css / script.js change, or browsers keep the old copy -->
-  <link rel="stylesheet" href="style.css?v=33">
+  <link rel="stylesheet" href="style.css?v=34">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -99,7 +99,14 @@
       <div id="resizer"></div>
 
       <div id="search-results-panel">
-        <h3>🔍 搜尋結果</h3>
+        <h3 id="results-panel-header" title="展開或收起搜尋結果">
+          <span class="panel-title">🔍 搜尋結果</span>
+          <span id="results-count"></span>
+          <span class="results-stepper">
+            <button id="prev-result-btn" type="button" title="上一筆結果">‹</button>
+            <button id="next-result-btn" type="button" title="下一筆結果">›</button>
+          </span>
+        </h3>
         <div id="panel-dropdown-container">
           <select id="panelFileFilterDropdown">
             <option value="all">所有檔案</option>
@@ -236,7 +243,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=16"></script>
+  <script type="module" src="./script.js?v=17"></script>
 </body>
 
 </html>
