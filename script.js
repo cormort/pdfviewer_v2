@@ -1972,6 +1972,42 @@ copyPageTextBtn?.addEventListener('click', async () => {
     }
 });
 
+// Links opened from inside LINE land in its built-in browser, where file
+// pickers and storage behave differently. LINE hands a link to the phone's
+// default browser instead when it carries openExternalBrowser=1, and the
+// parameter has to be in the link that gets sent, so the app builds it here.
+// Every other app just sees an extra query parameter and ignores it.
+const shareLinkBtn = document.getElementById('share-link-btn');
+
+function buildExternalBrowserLink() {
+    const url = new URL(window.location.href);
+    url.hash = '';
+    url.searchParams.set('openExternalBrowser', '1');
+    return url.toString();
+}
+
+shareLinkBtn?.addEventListener('click', async () => {
+    const link = buildExternalBrowserLink();
+    const payload = { title: 'PDF 專業工作室', text: 'PDF 關鍵字搜尋與註解工具', url: link };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(payload);
+            return;
+        }
+        await navigator.clipboard.writeText(link);
+        showNotification('已複製連結，貼到 LINE 就會用預設瀏覽器開啟', 'success');
+    } catch (err) {
+        if (err.name === 'AbortError') return;
+        try {
+            await navigator.clipboard.writeText(link);
+            showNotification('已複製連結，貼到 LINE 就會用預設瀏覽器開啟', 'success');
+        } catch {
+            showNotification('無法分享連結：' + err.message, 'error');
+        }
+    }
+});
+
 sharePageBtn?.addEventListener('click', async () => {
     if (!pdfDocs.length || !canvas) {
         showNotification('請先載入 PDF 檔案', 'error');
