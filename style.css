@@ -1497,34 +1497,66 @@ button:focus-visible {
     display: none;
 }
 
+/* Captions belong to the mobile floating buttons only */
+.fab-label {
+    display: none;
+}
+
 @media screen and (max-width: 768px),
        screen and (orientation: landscape) and (max-height: 500px) {
 
-    /* Mobile Menu Toggle — circular button matching FAB style */
+    /* Mobile Menu Toggle — mirrors #main-fab at the opposite bottom corner */
     #toolbar-toggle-tab {
-        display: flex;
         position: fixed;
-        top: 16px;
-        left: 12px;
-        transition: left var(--transition-slow), transform var(--transition-fast), opacity var(--transition-fast);
+        top: auto;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+        left: 16px;
+        transition: bottom var(--transition-normal),
+                    transform var(--transition-fast), opacity var(--transition-fast);
         z-index: 9999;
         background: var(--primary-color);
         border: none;
-        border-radius: 50%;
-        padding: 0;
         cursor: pointer;
-        font-size: 18px;
-        width: 44px;
-        height: 44px;
-        align-items: center;
-        justify-content: center;
         box-shadow: var(--shadow-xl);
         color: white;
     }
 
-    /* ponytail: 同 #main-fab — idle 讓出頁面，互動或選單展開時恢復 */
-    #toolbar-toggle-tab {
-        opacity: 0.2;
+    /* Menu and tools read as one pair: same size, same height, opposite corners */
+    #toolbar-toggle-tab,
+    #main-fab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        width: 56px;
+        height: 56px;
+        padding: 0;
+        border-radius: 18px;
+        flex-shrink: 0;
+    }
+
+    #toolbar-toggle-tab .icon,
+    #main-fab .icon {
+        font-size: 21px;
+        line-height: 1;
+    }
+
+    /* The caption is the point: "選單" / "工具" instead of three unexplained lines */
+    #toolbar-toggle-tab .fab-label,
+    #main-fab .fab-label {
+        display: block;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: 0.02em;
+    }
+
+    /* ponytail: idle 讓出頁面，互動或選單展開時恢復。
+       比純圖示的 0.2 高一點，文字才讀得出來。 */
+    #toolbar-toggle-tab,
+    #main-fab {
+        opacity: 0.45;
     }
 
     #toolbar-toggle-tab:active,
@@ -1536,17 +1568,26 @@ button:focus-visible {
         transform: scale(0.92);
     }
 
-    #toolbar-toggle-tab .icon {
-        transition: transform var(--transition-slow);
+    /* Drawer open: same button, same spot, now reading as the way out.
+       Staying put keeps it clear of the tools button at the other corner. */
+    #app-container.menu-active #toolbar-toggle-tab .icon,
+    #app-container.menu-active #toolbar-toggle-tab .fab-label {
+        display: none;
+    }
+
+    #app-container.menu-active #toolbar-toggle-tab::before {
+        content: "\2715";
+        font-size: 20px;
         line-height: 1;
     }
 
-    #app-container.menu-active #toolbar-toggle-tab {
-        left: 292px;
-    }
-
-    #app-container.menu-active #toolbar-toggle-tab .icon {
-        transform: rotate(90deg);
+    #app-container.menu-active #toolbar-toggle-tab::after {
+        content: "關閉";
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: 0.02em;
+        margin-top: 2px;
     }
 
     /* Mobile Sidebar Menu */
@@ -1816,7 +1857,8 @@ button:focus-visible {
         bottom: calc(var(--panel-h, 0px) + 12px);
     }
 
-    body.results-bar-visible #floating-action-buttons {
+    body.results-bar-visible #floating-action-buttons,
+    body.results-bar-visible #toolbar-toggle-tab {
         bottom: calc(var(--panel-h, 0px) + 72px);
     }
 
@@ -1920,14 +1962,9 @@ button:focus-visible {
     }
 
     #main-fab {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
         background: var(--primary-color);
         color: white;
-        font-size: 22px;
         box-shadow: var(--shadow-xl);
-        flex-shrink: 0;
     }
 
     @keyframes fabPanelIn {
