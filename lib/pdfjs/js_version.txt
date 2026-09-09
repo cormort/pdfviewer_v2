@@ -1,1 +1,1 @@
-js_version.txt
+pdf.js 5.3.31 (legacy dist build)
