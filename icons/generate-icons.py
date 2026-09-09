@@ -10,6 +10,10 @@ Two variants are produced. The plain one carries its own rounded corners. The
 maskable one runs full bleed with square corners, because the launcher applies
 its own shape, and keeps the lettering smaller so nothing important falls
 outside the safe zone a circular crop leaves behind.
+
+Every part is drawn as a plain rectangle and the rounded corners come from one
+alpha mask applied at the end. Rounding each band on its own gave three arcs
+that did not meet, leaving transparent notches along the top and bottom edges.
 """
 from PIL import Image, ImageDraw, ImageFont
 
@@ -25,7 +29,8 @@ FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
 
 def book_icon(size, maskable=False):
     S = size * 8                     # supersampled, downscaled at the end
-    img = Image.new('RGBA', (S, S), (0, 0, 0, 0))
+    # The cover fills the whole square; the corners are cut at the end.
+    img = Image.new('RGBA', (S, S), TEAL)
     d = ImageDraw.Draw(img)
 
     if maskable:
@@ -36,22 +41,20 @@ def book_icon(size, maskable=False):
     x0, y0, x1, y1 = 0, 0, S, S
     w = x1 - x0
 
-    # cover
-    d.rounded_rectangle([x0, y0, x1 - 1, y1 - 1], radius=radius, fill=TEAL)
-
-    # page block along the fore edge
-    pages = w * 0.10
-    d.rounded_rectangle([x1 - pages, y0, x1 - 1, y1 - 1], radius=radius, fill=PAGE)
-    d.rectangle([x1 - pages, y0, x1 - pages * 0.45, y1], fill=PAGE)
+    # page block along the fore edge, with the cover wrapping past it so the
+    # silhouette stays teal on every side. Left flush to the edge, the cream
+    # pages vanish into a light background and the icon looks bitten off.
+    edge = w * 0.035
+    pages = w * 0.11
+    d.rectangle([x1 - pages, y0 + edge, x1 - edge, y1 - edge], fill=PAGE)
     for i in range(1, 4):
-        lx = x1 - pages + pages * i / 4
-        d.line([(lx, y0 + (y1 - y0) * 0.08), (lx, y1 - (y1 - y0) * 0.08)],
+        lx = x1 - pages + (pages - edge) * i / 4
+        d.line([(lx, y0 + (y1 - y0) * 0.12), (lx, y1 - (y1 - y0) * 0.12)],
                fill=PAGE_LINE, width=max(1, int(S * 0.004)))
 
     # spine along the bound edge
     spine = w * 0.13
-    d.rounded_rectangle([x0, y0, x0 + spine, y1 - 1], radius=radius, fill=SPINE)
-    d.rectangle([x0 + spine * 0.5, y0, x0 + spine, y1], fill=SPINE)
+    d.rectangle([x0, y0, x0 + spine, y1], fill=SPINE)
     d.line([(x0 + spine, y0), (x0 + spine, y1)], fill=SHADOW, width=max(1, int(S * 0.006)))
 
     # "PDF" across the cover
@@ -71,6 +74,13 @@ def book_icon(size, maskable=False):
            stroke_width=stroke, stroke_fill=SHADOW)
     d.text((tx, ty), 'PDF', font=font, fill=TEAL,
            stroke_width=stroke, stroke_fill=WHITE)
+
+    # One silhouette for the whole book, so the bands cannot disagree about
+    # where the corner is.
+    if radius:
+        mask = Image.new('L', (S, S), 0)
+        ImageDraw.Draw(mask).rounded_rectangle([0, 0, S - 1, S - 1], radius=radius, fill=255)
+        img.putalpha(mask)
 
     return img.resize((size, size), Image.LANCZOS)
 
