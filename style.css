@@ -568,6 +568,10 @@ button {
     flex-direction: column;
 }
 
+.results-stepper {
+    display: none;
+}
+
 #search-results-panel h3 {
     margin: 0;
     padding: 20px;
@@ -1811,6 +1815,68 @@ button:focus-visible {
         display: none !important;
     }
 
+    /* Collapsed after a page is picked: the sheet leaves a bar behind, and the
+       bar is what brings it back. Expanded, the title stays hidden so the
+       carousel keeps every pixel it has. */
+    body.results-collapsed #search-results-panel h3 {
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 18px;
+        border-bottom: none;
+        background: transparent;
+        font-size: 0.95rem;
+        cursor: pointer;
+    }
+
+    body.results-collapsed #search-results-panel h3::after {
+        content: '▲';
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+    }
+
+    /* Step through hits straight from the bar, the way a find bar works */
+    body.results-collapsed .results-stepper {
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+        margin-right: 4px;
+    }
+
+    body.results-collapsed .results-stepper button {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 1px solid var(--border-color);
+        border-radius: 50%;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    body.results-collapsed .results-stepper button:active {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    /* The bar carries the position, so the static title is just noise there */
+    body.results-collapsed #search-results-panel h3 .panel-title {
+        display: none;
+    }
+
+    #results-count {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    body.results-collapsed #panel-dropdown-container,
+    body.results-collapsed #results-list {
+        display: none !important;
+    }
+
     /* Style the container to look like a bottom bar */
     #panel-dropdown-container {
         display: flex !important;
@@ -1859,7 +1925,7 @@ button:focus-visible {
 
     /* Choosing a page from the carousel: zoom controls have no part in that,
        so they hand the remaining strip back to the document. */
-    body.results-bar-visible.thumb-mode .page-nav-overlay {
+    body.results-bar-visible.thumb-mode:not(.results-collapsed) .page-nav-overlay {
         opacity: 0;
         pointer-events: none;
     }

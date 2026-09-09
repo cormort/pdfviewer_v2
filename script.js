@@ -845,6 +845,7 @@ function queueCarouselFocus() {
 resultsList?.addEventListener('scroll', queueCarouselFocus, { passive: true });
 
 function highlightCurrentResult() {
+    syncResultsBar();
     resultsList?.querySelectorAll('.result-item').forEach(item => {
         const isCurrent = Number(item.dataset.page) === currentPage;
         item.classList.toggle('is-current', isCurrent);
@@ -1435,6 +1436,71 @@ function searchKeyword() {
     });
 }
 
+// Picking a page is the end of the search, so the sheet gets out of the way and
+// leaves a bar behind. Mobile only: the desktop panel is a column beside the
+// document, not on top of it.
+const resultsPanelHeader = document.getElementById('results-panel-header');
+const resultsCount = document.getElementById('results-count');
+
+const prevResultBtn = document.getElementById('prev-result-btn');
+const nextResultBtn = document.getElementById('next-result-btn');
+
+function setResultsCollapsed(collapsed) {
+    document.body.classList.toggle('results-collapsed', collapsed);
+}
+
+function getFilteredResults() {
+    return currentFileFilter === 'all'
+        ? searchResults
+        : searchResults.filter(r => r.docName === currentFileFilter);
+}
+
+// The collapsed bar is a find bar: step through the hits without reopening the
+// sheet, which is what you usually want after picking one.
+function stepResult(delta) {
+    const results = getFilteredResults();
+    if (results.length === 0) return;
+
+    const index = results.findIndex(r => r.page === currentPage);
+    let target;
+    if (index === -1) {
+        target = delta > 0
+            ? results.find(r => r.page > currentPage) || results[0]
+            : [...results].reverse().find(r => r.page < currentPage) || results[results.length - 1];
+    } else {
+        target = results[(index + delta + results.length) % results.length];
+    }
+    goToPage(target.page, getPatternFromSearchInput());
+}
+
+function syncResultsBar() {
+    if (!resultsCount) return;
+    const results = getFilteredResults();
+    if (results.length === 0) {
+        resultsCount.textContent = '';
+        return;
+    }
+    const index = results.findIndex(r => r.page === currentPage);
+    resultsCount.textContent = index === -1
+        ? `共 ${results.length} 筆`
+        : `第 ${currentPage} 頁 · ${index + 1} / ${results.length}`;
+}
+
+resultsPanelHeader?.addEventListener('click', () => {
+    if (!isMobileView()) return;
+    setResultsCollapsed(!document.body.classList.contains('results-collapsed'));
+});
+
+prevResultBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    stepResult(-1);
+});
+
+nextResultBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    stepResult(1);
+});
+
 // ponytail: bottom bars need the sheet's real height.
 // +12 matches the mobile sheet's bottom gutter.
 function syncPanelHeight() {
@@ -1474,9 +1540,7 @@ function updateFilterAndResults(selectedFile = 'all') {
         dropdown.value = currentFileFilter;
     });
 
-    const filteredResults = currentFileFilter === 'all'
-        ? searchResults
-        : searchResults.filter(r => r.docName === currentFileFilter);
+    const filteredResults = getFilteredResults();
 
     // Only one file in play: the filename tells the user nothing
     resultsList?.classList.toggle('single-doc', docNames.length <= 1);
@@ -1514,6 +1578,7 @@ function updateFilterAndResults(selectedFile = 'all') {
                 `;
                 resultItem.addEventListener('click', () => {
                     goToPage(result.page, getPatternFromSearchInput());
+                    if (isMobileView()) setResultsCollapsed(true);
                 });
                 resultsList.appendChild(resultItem);
                 const thumbnailCanvas = resultItem.querySelector('.thumbnail-canvas');
@@ -1521,6 +1586,9 @@ function updateFilterAndResults(selectedFile = 'all') {
             });
         }
     }
+
+    // A new search or filter is a new question: show the answers, not the bar.
+    if (filteredResults.length > 0) setResultsCollapsed(false);
 
     highlightCurrentResult();
     queueCarouselFocus();
@@ -1647,6 +1715,7 @@ resultsDropdown?.addEventListener('change', () => {
 
 panelResultsDropdown?.addEventListener('change', () => {
     goToPageDropdown(panelResultsDropdown.value);
+    if (isMobileView()) setResultsCollapsed(true);
 });
 
 fileFilterDropdown?.addEventListener('change', e => {
