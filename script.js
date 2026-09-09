@@ -1654,7 +1654,7 @@ async function exportResultsToPdf() {
     }
     showNotification('正在產生 PDF…', 'info');
     try {
-        const { PDFDocument } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
+        const { PDFDocument } = await import('./lib/pdf-lib/pdf-lib.esm.min.js');
         const keyword = searchInputElem?.value.trim() || '';
         const tocPages = Math.ceil(results.length / TOC_ITEMS_PER_PAGE);
         const entries = results.map((r, i) => ({
@@ -1971,6 +1971,31 @@ copyPageTextBtn?.addEventListener('click', async () => {
         showNotification('複製頁面文字失敗', 'error');
     }
 });
+
+// === Installable app ===
+// The whole viewer runs on the device already, so a service worker is all that
+// stands between this and working with no network at all.
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .catch(err => console.warn('Service worker registration failed:', err));
+    });
+}
+
+// Installed as an app, it can be picked as the handler for a PDF. The file
+// arrives through the launch queue rather than the file input.
+if ('launchQueue' in window && 'files' in LaunchParams.prototype) {
+    window.launchQueue.setConsumer(async launchParams => {
+        if (!launchParams.files || launchParams.files.length === 0) return;
+        try {
+            const files = await Promise.all(launchParams.files.map(handle => handle.getFile()));
+            loadAndProcessFiles(files);
+        } catch (err) {
+            console.error('Launch file error:', err);
+            showNotification('無法開啟傳入的檔案', 'error');
+        }
+    });
+}
 
 // === LINE in-app browser notice ===
 // LINE's built-in browser reports itself as "Line/<version>" and, on newer
