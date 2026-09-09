@@ -810,6 +810,40 @@ fileSwitchDropdown?.addEventListener('change', e => {
 });
 
 // Mark (and scroll to) the result item for the page being viewed
+// Thumbnail carousel: whichever card sits closest to the middle is the one the
+// reader is looking at, so that is the card we light up. Separate from
+// .is-current, which marks the page actually open behind the sheet.
+let carouselFocusQueued = false;
+
+function syncCarouselFocus() {
+    carouselFocusQueued = false;
+    if (!resultsList?.classList.contains('mode-thumb')) return;
+    const items = [...resultsList.querySelectorAll('.result-item')];
+    if (items.length === 0) return;
+
+    const listRect = resultsList.getBoundingClientRect();
+    const middle = listRect.left + listRect.width / 2;
+    let focused = null;
+    let shortest = Infinity;
+    items.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        const distance = Math.abs(rect.left + rect.width / 2 - middle);
+        if (distance < shortest) {
+            shortest = distance;
+            focused = item;
+        }
+    });
+    items.forEach(item => item.classList.toggle('is-focused', item === focused));
+}
+
+function queueCarouselFocus() {
+    if (carouselFocusQueued) return;
+    carouselFocusQueued = true;
+    requestAnimationFrame(syncCarouselFocus);
+}
+
+resultsList?.addEventListener('scroll', queueCarouselFocus, { passive: true });
+
 function highlightCurrentResult() {
     resultsList?.querySelectorAll('.result-item').forEach(item => {
         const isCurrent = Number(item.dataset.page) === currentPage;
@@ -1220,7 +1254,10 @@ async function renderThumbnail(docIndex, localPageNum, canvasEl) {
 
         const page = await doc.getPage(localPageNum);
         const viewport = page.getViewport({ scale: 1 });
-        const scale = (parentWidth - 20) / viewport.width;
+        // The card is CSS-sized, so the backing store can carry device pixels.
+        // Capped at 2x: the carousel shows these near full width and 1x is soft.
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const scale = ((parentWidth - 20) * dpr) / viewport.width;
         const scaledViewport = page.getViewport({ scale });
         const thumbnailCtx = canvasEl.getContext('2d');
 
@@ -1398,16 +1435,25 @@ function searchKeyword() {
     });
 }
 
+// ponytail: bottom bars need the sheet's real height.
+// +12 matches the mobile sheet's bottom gutter.
+function syncPanelHeight() {
+    const visible = document.body.classList.contains('results-bar-visible');
+    const h = visible && searchResultsPanel ? searchResultsPanel.offsetHeight + 12 : 0;
+    document.body.style.setProperty('--panel-h', `${h}px`);
+}
+
+// The sheet grows and shrinks on its own: list mode versus thumbnail mode,
+// a new set of results, a rotated phone. Measuring once was not enough.
+if (searchResultsPanel && 'ResizeObserver' in window) {
+    new ResizeObserver(syncPanelHeight).observe(searchResultsPanel);
+}
+
 function updateResultsNav() {
     const hasResults = searchResults.length > 0;
     document.body.classList.toggle('results-bar-visible', hasResults);
     appContainer?.classList.toggle('results-panel-visible', hasResults);
-    // ponytail: bottom bars need the sheet's real height; measure after layout
-    requestAnimationFrame(() => {
-        // +12 matches the mobile sheet's bottom gutter
-        const h = hasResults && searchResultsPanel ? searchResultsPanel.offsetHeight + 12 : 0;
-        document.body.style.setProperty('--panel-h', `${h}px`);
-    });
+    requestAnimationFrame(syncPanelHeight);
 }
 
 
@@ -1477,6 +1523,7 @@ function updateFilterAndResults(selectedFile = 'all') {
     }
 
     highlightCurrentResult();
+    queueCarouselFocus();
 
     const currentPageResult = filteredResults.find(r => r.page === currentPage);
     if (currentPageResult) {
@@ -2473,6 +2520,7 @@ resultsViewToggle?.addEventListener('click', () => {
     localStorage.setItem('resultsView', next);
     applyResultsView(next);
     highlightCurrentResult();
+    queueCarouselFocus();
 });
 
 // Tapping the empty state is the same as hitting 開啟 PDF

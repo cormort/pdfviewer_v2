@@ -2267,26 +2267,61 @@ button:focus-visible {
 
 @media screen and (max-width: 768px),
        screen and (orientation: landscape) and (max-height: 500px) {
-    /* Thumbnails become a horizontal strip so the sheet stays short */
+    /* Thumbnails become a snap carousel: the page you are on fills the sheet,
+       its neighbours peek in from both edges so the strip reads as browsable.
+       The side padding is what makes the peek, so the card itself asks for the
+       full content width. */
     #results-list.mode-thumb {
         display: flex;
         flex-direction: row;
-        gap: 8px;
+        gap: 10px;
         max-height: none;
         overflow-x: auto;
         overflow-y: hidden;
-        padding: 0 12px 10px;
+        padding: 2px 14% 10px;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    #results-list.mode-thumb::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Touch leaves :hover stuck on the last card tapped, which would read as a
+       second selection next to the focused one. */
+    #results-list.mode-thumb .result-item:not(.is-current):not(.is-focused):hover {
+        border-color: var(--border-color);
+        box-shadow: none;
     }
 
     #results-list.mode-thumb .result-item {
-        flex: 0 0 92px;
+        flex: 0 0 100%;
         margin-bottom: 0;
-        padding: 6px;
+        padding: 8px;
+        scroll-snap-align: center;
+        transition: transform var(--transition-normal), opacity var(--transition-normal);
     }
 
+    /* The card in the middle is the one being browsed, so it stays lit and the
+       rest step back. Guarded by :has() so nothing dims before the first
+       measurement, and on browsers without :has() everything simply stays lit. */
+    #results-list.mode-thumb:has(.is-focused) .result-item:not(.is-focused) {
+        opacity: 0.45;
+        transform: scale(0.92);
+    }
+
+    /* Portrait-page ratio, so an A4 or Letter page fills the card edge to edge
+       instead of sitting in a letterbox. Set up front, so the card does not
+       jump when the thumbnail finishes rendering. */
     #results-list.mode-thumb .thumbnail-canvas {
         min-height: 0;
-        margin-bottom: 4px;
+        height: auto;
+        aspect-ratio: 1 / 1.414;
+        max-height: min(48vh, 420px);
+        object-fit: contain;
+        margin-bottom: 6px;
     }
 
     #results-list.mode-thumb .page-info {
@@ -2320,10 +2355,35 @@ button:focus-visible {
         max-height: 22vh;
     }
 
-    /* Short screen: cap the thumbnail so the snippet still fits */
+    /* Short screen: height is the scarce axis, so it drives the card and the
+       width follows the page shape. A wide card here would letterbox the page
+       into a sliver. The side padding is exactly half a card, which is what
+       lets the first and last cards reach the middle. */
+    #results-list.mode-thumb {
+        --thumb-h: min(28vh, 150px);
+        /* + 18px covers the card's own padding and border, so the canvas inside
+           lands exactly on the page ratio */
+        --thumb-card-w: calc(var(--thumb-h) / 1.414 + 18px);
+        padding-inline: calc(50% - var(--thumb-card-w) / 2);
+    }
+
+    #results-list.mode-thumb .result-item {
+        flex: 0 0 var(--thumb-card-w);
+        box-sizing: border-box;
+        /* Without this the caption's minimum size widens the card past its
+           basis, and the page ends up letterboxed inside it again. */
+        min-width: 0;
+    }
+
     #results-list.mode-thumb .thumbnail-canvas {
-        max-height: 76px;
-        object-fit: contain;
+        height: var(--thumb-h);
+        max-height: none;
+        aspect-ratio: auto;
+    }
+
+    /* One line of context: the sheet has no room for two here */
+    #results-list.mode-thumb .context-snippet {
+        -webkit-line-clamp: 1;
     }
 }
 
