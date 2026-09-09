@@ -1535,6 +1535,12 @@ function syncResultsBar() {
         : `第 ${currentPage} 頁 · ${index + 1} / ${results.length}`;
 }
 
+// Collapsing used to need a page tap. This is the way out that does not also
+// navigate somewhere.
+document.getElementById('results-collapse-btn')?.addEventListener('click', () => {
+    setResultsCollapsed(true);
+});
+
 resultsPanelHeader?.addEventListener('click', () => {
     if (!isMobileView()) return;
     setResultsCollapsed(!document.body.classList.contains('results-collapsed'));

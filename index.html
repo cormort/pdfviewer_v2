@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <!-- Bump ?v= on every style.css / script.js change, or browsers keep the old copy -->
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=36">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -125,6 +125,7 @@
             <button id="next-result-btn" type="button" title="下一筆結果">›</button>
           </span>
         </h3>
+        <button id="results-collapse-btn" type="button" title="收起搜尋結果" aria-label="收起搜尋結果">&times;</button>
         <div id="panel-dropdown-container">
           <select id="panelFileFilterDropdown">
             <option value="all">所有檔案</option>
@@ -264,7 +265,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=21"></script>
+  <script type="module" src="./script.js?v=22"></script>
 </body>
 
 </html>
