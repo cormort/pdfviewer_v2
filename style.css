@@ -1857,6 +1857,13 @@ button:focus-visible {
         bottom: calc(var(--panel-h, 0px) + 12px);
     }
 
+    /* Choosing a page from the carousel: zoom controls have no part in that,
+       so they hand the remaining strip back to the document. */
+    body.results-bar-visible.thumb-mode .page-nav-overlay {
+        opacity: 0;
+        pointer-events: none;
+    }
+
     body.results-bar-visible #floating-action-buttons,
     body.results-bar-visible #toolbar-toggle-tab {
         bottom: calc(var(--panel-h, 0px) + 72px);
@@ -2278,7 +2285,7 @@ button:focus-visible {
         max-height: none;
         overflow-x: auto;
         overflow-y: hidden;
-        padding: 2px 14% 10px;
+        padding: 2px 9% 10px;
         scroll-snap-type: x mandatory;
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
@@ -2319,7 +2326,7 @@ button:focus-visible {
         min-height: 0;
         height: auto;
         aspect-ratio: 1 / 1.414;
-        max-height: min(48vh, 420px);
+        max-height: min(58vh, 520px);
         object-fit: contain;
         margin-bottom: 6px;
     }

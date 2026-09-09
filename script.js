@@ -2510,6 +2510,9 @@ const resultsViewToggle = document.getElementById('results-view-toggle');
 function applyResultsView(mode) {
     resultsList?.classList.toggle('mode-thumb', mode === 'thumb');
     resultsList?.classList.toggle('mode-list', mode !== 'thumb');
+    // The carousel is a page picker, so the strip left above it should belong
+    // to the document, not to controls that do nothing while you are choosing.
+    document.body.classList.toggle('thumb-mode', mode === 'thumb');
     if (resultsViewToggle) resultsViewToggle.textContent = mode === 'thumb' ? '☰ 列表' : '▦ 縮圖';
 }
 
