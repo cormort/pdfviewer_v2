@@ -1707,11 +1707,9 @@ button:focus-visible {
         flex-shrink: 0;
     }
 
-    /* Hide session buttons on mobile */
-    #restore-session-btn,
-    #clear-session-btn {
-        display: none !important;
-    }
+    /* The session buttons live in the drawer on mobile. They used to be hidden
+       here, which left no way at all to restore a previous set of files on a
+       phone; the drawer has room for them now. */
 
     /* Limit SVG sizes in toolbar */
     #toolbar svg {

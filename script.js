@@ -166,7 +166,7 @@ function resetApp() {
     // Show/hide file input
     if (fileInputLabel) fileInputLabel.style.display = 'inline-flex';
     if (clearSessionBtn) clearSessionBtn.style.display = 'none';
-    if (restoreSessionBtn) restoreSessionBtn.style.display = 'inline-block';
+    syncRestoreButton();
 
     updatePageControls();
     updateResultsNav();
@@ -340,6 +340,19 @@ async function handleRestoreSession() {
     }
 }
 
+// A restore button with nothing behind it is worse than no button, so its
+// visibility follows what is actually stored.
+async function syncRestoreButton() {
+    if (!restoreSessionBtn) return;
+    try {
+        const files = await getFiles();
+        restoreSessionBtn.style.display = files?.length ? '' : 'none';
+    } catch (err) {
+        console.warn('Could not read the stored session:', err);
+        restoreSessionBtn.style.display = 'none';
+    }
+}
+
 restoreSessionBtn?.addEventListener('click', handleRestoreSession);
 
 // === File Input Handling ===
@@ -349,8 +362,6 @@ fileInput?.addEventListener('change', async function (e) {
 
     try {
         await saveFiles(files);
-        const restoreContainer = document.getElementById('restore-session-container');
-        if (restoreContainer) restoreContainer.style.display = 'none';
     } catch (dbError) {
         console.warn("Could not save session to IndexedDB", dbError);
     }
@@ -2686,18 +2697,7 @@ document.addEventListener('keydown', e => {
 async function initializeApp() {
     try {
         await initDB();
-        const storedFiles = await getFiles();
-        if (storedFiles.length > 0) {
-            const restoreContainer = document.getElementById('restore-session-container');
-            const restoreBtn = document.getElementById('restore-session-btn');
-            if (restoreContainer) restoreContainer.style.display = 'block';
-            if (restoreBtn) {
-                restoreBtn.onclick = async () => {
-                    await loadAndProcessFiles(storedFiles);
-                    restoreContainer.style.display = 'none';
-                };
-            }
-        }
+        await syncRestoreButton();
     } catch (error) {
         console.error("Could not initialize app from IndexedDB:", error);
     }
