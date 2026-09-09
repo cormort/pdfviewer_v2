@@ -572,6 +572,12 @@ button {
     display: none;
 }
 
+/* The collapse button belongs to the mobile sheet, which sits on top of the
+   document. The desktop panel is a column beside it and stays put. */
+#results-collapse-btn {
+    display: none;
+}
+
 #search-results-panel h3 {
     margin: 0;
     padding: 20px;
@@ -1887,6 +1893,38 @@ button:focus-visible {
     /* Hide the panel title on mobile to save space */
     #search-results-panel h3 {
         display: none !important;
+    }
+
+    /* Expanded, the sheet gets a close button in its own top right corner.
+       Before this the only way to collapse it was to tap a page, which also
+       navigated. */
+    body:not(.results-collapsed) #results-collapse-btn {
+        display: flex;
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 2;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 1px solid var(--border-color);
+        border-radius: 50%;
+        background: var(--bg-primary);
+        color: var(--text-secondary);
+        font-size: 1.25rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    body:not(.results-collapsed) #results-collapse-btn:active {
+        background: var(--bg-secondary);
+    }
+
+    /* Room for it, so it never sits on top of the export button */
+    body:not(.results-collapsed) #panel-dropdown-container {
+        padding-right: 48px;
     }
 
     /* Collapsed after a page is picked: the sheet leaves a bar behind, and the
