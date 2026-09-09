@@ -1496,6 +1496,80 @@ button:focus-visible {
     }
 }
 
+/* =================== IN-APP BROWSER NOTICE =================== */
+/* Hidden until script.js finds it is running inside LINE */
+#inapp-browser-banner {
+    display: none;
+}
+
+#inapp-browser-banner.is-visible {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    align-items: center;
+    gap: 10px;
+    /* Room on the right for the close button, which sits out of the flow */
+    padding: 10px 34px 10px 12px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+#inapp-browser-banner .banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+#inapp-browser-banner .banner-text strong {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+#inapp-browser-banner .banner-text span {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+}
+
+#inapp-browser-banner #inapp-open-external {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+}
+
+#inapp-browser-banner .close-btn {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    border: none;
+    background: transparent;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px 6px;
+}
+
+/* Narrow phones: the button drops under the text rather than squeezing it */
+@media screen and (max-width: 420px) {
+    #inapp-browser-banner.is-visible {
+        flex-wrap: wrap;
+    }
+
+    #inapp-browser-banner #inapp-open-external {
+        width: 100%;
+        padding: 7px 12px;
+    }
+}
+
 /* Hide toolbar toggle tab on desktop */
 #toolbar-toggle-tab {
     display: none;

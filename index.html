@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF 專業工作室 - 關鍵字搜尋與註解</title>
   <!-- Bump ?v= on every style.css / script.js change, or browsers keep the old copy -->
-  <link rel="stylesheet" href="style.css?v=34">
+  <link rel="stylesheet" href="style.css?v=35">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -26,6 +26,15 @@
 
 <body>
   <div id="app-container">
+    <!-- Shown only inside the LINE in-app browser (see script.js) -->
+    <div id="inapp-browser-banner">
+      <div class="banner-text">
+        <strong>目前在 LINE 內建瀏覽器</strong>
+        <span>開檔與暫存可能受限。也可點右上角 ⋯ 改用其他瀏覽器開啟。</span>
+      </div>
+      <button id="inapp-open-external" type="button" class="btn-primary">用預設瀏覽器開啟</button>
+      <button id="inapp-banner-close" type="button" class="close-btn" title="關閉提示">&times;</button>
+    </div>
     <div id="toolbar-toggle-tab" title="開啟選單：開檔、搜尋、翻頁">
       <span class="icon" aria-hidden="true">☰</span>
       <span class="fab-label">選單</span>
@@ -246,7 +255,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=18"></script>
+  <script type="module" src="./script.js?v=19"></script>
 </body>
 
 </html>

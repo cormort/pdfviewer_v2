@@ -1972,6 +1972,55 @@ copyPageTextBtn?.addEventListener('click', async () => {
     }
 });
 
+// === LINE in-app browser notice ===
+// LINE's built-in browser reports itself as "Line/<version>" and, on newer
+// builds, "/IAB". Nothing in a page can push itself out of that webview, so
+// the banner offers the platform's best escape and, above it, the manual route
+// that always works.
+const inappBanner = document.getElementById('inapp-browser-banner');
+
+function isLineInAppBrowser() {
+    return /\bLine\/\d/i.test(navigator.userAgent);
+}
+
+function openInExternalBrowser() {
+    const target = new URL(window.location.href);
+    target.hash = '';
+    target.searchParams.set('openExternalBrowser', '1');
+    const httpsUrl = target.toString();
+
+    if (/android/i.test(navigator.userAgent)) {
+        const scheme = target.protocol.replace(':', '');
+        window.location.href =
+            `intent://${target.host}${target.pathname}${target.search}` +
+            `#Intent;scheme=${scheme};package=com.android.chrome;` +
+            `S.browser_fallback_url=${encodeURIComponent(httpsUrl)};end`;
+        return;
+    }
+
+    // iOS: this scheme hands the URL to Safari from inside a webview. When the
+    // webview refuses it nothing happens, which is why the banner keeps the
+    // manual instruction visible.
+    window.location.href = httpsUrl.replace(/^https?:/, 'x-safari-https:');
+}
+
+if (inappBanner) {
+    if (isLineInAppBrowser() && sessionStorage.getItem('inappNoticeDismissed') !== '1') {
+        inappBanner.classList.add('is-visible');
+    }
+
+    document.getElementById('inapp-open-external')?.addEventListener('click', openInExternalBrowser);
+
+    document.getElementById('inapp-banner-close')?.addEventListener('click', () => {
+        inappBanner.classList.remove('is-visible');
+        try {
+            sessionStorage.setItem('inappNoticeDismissed', '1');
+        } catch {
+            /* private mode: the notice simply comes back next load */
+        }
+    });
+}
+
 // Links opened from inside LINE land in its built-in browser, where file
 // pickers and storage behave differently. LINE hands a link to the phone's
 // default browser instead when it carries openExternalBrowser=1, and the
