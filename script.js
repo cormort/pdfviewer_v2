@@ -1271,9 +1271,58 @@ async function renderThumbnail(docIndex, localPageNum, canvasEl) {
             viewport: scaledViewport
         };
         await page.render(renderContext).promise;
+
+        await drawThumbnailMatches(page, scaledViewport, thumbnailCtx, getPatternFromSearchInput());
     } catch (error) {
         console.error(`Failed to render thumbnail for doc ${docIndex} page ${localPageNum}:`, error);
     }
+}
+
+// The reading view marks a match by underlining the whole text run that
+// contains it (see the text layer above). A thumbnail has no text layer, so the
+// same marks are drawn straight onto the canvas, which is also what lets the
+// exported PNG and the carousel card show where the keyword sits.
+async function drawThumbnailMatches(page, viewport, ctx, pattern) {
+    if (!pattern) return;
+
+    const textContent = await page.getTextContent();
+    if (!textContent?.items?.length) return;      // scanned PDF: nothing to mark
+
+    ctx.save();
+    ctx.strokeStyle = '#f31260';                  // --danger-color, as in the reading view
+    ctx.lineWidth = Math.max(1, viewport.scale * 0.9);
+    ctx.lineJoin = 'round';
+
+    for (const item of textContent.items) {
+        if (!item.str) continue;
+        pattern.lastIndex = 0;
+        if (!pattern.test(item.str)) continue;
+
+        // item.transform is text space; this puts its baseline on the canvas.
+        const [a, b, , , e, f] = pdfjsLib.Util.transform(viewport.transform, item.transform);
+        const width = item.width * viewport.scale;
+        if (width <= 0) continue;
+
+        // Rotated or vertical runs would need the full matrix; underlining them
+        // horizontally would land the mark in the wrong place, so leave them.
+        if (Math.abs(b) > Math.abs(a) * 0.1) continue;
+
+        const fontSize = Math.hypot(a, b) || viewport.scale * 10;
+        drawWavyLine(ctx, e, f + fontSize * 0.18, width, fontSize * 0.16);
+    }
+
+    ctx.restore();
+}
+
+// A sine wave, so the mark reads the same as the CSS wavy underline it mirrors.
+function drawWavyLine(ctx, x, y, width, amplitude) {
+    const wavelength = Math.max(3, amplitude * 4);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    for (let dx = 0; dx <= width; dx += 1) {
+        ctx.lineTo(x + dx, y + Math.sin((dx / wavelength) * Math.PI * 2) * amplitude);
+    }
+    ctx.stroke();
 }
 
 function initThumbnailObserver() {
