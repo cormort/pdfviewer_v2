@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=40';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=42';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -2803,6 +2803,9 @@ function initResizer() {
 
 // === Keyboard Shortcuts ===
 document.addEventListener('keydown', e => {
+    // A modal is modal: nothing behind it should react to the page shortcuts.
+    if (openDialogs().length) return;
+
     // Don't steal keys from anything the user is operating with the keyboard.
     // SELECT needs the arrows, BUTTON needs Space, and contenteditable needs both.
     const t = e.target;
@@ -2969,12 +2972,21 @@ function openDialogs() {
 }
 
 function rememberFocus() {
+    // Only the first dialog in a chain records the origin. Opening a note from
+    // the notes list closes the list first, so by the time the modal asks,
+    // there is no open dialog and activeElement is already <body> — checking
+    // openDialogs() here is not enough, the saved value is what guards it.
+    if (focusBeforeDialog) return;
     focusBeforeDialog = document.activeElement;
 }
 
 function restoreFocus() {
     if (openDialogs().length) return;   // another dialog is still up
-    focusBeforeDialog?.focus?.();
+    // The remembered element can have been hidden while the dialog was open;
+    // focusing it then would drop focus to <body> anyway.
+    if (focusBeforeDialog?.isConnected && focusBeforeDialog.offsetParent !== null) {
+        focusBeforeDialog.focus?.();
+    }
     focusBeforeDialog = null;
 }
 

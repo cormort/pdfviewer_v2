@@ -16,7 +16,7 @@
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <!-- One ?v= token for every local asset (style.css, script.js, db.js) —
        they used to drift apart. Bump all three with: npm run bump-cache -->
-  <link rel="stylesheet" href="style.css?v=40">
+  <link rel="stylesheet" href="style.css?v=42">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -216,7 +216,7 @@
     <div id="loading-overlay" class="loading-overlay" style="display: none;">
       <div class="loading-content">
         <div class="loading-spinner-large"></div>
-        <div id="loading-message">載入中...</div>
+        <div id="loading-message" class="loading-message">載入中...</div>
       </div>
     </div>
 
@@ -251,7 +251,7 @@
         <div class="modal-footer backup-actions">
           <button id="export-notes-btn" class="btn-secondary" title="將所有筆記匯出為 JSON 檔案" aria-label="將所有筆記匯出為 JSON 檔案">📤 匯出備份</button>
           <button id="import-notes-trigger-btn" class="btn-secondary" title="從 JSON 備份檔案匯入筆記" aria-label="從 JSON 備份檔案匯入筆記">📥 匯入備份</button>
-          <input type="file" id="import-notes-input" accept=".json" style="display: none;">
+          <input type="file" id="import-notes-input" accept=".json" class="sr-only">
         </div>
       </div>
     </div>
@@ -270,7 +270,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=40"></script>
+  <script type="module" src="./script.js?v=42"></script>
 </body>
 
 </html>

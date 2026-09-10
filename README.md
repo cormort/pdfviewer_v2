@@ -59,7 +59,7 @@ Normal Mode: When you are not in search mode, swiping left or right will take yo
 
 Search Mode: After you have performed a search, swiping left or right will jump directly to the page containing the previous or next search result, allowing you to quickly browse through all matches.
 
-When you reach the first or last search result, a brief notification, "Already at the first/last result," will be displayed.
+Stepping through results wraps around: past the last result you land back on the first. Your position is always shown in the results bar as i / total.
 
 Note: To avoid conflicts, the swipe-to-navigate feature is temporarily disabled when the highlighter, text selection, or magnifier tools are active.
 
