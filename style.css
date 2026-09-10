@@ -16,7 +16,7 @@
 
     --text-primary: #1f2427;       /* softened foreground */
     --text-secondary: #71717a;     /* default-500 */
-    --text-tertiary: #a1a1aa;      /* default-400 */
+    --text-tertiary: #6b7280;      /* darkened from default-400: #a1a1aa was 2.5:1 on --bg-primary */
 
     --border-color: #e4e4e7;       /* default-200 */
     --border-hover: #d4d4d8;       /* default-300 */
@@ -38,6 +38,16 @@
     --transition-normal: 250ms ease;
     --transition-slow: 350ms ease;
 
+    /* `transition: all` also animates layout properties, so every hover forced
+       the browser to watch width/height/top/left too. These are the properties
+       the interactive states actually change. */
+    --transition-ui: background-color 150ms ease, color 150ms ease, border-color 150ms ease,
+        box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease, visibility 150ms ease;
+    --transition-ui-normal: background-color 250ms ease, color 250ms ease, border-color 250ms ease,
+        box-shadow 250ms ease, transform 250ms ease, opacity 250ms ease, visibility 250ms ease;
+    --transition-ui-200: background-color 200ms ease, color 200ms ease, border-color 200ms ease,
+        box-shadow 200ms ease, transform 200ms ease, opacity 200ms ease, visibility 200ms ease;
+
     --glass-bg: rgba(251, 251, 249, 0.7);
     --glass-border: rgba(255, 255, 255, 0.5);
 
@@ -51,7 +61,8 @@ body {
     padding: 0;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100vh;      /* fallback */
+    height: 100dvh;     /* excludes the mobile browser chrome */
     overflow: hidden;
     overscroll-behavior-y: contain;
     background-color: var(--bg-tertiary);
@@ -196,7 +207,7 @@ body {
     cursor: pointer;
     pointer-events: auto;
     box-shadow: var(--shadow-md);
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -359,7 +370,7 @@ body {
     font-size: 0.875rem;
     color: var(--text-primary);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
     white-space: nowrap;
 }
 
@@ -367,8 +378,18 @@ body {
     background: var(--bg-tertiary);
 }
 
+/* Visually hidden rather than display:none — display:none drops the input out
+   of the tab order, leaving no keyboard route to the file picker. */
 .custom-file-upload input[type="file"] {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
 }
 
 .file-switch-section {
@@ -382,7 +403,7 @@ body {
     border: 1px solid transparent;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
 }
 
 #fileSwitchDropdown:hover:not(:disabled) {
@@ -415,7 +436,7 @@ select {
     font-size: 0.875rem;
     background: var(--bg-secondary);
     color: var(--text-primary);
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
 }
 
 input[type="text"]:hover,
@@ -477,7 +498,7 @@ button {
     font-size: 0.875rem;
     line-height: 1;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
     border: 1px solid transparent;
     display: inline-flex;
     align-items: center;
@@ -672,7 +693,7 @@ button {
     font-size: 0.938rem;
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
     cursor: pointer;
 }
 
@@ -721,7 +742,7 @@ button {
     border-radius: var(--radius-lg);
     background-color: var(--bg-primary);
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: var(--transition-ui-normal);
     position: relative;
     overflow: hidden;
 }
@@ -846,7 +867,7 @@ body.results-bar-visible #floating-action-buttons {
     font-size: 22px;
     cursor: pointer;
     box-shadow: var(--shadow-lg);
-    transition: all var(--transition-normal);
+    transition: var(--transition-ui-normal);
     position: relative;
     backdrop-filter: blur(10px);
 }
@@ -875,7 +896,7 @@ body.results-bar-visible #floating-action-buttons {
     white-space: nowrap;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.2s;
+    transition: var(--transition-ui-200);
     pointer-events: none;
 }
 
@@ -894,7 +915,7 @@ body.results-bar-visible #floating-action-buttons {
     background: white;
     border: 1px solid var(--border-color);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
     box-shadow: var(--shadow-md);
 }
 
@@ -933,7 +954,7 @@ body.results-bar-visible #floating-action-buttons {
     white-space: nowrap;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.2s ease;
+    transition: var(--transition-ui-200);
     pointer-events: none;
     z-index: 1001;
     box-shadow: var(--shadow-md);
@@ -949,7 +970,7 @@ body.results-bar-visible #floating-action-buttons {
     border-left-color: rgba(17, 24, 28, 0.95);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.2s ease;
+    transition: var(--transition-ui-200);
     pointer-events: none;
 }
 
@@ -1135,7 +1156,7 @@ body.results-bar-visible #floating-action-buttons {
     cursor: pointer;
     padding: 4px 8px;
     border-radius: var(--radius-sm);
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
     line-height: 1;
 }
 
@@ -1196,7 +1217,7 @@ body.results-bar-visible #floating-action-buttons {
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
 }
 
 .btn-primary {
@@ -1246,7 +1267,7 @@ body.results-bar-visible #floating-action-buttons {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
 }
 
 .note-list-item:hover {
@@ -1395,16 +1416,18 @@ body.results-bar-visible #floating-action-buttons {
     font-size: 14px;
 }
 
+/* White text needs 4.5:1 against these fills. The default-500 brand tones give
+   about 2:1, so notifications use darkened variants of the same hues. */
 .notification-success {
-    background-color: var(--secondary-color);
+    background-color: #0f7b3f;
 }
 
 .notification-error {
-    background-color: var(--danger-color);
+    background-color: #c20d4c;
 }
 
 .notification-warning {
-    background-color: var(--accent-color);
+    background-color: #8a5a00;
 }
 
 .notification-info {
@@ -1506,7 +1529,7 @@ button:disabled {
 
 /* =================== PAGE SLIDER STYLES =================== */
 input[type="range"]::-webkit-slider-thumb {
-    transition: all 0.2s;
+    transition: var(--transition-ui-200);
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
@@ -1545,6 +1568,11 @@ html {
 
 button:focus-visible {
     outline-offset: 4px;
+}
+
+.custom-file-upload:focus-within {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 /* =================== ACCESSIBILITY HELPERS =================== */
@@ -1648,7 +1676,9 @@ button:focus-visible {
         width: 280px;
         max-width: 85vw;
         height: 100vh;
+        height: 100dvh;
         max-height: 100vh;
+        max-height: 100dvh;
         background: var(--bg-primary);
         border-right: 1px solid var(--border-color);
         padding: 20px;
@@ -1714,7 +1744,15 @@ button:focus-visible {
 
     /* Hide the native file input text on mobile so only the label text shows */
     #toolbar label[for="fileInput"] input[type="file"] {
-        display: none;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
     }
 
     .title-section {
@@ -2222,7 +2260,7 @@ button:focus-visible {
     font-size: 0.938rem;
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    transition: all var(--transition-fast);
+    transition: var(--transition-ui);
     cursor: pointer;
     flex-shrink: 0;
 }

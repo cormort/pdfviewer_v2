@@ -36,8 +36,8 @@
       </div>
 
       <div class="file-section">
-        <button id="restore-session-btn" class="btn-secondary" style="display: none;" title="恢復上一個工作階段">🔄 恢復</button>
-        <button id="clear-session-btn" class="btn-danger" style="display: none;" title="清除工作階段">🗑️
+        <button id="restore-session-btn" class="btn-secondary" style="display: none;" title="恢復上一個工作階段" aria-label="恢復上一個工作階段">🔄 恢復</button>
+        <button id="clear-session-btn" class="btn-danger" style="display: none;" title="清除工作階段" aria-label="清除工作階段">🗑️
           清除</button>
         <label for="fileInput" class="custom-file-upload">
           <span>📁 開啟 PDF</span>
@@ -48,7 +48,7 @@
       <div class="search-section">
         <div class="search-input-wrap">
           <input type="text" id="searchInput" placeholder="搜尋關鍵字..." autocomplete="off">
-          <button id="clear-search-btn" type="button" title="清除搜尋" hidden>×</button>
+          <button id="clear-search-btn" type="button" title="清除搜尋" hidden aria-label="清除搜尋">×</button>
         </div>
         <button id="search-action-button" class="btn-primary">搜尋</button>
         <select id="fileFilterDropdown">
@@ -63,10 +63,10 @@
       </div>
 
       <div class="nav-section">
-        <button id="go-to-first-page" title="第一頁">«</button>
-        <button id="prev-page" title="上一頁">‹</button>
+        <button id="go-to-first-page" title="第一頁" aria-label="第一頁">«</button>
+        <button id="prev-page" title="上一頁" aria-label="上一頁">‹</button>
         <div id="page-num-display">第 - / - 頁</div>
-        <button id="next-page" title="下一頁">›</button>
+        <button id="next-page" title="下一頁" aria-label="下一頁">›</button>
         <input type="number" id="page-to-go" min="1" value="1" title="前往頁面">
         <button id="go-to-page-btn" class="btn-secondary">前往</button>
       </div>
@@ -77,17 +77,17 @@
     <main id="main-content">
       <section id="pdf-container">
         <!-- Empty State -->
-        <div id="empty-state" class="empty-state-guide">
-          <div class="icon">📄</div>
+        <div id="empty-state" class="empty-state-guide" role="button" tabindex="0">
+          <div class="icon" aria-hidden="true">📄</div>
           <h2>開始您的專案</h2>
           <p>點這裡開啟 PDF，即可使用關鍵字搜尋、分頁筆記等功能。</p>
         </div>
 
         <!-- PDF Content Wrapper -->
         <div id="canvas-wrapper" style="position: relative; display: none;">
-          <canvas id="pdf-canvas"></canvas>
+          <canvas id="pdf-canvas" aria-hidden="true"></canvas>
           <div id="text-layer"></div>
-          <canvas id="drawing-canvas"></canvas>
+          <canvas id="drawing-canvas" aria-hidden="true"></canvas>
           <div id="magnifier-glass">
             <canvas id="magnifier-canvas"></canvas>
           </div>
@@ -106,8 +106,8 @@
           <select id="panelResultsDropdown">
             <option value="">搜尋結果</option>
           </select>
-        <button id="results-view-toggle" title="切換列表／縮圖：橫式（寬）的文件建議用列表，直式（長）的文件建議用縮圖">▦ 縮圖</button>
-        <button id="export-results-pdf-btn" title="把搜尋到的頁面匯出成一份含目錄的 PDF">📄 匯出結果 PDF</button>
+        <button id="results-view-toggle" title="切換列表／縮圖：橫式（寬）的文件建議用列表，直式（長）的文件建議用縮圖" aria-label="切換列表／縮圖：橫式（寬）的文件建議用列表，直式（長）的文件建議用縮圖">▦ 縮圖</button>
+        <button id="export-results-pdf-btn" title="把搜尋到的頁面匯出成一份含目錄的 PDF" aria-label="把搜尋到的頁面匯出成一份含目錄的 PDF">📄 匯出結果 PDF</button>
         </div>
         <div id="results-list"></div>
       </div>
@@ -119,46 +119,46 @@
     <!-- Floating Action Buttons -->
     <div id="floating-action-buttons" class="fab-container">
       <!-- Overlay Panel Trigger (Mobile Speed Dial) -->
-      <button id="main-fab" class="btn-primary" title="工具選單">
+      <button id="main-fab" class="btn-primary" title="工具選單" aria-label="工具選單">
         <span class="icon">🛠️</span>
       </button>
 
       <div class="fab-menu" id="fab-speed-dial">
         <div class="fab-group-label">分享與截圖</div>
-        <button id="share-page-btn" class="btn-secondary" title="分享 PDF">
+        <button id="share-page-btn" class="btn-secondary" title="分享 PDF" aria-label="分享 PDF">
           <span class="icon">🔗</span>
         </button>
 
         <div class="fab-divider"></div>
         <div class="fab-group-label">文字工具</div>
-        <button id="toggle-underline-btn" class="btn-secondary" title="切換搜尋底線">
+        <button id="toggle-underline-btn" class="btn-secondary" title="切換搜尋底線" aria-label="切換搜尋底線">
           <span class="icon">S̲</span>
         </button>
-        <button id="toggle-highlighter-btn" class="btn-secondary" title="螢光筆標記選擇內容">
+        <button id="toggle-highlighter-btn" class="btn-secondary" title="螢光筆標記選擇內容" aria-label="螢光筆標記選擇內容">
           <span class="icon">🖍️</span>
         </button>
-        <button id="clear-highlighter-btn" class="btn-secondary" title="清除所有標記">
+        <button id="clear-highlighter-btn" class="btn-secondary" title="清除所有標記" aria-label="清除所有標記">
           <span class="icon">🧹</span>
         </button>
 
         <div class="fab-divider"></div>
         <div class="fab-group-label">選取與筆記</div>
-        <button id="toggle-text-selection-btn" class="btn-secondary" title="選擇文字">
+        <button id="toggle-text-selection-btn" class="btn-secondary" title="選擇文字" aria-label="選擇文字">
           <span class="icon">📄</span>
         </button>
-        <button id="toggle-paragraph-selection-btn" class="btn-secondary" title="選擇段落">
+        <button id="toggle-paragraph-selection-btn" class="btn-secondary" title="選擇段落" aria-label="選擇段落">
           <span class="icon">¶</span>
         </button>
-        <button id="copy-page-text-btn" class="btn-secondary" title="複製選擇內容">
+        <button id="copy-page-text-btn" class="btn-secondary" title="複製選擇內容" aria-label="複製選擇內容">
           <span class="icon">📋</span>
         </button>
-        <button id="view-notes-btn" class="btn-secondary" title="所有分頁筆記">
+        <button id="view-notes-btn" class="btn-secondary" title="所有分頁筆記" aria-label="所有分頁筆記">
           <span class="icon">📝</span>
         </button>
-        <button id="toggle-local-magnifier-btn" class="btn-secondary" title="放大鏡 (點擊 PDF)">
+        <button id="toggle-local-magnifier-btn" class="btn-secondary" title="放大鏡 (點擊 PDF)" aria-label="放大鏡 (點擊 PDF)">
           <span class="icon">🔍</span>
         </button>
-        <button id="toggle-notes-btn" class="btn-secondary" title="新增筆記 (點擊 PDF)">
+        <button id="toggle-notes-btn" class="btn-secondary" title="新增筆記 (點擊 PDF)" aria-label="新增筆記 (點擊 PDF)">
           <span class="icon">📌</span>
         </button>
       </div>
@@ -166,9 +166,9 @@
 
     <!-- Zoom Controls Overlay -->
     <div class="page-nav-overlay">
-      <button id="zoom-out-btn" class="zoom-out-btn" title="縮小">-</button>
+      <button id="zoom-out-btn" class="zoom-out-btn" title="縮小" aria-label="縮小">-</button>
       <div id="zoom-level-display">100%</div>
-      <button id="zoom-in-btn" class="zoom-in-btn" title="放大">+</button>
+      <button id="zoom-in-btn" class="zoom-in-btn" title="放大" aria-label="放大">+</button>
       <div class="toolbar-divider"></div>
       <button id="fit-width-btn" class="fit-width-btn">寬度</button>
       <button id="fit-height-btn" class="fit-height-btn">高度</button>
@@ -185,7 +185,7 @@
     </div>
 
     <!-- Note Modal -->
-    <div id="note-modal" class="modal-overlay">
+    <div id="note-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="note-modal-title">
       <div class="modal-content">
         <div class="modal-header">
           <h3 id="note-modal-title">新增筆記</h3>
@@ -203,18 +203,18 @@
     </div>
 
     <!-- Notes List Panel -->
-    <div id="notes-list-panel" class="modal-overlay">
+    <div id="notes-list-panel" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="notes-list-title">
       <div class="modal-content side-panel">
         <div class="modal-header">
-          <h3>所有分頁筆記</h3>
+          <h3 id="notes-list-title">所有分頁筆記</h3>
           <button id="close-notes-list" class="close-btn">&times;</button>
         </div>
         <div id="notes-list-container" class="modal-body">
           <!-- Notes will be loaded here -->
         </div>
         <div class="modal-footer backup-actions">
-          <button id="export-notes-btn" class="btn-secondary" title="將所有筆記匯出為 JSON 檔案">📤 匯出備份</button>
-          <button id="import-notes-trigger-btn" class="btn-secondary" title="從 JSON 備份檔案匯入筆記">📥 匯入備份</button>
+          <button id="export-notes-btn" class="btn-secondary" title="將所有筆記匯出為 JSON 檔案" aria-label="將所有筆記匯出為 JSON 檔案">📤 匯出備份</button>
+          <button id="import-notes-trigger-btn" class="btn-secondary" title="從 JSON 備份檔案匯入筆記" aria-label="從 JSON 備份檔案匯入筆記">📥 匯入備份</button>
           <input type="file" id="import-notes-input" accept=".json" style="display: none;">
         </div>
       </div>

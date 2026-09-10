@@ -732,7 +732,8 @@ function initLocalMagnifier() {
 }
 
 function updateLocalMagnifier(clientX, clientY) {
-    const canvasWrapper = document.getElementById('canvas-wrapper');
+    // canvasWrapper is already a module-level element; the getElementById here
+    // ran on every pointer move.
     if (!localMagnifierEnabled || !canvas || !magnifierGlass || !localMagnifierCtx || !canvasWrapper) {
         if (magnifierGlass) magnifierGlass.style.display = 'none';
         return;
@@ -1058,6 +1059,7 @@ function renderPage(globalPageNum, highlightPattern = null) {
     pageRendering = true;
     currentPageTextContent = null;
     currentViewport = null;
+    pageItemGeometry = null;
     updatePageControls();
 
     drawingCtx?.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
@@ -1215,6 +1217,7 @@ function renderTextLayer(page, viewport, highlightPattern, docIndex, localPage, 
     return getCachedTextContent(docIndex, localPage).then(textContent => {
         if (isStale()) return;
         currentPageTextContent = textContent;
+        pageItemGeometry = null;
 
         // Handle empty text content (scanned PDFs / image-based PDFs)
         if (!textContent || !textContent.items || textContent.items.length === 0) {
@@ -2106,6 +2109,11 @@ localMagnifierZoomSelector?.addEventListener('change', e => {
     LOCAL_MAGNIFIER_ZOOM_LEVEL = parseFloat(e.target.value);
 });
 
+// Pointer moves arrive far faster than the screen repaints; coalesce them so
+// the magnifier does at most one measure-and-draw per frame.
+let magnifierPointer = null;
+let magnifierQueued = false;
+
 function handlePointerMoveForLocalMagnifier(e) {
     if (!localMagnifierEnabled) return;
     if (e.type === 'touchmove' || e.type === 'touchstart') e.preventDefault();
@@ -2121,10 +2129,17 @@ function handlePointerMoveForLocalMagnifier(e) {
         return;
     }
 
-    updateLocalMagnifier(clientX, clientY);
+    magnifierPointer = { clientX, clientY };
+    if (magnifierQueued) return;
+    magnifierQueued = true;
+    requestAnimationFrame(() => {
+        magnifierQueued = false;
+        if (magnifierPointer) updateLocalMagnifier(magnifierPointer.clientX, magnifierPointer.clientY);
+    });
 }
 
 function handlePointerLeaveForLocalMagnifier() {
+    magnifierPointer = null;
     if (localMagnifierEnabled && magnifierGlass) {
         magnifierGlass.style.display = 'none';
     }
@@ -2332,28 +2347,56 @@ function clearParagraphHighlights() {
     document.querySelectorAll('.paragraph-highlight, #copy-paragraph-btn').forEach(el => el.remove());
 }
 
+// The click hit-test used to run Util.transform over every item on the page,
+// and the line grouping sorted currentPageTextContent.items *in place* — that
+// array is the cached textContent shared with search and the text layer, so
+// the sort silently reordered the text search joins together.
+// Both now work off a per-render cache built from a copy.
+// ponytail: still a linear scan of the cached rects, which is plenty for a
+// click handler; bucket by row only if a page ever gets slow enough to notice.
+let pageItemGeometry = null;
+
+function getPageItemGeometry() {
+    if (pageItemGeometry) return pageItemGeometry;
+    if (!currentPageTextContent || !currentViewport) return null;
+
+    const scale = currentViewport.scale;
+    const rects = currentPageTextContent.items.map(item => {
+        const tx = pdfjsLib.Util.transform(currentViewport.transform, item.transform);
+        return {
+            item,
+            left: tx[4],
+            top: tx[5] - item.height * scale,
+            right: tx[4] + item.width * scale,
+            bottom: tx[5]
+        };
+    });
+    const sortedItems = [...currentPageTextContent.items].sort((a, b) =>
+        a.transform[5] - b.transform[5] || a.transform[4] - b.transform[4]
+    );
+
+    pageItemGeometry = { rects, sortedItems };
+    return pageItemGeometry;
+}
+
 function handleParagraphSelection(e) {
     if (!paragraphSelectionModeActive || !currentPageTextContent || !currentViewport || !textLayerDivGlobal) return;
 
     clearParagraphHighlights();
 
+    const geometry = getPageItemGeometry();
+    if (!geometry) return;
+
     const pos = getEventPosition(textLayerDivGlobal, e);
     const clickPoint = { x: pos.x, y: pos.y };
 
     let closestItem = null;
-    currentPageTextContent.items.forEach(item => {
-        const tx = pdfjsLib.Util.transform(currentViewport.transform, item.transform);
-        const itemRect = {
-            left: tx[4],
-            top: tx[5] - item.height * currentViewport.scale,
-            right: tx[4] + item.width * currentViewport.scale,
-            bottom: tx[5]
-        };
-        if (clickPoint.x >= itemRect.left && clickPoint.x <= itemRect.right &&
-            clickPoint.y >= itemRect.top && clickPoint.y <= itemRect.bottom) {
-            closestItem = item;
+    for (const r of geometry.rects) {
+        if (clickPoint.x >= r.left && clickPoint.x <= r.right &&
+            clickPoint.y >= r.top && clickPoint.y <= r.bottom) {
+            closestItem = r.item;
         }
-    });
+    }
 
     if (!closestItem) return;
 
@@ -2364,11 +2407,7 @@ function handleParagraphSelection(e) {
     let currentLine = [];
     let lastY = -1;
 
-    currentPageTextContent.items.sort((a, b) =>
-        a.transform[5] - b.transform[5] || a.transform[4] - b.transform[4]
-    );
-
-    currentPageTextContent.items.forEach(item => {
+    geometry.sortedItems.forEach(item => {
         if (lastY === -1 || Math.abs(item.transform[5] - lastY) < lineTolerance) {
             currentLine.push(item);
         } else {
@@ -2512,8 +2551,11 @@ function initResizer() {
 
 // === Keyboard Shortcuts ===
 document.addEventListener('keydown', e => {
-    // Ignore keydown events in input fields
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    // Don't steal keys from anything the user is operating with the keyboard.
+    // SELECT needs the arrows, BUTTON needs Space, and contenteditable needs both.
+    const t = e.target;
+    if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' ||
+        t.tagName === 'BUTTON' || t.isContentEditable) return;
 
     if (!pdfDocs.length) return;
 
@@ -2646,8 +2688,25 @@ resultsViewToggle?.addEventListener('click', () => {
     highlightCurrentResult();
 });
 
-// Tapping the empty state is the same as hitting 開啟 PDF
+// Tapping the empty state is the same as hitting 開啟 PDF.
+// It is role="button", so it has to answer Enter and Space like one.
 emptyState?.addEventListener('click', () => fileInput?.click());
+emptyState?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput?.click();
+    }
+});
+
+// Esc closes whichever dialog is open
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (noteModal?.classList.contains('active')) {
+        closeNoteModalFunc();
+    } else if (notesListPanel?.classList.contains('active')) {
+        notesListPanel.classList.remove('active');
+    }
+});
 
 // Clear button inside the search box
 const clearSearchBtn = document.getElementById('clear-search-btn');
