@@ -9,7 +9,7 @@
 //
 // Bump CACHE_VERSION when a precached library changes, or to force every
 // installed copy to discard what it has.
-const CACHE_VERSION = 'pdf-studio-v15';
+const CACHE_VERSION = 'pdf-studio-v17';
 
 const PRECACHE = [
   './',
@@ -73,7 +73,12 @@ async function cacheFirst(request) {
 
 async function networkFirst(request) {
   try {
-    const response = await fetch(request);
+    // 'no-cache' means revalidate with the server every time (a 304 is cheap),
+    // not "skip the cache". Without it, fetch() can answer from the HTTP cache
+    // — index.html and instructions.html carry no ?v= token, so a heuristically
+    // fresh copy is served with transferSize 0 and then store()d, fossilising
+    // the stale page in the SW cache too.
+    const response = await fetch(request, { cache: 'no-cache' });
     if (response && response.ok) await store(request, response.clone());
     return response;
   } catch {

@@ -100,6 +100,35 @@ Q11: How do I adjust the magnifier's zoom level?
 
 When the magnifier tool 🔍 is enabled, a "Magnifier Zoom" option will appear in the function menu. You can select a zoom level from 1.5x to 3.5x.
 
+🛠️ Developing
+
+Serve the folder over HTTP (`python3 -m http.server 8931`) rather than opening
+index.html directly — it is an ES module app with a service worker, and
+neither works from file://.
+
+Before concluding a change did not work, check you are not looking at a cached
+copy. There are two layers:
+
+- The HTTP cache. style.css, script.js and db.js carry a `?v=` token, so a
+  bump changes the URL and sidesteps it — run `npm run bump-cache` to move all
+  three together. index.html and instructions.html have no token, so a browser
+  that cached them heuristically (a plain static server sends Last-Modified and
+  no Cache-Control) will re-serve the old copy. In DevTools → Network, a Size
+  of `(disk cache)` — or `transferSize` 0 from
+  `performance.getEntriesByType('navigation')[0]` — means the network was never
+  reached. The service worker asks for these with `cache: 'no-cache'`, so once
+  it controls the page every navigation revalidates. It cannot help with the
+  *first* navigation of a fresh profile, which the browser handles before the
+  worker is installed: on that one, `workerStart` is 0 and a heuristically
+  fresh copy is served regardless. Unregistering the worker from the console
+  does not clear the HTTP cache either, which is why the reliable reset is
+  Clear site data, not `caches.delete()`.
+- The service worker cache. Bump `CACHE_VERSION` in service-worker.js whenever
+  a precached file changes. To start clean: unregister the worker and clear
+  the caches (Application → Storage → Clear site data).
+
+`npm run lint` covers script.js, db.js, service-worker.js and tools/.
+
 📄 License
 The code written for this project is released under the MIT License. See LICENSE.
 
