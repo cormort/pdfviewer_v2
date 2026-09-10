@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=44';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=45';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -2017,7 +2017,9 @@ const REGEX_FLAGS = /^[dgimsuvy]*$/;
 
 function createSearchPattern(input) {
     const lastSlashIndex = input.lastIndexOf('/');
-    if (input.startsWith('/') && lastSlashIndex > 0 &&
+    // > 1, not > 0: "//" would otherwise compile to an empty regex that
+    // matches every page.
+    if (input.startsWith('/') && lastSlashIndex > 1 &&
         REGEX_FLAGS.test(input.slice(lastSlashIndex + 1))) {
         return new RegExp(input.slice(1, lastSlashIndex), input.slice(lastSlashIndex + 1));
     }

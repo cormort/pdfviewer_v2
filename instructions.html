@@ -130,7 +130,7 @@
 
         <h3>Q4: 如何跨多個 PDF 檔案進行搜尋？</h3>
         <ol>
-            <li>在「Keyword or Regex」輸入框中輸入您的關鍵字。您可以用空格分隔多個關鍵字，例如：<code>company report</code>。</li>
+            <li>在搜尋框中輸入您的關鍵字。您可以用空格分隔多個關鍵字，例如：<code>company report</code>，會找出同一頁中依序出現這些詞的地方。</li>
             <li>點擊 <span class="key">Search</span> 按鈕。</li>
             <li>
                 搜尋完成後，結果會根據您的裝置以不同方式呈現：
@@ -142,7 +142,9 @@
             <li>點擊任何一個結果即可快速跳轉到該頁面。</li>
         </ol>
         <div class="note">
-            <strong>進階搜尋提示：</strong> 您可以使用正規表示式 (Regular Expressions) 進行更強大的搜尋。只需將您的表達式放在斜線之間。例如，<code>/Chapter \d+/i</code> 會進行一個不區分大小寫的搜尋，尋找 "Chapter" 後面跟著一個或多個數字的內容。
+            <strong>進階搜尋提示：</strong> 您可以使用正規表示式 (Regular Expressions) 進行更強大的搜尋。只需將您的表達式放在斜線之間，結尾可再加上旗標。例如，<code>/Chapter \d+/i</code> 會進行一個不區分大小寫的搜尋，尋找 "Chapter" 後面跟著一個或多個數字的內容。
+            <br><br>
+            <strong>一般搜尋不必擔心這件事：</strong>只有「以 <code>/</code> 開頭、且結尾那段確實是合法旗標」的輸入才會被當成正規表示式。所以像 <code>/usr/bin</code>、<code>/2026/09</code>、<code>/合約/附件</code> 這種路徑或日期，都會照字面比對，不會被誤判。
         </div>
         
         <h3>Q5: 如何導覽頁面與搜尋結果？</h3>

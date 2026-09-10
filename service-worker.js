@@ -9,7 +9,7 @@
 //
 // Bump CACHE_VERSION when a precached library changes, or to force every
 // installed copy to discard what it has.
-const CACHE_VERSION = 'pdf-studio-v14';
+const CACHE_VERSION = 'pdf-studio-v15';
 
 const PRECACHE = [
   './',
