@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=38';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=39';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -116,6 +116,7 @@ const fileInputLabel = document.querySelector('label[for="fileInput"]');
 const clearSessionBtn = document.getElementById('clear-session-btn');
 const restoreSessionBtn = document.getElementById('restore-session-btn');
 const emptyState = document.getElementById('empty-state');
+const emptyStateWrap = document.getElementById('empty-state-wrap');
 const canvasWrapper = document.getElementById('canvas-wrapper');
 const toolbarToggleTab = document.getElementById('toolbar-toggle-tab');
 
@@ -133,6 +134,7 @@ let currentNotePosition = null;
 let currentRenderEpoch = 0;
 let currentSearchToken = 0;
 const highlighterStrokes = new Map(); // `${docIndex}:${localPage}` -> stroke[]
+let pageItemGeometry = null;   // per-render text-item rects, see getPageItemGeometry()
 let currentStroke = null;
 let isDrawing = false;
 let lastX = 0;
@@ -178,7 +180,7 @@ function resetApp() {
     });
 
     // Toggle Empty State UI
-    if (emptyState) emptyState.style.display = 'flex';
+    if (emptyStateWrap) emptyStateWrap.style.display = 'flex';
     if (canvasWrapper) canvasWrapper.style.display = 'none';
 
     // Show/hide file input
@@ -271,13 +273,21 @@ async function loadAndProcessFiles(files) {
         showNotification(`成功載入 ${loadedPdfs.length} 個 PDF 檔案，共 ${globalTotalPages} 頁。`, 'success');
 
         // Show Canvas UI
-        if (emptyState) emptyState.style.display = 'none';
+        if (emptyStateWrap) emptyStateWrap.style.display = 'none';
         if (canvasWrapper) canvasWrapper.style.display = 'block';
 
         renderPage(1);
 
         // Update file switch dropdown
         updateFileSwitchDropdown();
+
+        // Cache the session only now: saving first meant one unreadable PDF
+        // replaced a good cached set, so "開啟上次檔案" just failed again.
+        try {
+            await saveFiles(files);
+        } catch (dbError) {
+            console.warn('Could not save session to IndexedDB', dbError);
+        }
 
         if (fileInputLabel) fileInputLabel.style.display = 'none';
         if (clearSessionBtn) clearSessionBtn.style.display = 'inline-block';
@@ -402,13 +412,10 @@ restoreSessionBtn?.addEventListener('click', handleRestoreSession);
 // === File Input Handling ===
 fileInput?.addEventListener('change', async function (e) {
     const files = Array.from(e.target.files);
+    // Reset first: without it, picking the same file twice in a row fires no
+    // change event at all. The notes import already does this.
+    e.target.value = '';
     if (files.length === 0) return;
-
-    try {
-        await saveFiles(files);
-    } catch (dbError) {
-        console.warn("Could not save session to IndexedDB", dbError);
-    }
 
     try {
         await loadAndProcessFiles(files);
@@ -481,6 +488,7 @@ async function renderNotes() {
 }
 
 function openNoteModal(note = null) {
+    rememberFocus();
     currentEditingNote = note;
     if (note) {
         if (noteModalTitle) noteModalTitle.textContent = '編輯筆記';
@@ -513,6 +521,7 @@ function closeNoteModalFunc() {
     noteModal?.classList.remove('active');
     currentEditingNote = null;
     currentNotePosition = null;
+    restoreFocus();
 }
 
 async function saveCurrentNote() {
@@ -571,8 +580,16 @@ async function showNotesList() {
     notesListPanel?.classList.add('active');
 
     try {
+        // One pass over pageMap instead of a scan per document and per note.
+        const docNameByIndex = new Map();
+        const globalPageByKey = new Map();
+        pageMap.forEach((m, i) => {
+            if (!docNameByIndex.has(m.docIndex)) docNameByIndex.set(m.docIndex, m.docName);
+            globalPageByKey.set(`${m.docName}\u0000${m.localPage}`, i + 1);
+        });
+
         const importPromises = pdfDocs.map((doc, idx) => {
-            const docName = pageMap.find(m => m.docIndex === idx)?.docName;
+            const docName = docNameByIndex.get(idx);
             return docName ? getNotesForFile(docName) : Promise.resolve([]);
         });
 
@@ -593,7 +610,7 @@ async function showNotesList() {
                 noteItem.className = 'note-list-item';
 
                 // Find global page number for this note
-                const globalPageNum = pageMap.findIndex(m => m.docName === note.fileId && m.localPage === note.pageNum) + 1;
+                const globalPageNum = globalPageByKey.get(`${note.fileId}\u0000${note.pageNum}`) || 0;
 
                 const noteMeta = document.createElement('div');
                 noteMeta.className = 'note-meta';
@@ -1380,7 +1397,7 @@ if (drawingCanvas) {
 // === Thumbnail Rendering ===
 const THUMBNAIL_RETRY_LIMIT = 5;
 
-async function renderThumbnail(docIndex, localPageNum, canvasEl, attempt = 0) {
+async function renderThumbnail(docIndex, localPageNum, canvasEl, attempt = 0, pattern = getPatternFromSearchInput()) {
     try {
         const doc = pdfDocs[docIndex];
         if (!doc || !canvasEl) return;
@@ -1395,7 +1412,7 @@ async function renderThumbnail(docIndex, localPageNum, canvasEl, attempt = 0) {
         const parentWidth = canvasEl.parentElement?.clientWidth || 0;
         if (parentWidth <= 30) {
             if (!canvasEl.isConnected || attempt >= THUMBNAIL_RETRY_LIMIT) return;
-            setTimeout(() => renderThumbnail(docIndex, localPageNum, canvasEl, attempt + 1), 150);
+            setTimeout(() => renderThumbnail(docIndex, localPageNum, canvasEl, attempt + 1, pattern), 150);
             return;
         }
 
@@ -1418,7 +1435,7 @@ async function renderThumbnail(docIndex, localPageNum, canvasEl, attempt = 0) {
         };
         await page.render(renderContext).promise;
 
-        await drawThumbnailMatches(page, scaledViewport, thumbnailCtx, getPatternFromSearchInput());
+        await drawThumbnailMatches(docIndex, localPageNum, scaledViewport, thumbnailCtx, pattern);
     } catch (error) {
         console.error(`Failed to render thumbnail for doc ${docIndex} page ${localPageNum}:`, error);
     }
@@ -1428,10 +1445,12 @@ async function renderThumbnail(docIndex, localPageNum, canvasEl, attempt = 0) {
 // contains it (see the text layer above). A thumbnail has no text layer, so the
 // same marks are drawn straight onto the canvas, which is also what lets the
 // exported PNG and the carousel card show where the keyword sits.
-async function drawThumbnailMatches(page, viewport, ctx, pattern) {
+async function drawThumbnailMatches(docIndex, localPageNum, viewport, ctx, pattern) {
     if (!pattern) return;
 
-    const textContent = await page.getTextContent();
+    // Same cache the search and the text layer fill; this used to be a third,
+    // uncached getTextContent for every thumbnail.
+    const textContent = await getCachedTextContent(docIndex, localPageNum);
     if (!textContent?.items?.length) return;      // scanned PDF: nothing to mark
 
     ctx.save();
@@ -1476,13 +1495,16 @@ function initThumbnailObserver() {
         thumbnailObserver.disconnect();
     }
 
+    // Compile the search pattern once for the whole batch rather than once per card.
+    const pattern = getPatternFromSearchInput();
+
     thumbnailObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const canvas = entry.target;
                 const docIndex = parseInt(canvas.dataset.docIndex, 10);
                 const localPage = parseInt(canvas.dataset.localPage, 10);
-                renderThumbnail(docIndex, localPage, canvas);
+                renderThumbnail(docIndex, localPage, canvas, 0, pattern);
                 observer.unobserve(canvas);
             }
         });
@@ -2101,9 +2123,14 @@ toggleNotesBtn?.addEventListener('click', () => {
 
 viewNotesBtn?.addEventListener('click', () => {
     if (!pdfDocs.length) return;
+    const opening = !notesListPanel?.classList.contains('active');
+    if (opening) rememberFocus();
     notesListPanel?.classList.toggle('active');
-    if (notesListPanel?.classList.contains('active')) {
+    if (opening) {
         showNotesList();
+        closeNotesList?.focus();
+    } else {
+        restoreFocus();
     }
 });
 
@@ -2158,6 +2185,7 @@ deleteNoteBtn?.addEventListener('click', deleteCurrentNote);
 // Close Notes List
 closeNotesList?.addEventListener('click', () => {
     notesListPanel?.classList.remove('active');
+    restoreFocus();
 });
 
 copyPageTextBtn?.addEventListener('click', async () => {
@@ -2223,7 +2251,9 @@ function openInExternalBrowser() {
     target.searchParams.set('openExternalBrowser', '1');
     const httpsUrl = target.toString();
 
-    if (/android/i.test(navigator.userAgent)) {
+    // intent:// needs a real host; on a file:// page there is none and the URL
+    // it builds is broken, so fall through to the plain-navigation path.
+    if (/android/i.test(navigator.userAgent) && target.host) {
         const scheme = target.protocol.replace(':', '');
         window.location.href =
             `intent://${target.host}${target.pathname}${target.search}` +
@@ -2460,26 +2490,6 @@ zoomOutBtns?.forEach(btn => {
 });
 
 // === Search Result Navigation ===
-function navigateToNextResult() {
-    if (!searchResults.length) return;
-    const nextResult = searchResults.find(r => r.page > currentPage);
-    if (nextResult) {
-        goToPage(nextResult.page, getPatternFromSearchInput());
-    } else {
-        showNotification('已是最後一個搜尋結果', 'info');
-    }
-}
-
-function navigateToPreviousResult() {
-    if (!searchResults.length) return;
-    const prevResult = [...searchResults].reverse().find(r => r.page < currentPage);
-    if (prevResult) {
-        goToPage(prevResult.page, getPatternFromSearchInput());
-    } else {
-        showNotification('已是第一個搜尋結果', 'info');
-    }
-}
-
 // === Notification System (Optimized — Item 6: styles now in style.css) ===
 function showNotification(message, type = 'info') {
     let notificationContainer = document.getElementById('notification-container');
@@ -2526,29 +2536,11 @@ function showNotification(message, type = 'info') {
 
 // Loading Overlay (Item 6: styles now in style.css)
 function showLoadingOverlay(message = '載入中...') {
-    let overlay = document.getElementById('loading-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'loading-overlay';
-        const content = document.createElement('div');
-        content.className = 'loading-content';
-        const spinner = document.createElement('div');
-        spinner.className = 'loading-spinner-large';
-        const msg = document.createElement('p');
-        msg.className = 'loading-message';
-        msg.textContent = message;
-        content.appendChild(spinner);
-        content.appendChild(msg);
-        overlay.appendChild(content);
-        document.body.appendChild(overlay);
-    } else {
-        // Support both id and class selectors for loading-message element
-        const messageEl = overlay.querySelector('.loading-message') || overlay.querySelector('#loading-message');
-        if (messageEl) {
-            messageEl.textContent = message;
-        }
-        overlay.style.display = 'flex';
-    }
+    const overlay = document.getElementById('loading-overlay');
+    if (!overlay) return;
+    const messageEl = overlay.querySelector('.loading-message');
+    if (messageEl) messageEl.textContent = message;
+    overlay.style.display = 'flex';
 }
 
 function hideLoadingOverlay() {
@@ -2591,9 +2583,9 @@ if (pdfContainer) {
         if (Math.abs(diffX) > MIN_SWIPE_DISTANCE_X && Math.abs(diffY) < MAX_SWIPE_DISTANCE_Y) {
             const isSearchResultMode = searchResults.length > 0;
             if (diffX < 0) {
-                isSearchResultMode ? navigateToNextResult() : nextPageBtn?.click();
+                isSearchResultMode ? stepResult(1) : nextPageBtn?.click();
             } else {
-                isSearchResultMode ? navigateToPreviousResult() : prevPageBtn?.click();
+                isSearchResultMode ? stepResult(-1) : prevPageBtn?.click();
             }
         }
         isSwiping = false;
@@ -2616,8 +2608,6 @@ function clearParagraphHighlights() {
 // Both now work off a per-render cache built from a copy.
 // ponytail: still a linear scan of the cached rects, which is plenty for a
 // click handler; bucket by row only if a page ever gets slow enough to notice.
-let pageItemGeometry = null;
-
 function getPageItemGeometry() {
     if (pageItemGeometry) return pageItemGeometry;
     if (!currentPageTextContent || !currentViewport) return null;
@@ -2826,7 +2816,7 @@ document.addEventListener('keydown', e => {
         case 'PageUp':
             e.preventDefault();
             if (searchResults.length > 0) {
-                navigateToPreviousResult();
+                stepResult(-1);
             } else {
                 prevPageBtn?.click();
             }
@@ -2836,7 +2826,7 @@ document.addEventListener('keydown', e => {
         case ' ':
             e.preventDefault();
             if (searchResults.length > 0) {
-                navigateToNextResult();
+                stepResult(1);
             } else {
                 nextPageBtn?.click();
             }
@@ -2968,13 +2958,49 @@ emptyState?.addEventListener('keydown', e => {
     }
 });
 
-// Esc closes whichever dialog is open
+// === Dialog focus management ===
+// role="dialog" + aria-modal promises the screen reader that focus is trapped.
+// These two keep that promise and hand focus back where it came from.
+const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+let focusBeforeDialog = null;
+
+function openDialogs() {
+    return [noteModal, notesListPanel].filter(d => d?.classList.contains('active'));
+}
+
+function rememberFocus() {
+    focusBeforeDialog = document.activeElement;
+}
+
+function restoreFocus() {
+    if (openDialogs().length) return;   // another dialog is still up
+    focusBeforeDialog?.focus?.();
+    focusBeforeDialog = null;
+}
+
 document.addEventListener('keydown', e => {
-    if (e.key !== 'Escape') return;
-    if (noteModal?.classList.contains('active')) {
-        closeNoteModalFunc();
-    } else if (notesListPanel?.classList.contains('active')) {
-        notesListPanel.classList.remove('active');
+    const dialog = openDialogs().pop();
+    if (!dialog) return;
+
+    if (e.key === 'Escape') {
+        if (dialog === noteModal) closeNoteModalFunc();
+        else dialog.classList.remove('active');
+        restoreFocus();
+        return;
+    }
+
+    if (e.key !== 'Tab') return;
+    const items = [...dialog.querySelectorAll(FOCUSABLE)]
+        .filter(el => !el.disabled && el.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
     }
 });
 

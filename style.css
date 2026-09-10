@@ -4,15 +4,13 @@
     --primary-color: #0E7C86;
     --primary-hover: #0A5F67;
     --primary-light: #35A2AB;
-    --primary-soft: #e6f3f4;
-    --secondary-color: #17c964;    /* success-500 */
     --accent-color: #f5a524;       /* warning-500 */
-    --danger-color: #f31260;       /* danger-500  */
+    --danger-color: #f31260;       /* danger-500 — fills only, not behind text */
+    --danger-strong: #c20d4c;      /* darkened for white text: #f31260 is 4.1:1 */
 
     --bg-primary: #fbfbf9;         /* content1, warm off-white (less glare) */
     --bg-secondary: #f3f3f0;       /* content2 */
     --bg-tertiary: #e6e6e1;        /* content3 */
-    --bg-dark: #11181C;            /* foreground */
 
     --text-primary: #1f2427;       /* softened foreground */
     --text-secondary: #71717a;     /* default-500 */
@@ -20,7 +18,6 @@
 
     --border-color: #e4e4e7;       /* default-200 */
     --border-hover: #d4d4d8;       /* default-300 */
-    --divider: rgba(17, 17, 17, 0.15);
 
     /* HeroUI elevation scale */
     --shadow-sm: 0 0 5px 0 rgba(0,0,0,.02), 0 2px 10px 0 rgba(0,0,0,.06), 0 0 1px 0 rgba(0,0,0,.3);
@@ -50,8 +47,6 @@
 
     --glass-bg: rgba(251, 251, 249, 0.7);
     --glass-border: rgba(255, 255, 255, 0.5);
-
-    --focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px var(--primary-color);
 }
 
 /* =================== BASE LAYOUT =================== */
@@ -135,8 +130,11 @@ body {
     white-space: pre;
     transform-origin: 0% 0%;
     pointer-events: auto;
-    user-select: text;
-    -webkit-user-select: text;
+    /* Selection is off until the 文字選取 button turns it on. It used to be
+       `text` here with nothing setting `none`, so the button did almost
+       nothing and a swipe to turn the page selected text instead. */
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* When text selection mode is active */
@@ -148,6 +146,13 @@ body {
 #text-layer.text-selection-active span[role="presentation"] {
     color: transparent;
     background: transparent;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+/* While selecting, the browser must not also treat the drag as a page swipe */
+#text-layer.text-selection-active {
+    touch-action: none;
 }
 
 #text-layer.text-selection-active span[role="presentation"]::selection {
@@ -248,6 +253,28 @@ body {
 }
 
 /* Empty State / Upload Guide */
+#empty-state-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+/* instructions.html was precached but had no way in from the UI */
+#help-link {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 2px;
+}
+
+#help-link:hover,
+#help-link:focus-visible {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
 .empty-state-guide {
     display: flex;
     flex-direction: column;
@@ -379,21 +406,6 @@ body {
     background: var(--bg-tertiary);
 }
 
-/* Visually hidden rather than display:none — display:none drops the input out
-   of the tab order, leaving no keyboard route to the file picker. */
-.custom-file-upload input[type="file"],
-#toolbar label[for="fileInput"] input[type="file"] {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-}
-
 .file-switch-section {
     flex-shrink: 0;
 }
@@ -509,6 +521,13 @@ button {
     white-space: nowrap;
 }
 
+/* Everything else these need comes from the generic `button` rule above. */
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+    padding: 0 20px;
+}
+
 .btn-primary {
     background: var(--primary-color);
     color: #fff;
@@ -530,7 +549,7 @@ button {
 }
 
 .btn-danger {
-    background: var(--danger-color);
+    background: var(--danger-strong);
     color: #fff;
     box-shadow: var(--shadow-sm);
 }
@@ -1208,58 +1227,7 @@ body.results-bar-visible #floating-action-buttons {
     background: var(--bg-secondary);
 }
 
-.modal-actions {
-    display: flex;
-    gap: 10px;
-    margin-left: auto;
-}
-
-/* Button Styles */
-.btn-primary,
-.btn-secondary,
-.btn-danger {
-    padding: 0 20px;
-    min-height: 40px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--transition-ui);
-}
-
-.btn-primary {
-    background: var(--primary-color);
-    color: #fff;
-    box-shadow: var(--shadow-sm);
-}
-
-.btn-secondary {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-}
-
-.btn-danger {
-    background: var(--danger-color);
-    color: #fff;
-    box-shadow: var(--shadow-sm);
-}
-
-.btn-primary:hover,
-.btn-danger:hover {
-    opacity: .9;
-}
-
-.btn-secondary:hover {
-    background: var(--bg-tertiary);
-}
-
 /* Notes List Panel */
-.notes-panel-content {
-    max-width: 560px;
-    max-height: 70vh;
-}
-
 #notes-list-container {
     display: flex;
     flex-direction: column;
@@ -1418,7 +1386,7 @@ body.results-bar-visible #floating-action-buttons {
 }
 
 .notification-error {
-    background-color: #c20d4c;
+    background-color: var(--danger-strong);
 }
 
 .notification-warning {
@@ -1571,7 +1539,11 @@ button:focus-visible {
 }
 
 /* =================== ACCESSIBILITY HELPERS =================== */
-.sr-only {
+/* The file inputs are visually hidden rather than display:none — display:none
+   drops them out of the tab order, leaving no keyboard route to the picker. */
+.sr-only,
+.custom-file-upload input[type="file"],
+#toolbar label[for="fileInput"] input[type="file"] {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -2414,6 +2386,21 @@ button:focus-visible {
     to {
         transform: translateY(0);
         opacity: 1;
+    }
+}
+
+/* =================== REDUCED MOTION =================== */
+/* Nine animations plus every transition; vestibular triggers are a real
+   accessibility problem, and the OS already tells us when to stop. */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 

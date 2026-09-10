@@ -9,20 +9,20 @@ Q1: How do I get started?
 
 Click the Choose one or more PDF files button in the top-left corner to select the PDF files you wish to view from your computer or mobile device. You can select multiple files at once by holding down Ctrl (Windows) or Command ⌘ (Mac).
 
-Q2: Why does a "Restore Previous Session" button sometimes appear?
+Q2: Why does an "開啟上次檔案" button sometimes appear?
 
 To improve your workflow, this tool features a "Remember Last Session" function.
 
 First-Time Use: After you load one or more PDF files for the first time, the tool automatically saves a copy of these files securely within your own browser.
 
-Next Visit: The next time you open this page, the application will detect these saved files and display a green Restore Previous Session button. This allows you to restore your last session with a single click, without needing to select the files again.
+Next Visit: The next time you open this page, the application detects the saved files and shows a 🔄 開啟上次檔案 button in the toolbar. This allows you to restore your last session with a single click, without needing to select the files again.
 
 Privacy & How It Works:
 This feature is powered by the browser's IndexedDB technology. Copies of your files are stored only on your local device and are never uploaded to any online server. If you clear your browser's site data for this page, the saved files will also be removed.
 
 Q3: How do I open/close the function menu on a mobile device?
 
-On touch devices like phones or tablets, you will see an orange arrow handle › on the left side. Tap this handle to slide the function menu in or out. You can also quickly collapse the menu by tapping on the PDF content area on the right. When first opened on a mobile device, the menu defaults to expanded for your convenience.
+On touch devices like phones or tablets, you will see a teal ☰ 選單 handle on the left side. Tap this handle to slide the function menu in or out. You can also quickly collapse the menu by tapping on the PDF content area on the right. When first opened on a mobile device, the menu defaults to expanded for your convenience.
 
 Q4: How do I search across multiple PDF files?
 
@@ -70,7 +70,7 @@ This is a set of quick action buttons for easy access to various tools while you
 
 S: Toggle Search Underlines. If you find the wavy underlines for search results distracting, click this button to temporarily hide them. Click it again to show them.
 
-TS: Enable Text Selection. By default, text selection is disabled to allow for smoother pinch-to-zoom and swipe gestures. Click this button to make the PDF content selectable, allowing you to copy text. Click it again to disable.
+📄: Enable Text Selection. By default, text selection is disabled so pinch-to-zoom and swipe-to-turn-the-page work without the drag turning into a selection instead. Click this button to make the PDF content selectable, allowing you to copy text. Click it again to disable. Copy Page Text and Paragraph Select both require it.
 
 🖌️: Enable Highlighter. After clicking, you can freely draw on the PDF page, just like using a real highlighter.
 
@@ -80,8 +80,23 @@ TS: Enable Text Selection. By default, text selection is disabled to allow for s
 
 🔗: Share Page. If your browser supports it, this allows you to share the current page (with highlights) as an image to other applications.
 
+Q9: Is there anything else in the results panel?
+
+Yes — a collapsed find bar. Once you pick a result the sheet folds down to a
+single strip showing 第 N 頁 · i / total with ‹ › steppers, so you can walk
+through the hits without the sheet covering the page. The steppers, the arrow
+keys and swipe all respect the file filter, so with one file selected they
+stay inside it.
+
+Q10: Can I install it as an app / use it offline?
+
+Yes. It ships a web app manifest and a service worker, so a browser can install
+it to the home screen or dock, and it keeps working with no network. Opening the
+site from inside the LINE in-app browser shows a prompt to reopen it in a real
+browser, where installing and file access work properly.
+
 ⚙️ Other Settings
-Q9: How do I adjust the magnifier's zoom level?
+Q11: How do I adjust the magnifier's zoom level?
 
 When the magnifier tool 🔍 is enabled, a "Magnifier Zoom" option will appear in the function menu. You can select a zoom level from 1.5x to 3.5x.
 

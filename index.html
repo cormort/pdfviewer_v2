@@ -16,7 +16,7 @@
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <!-- One ?v= token for every local asset (style.css, script.js, db.js) —
        they used to drift apart. Bump all three with: npm run bump-cache -->
-  <link rel="stylesheet" href="style.css?v=38">
+  <link rel="stylesheet" href="style.css?v=39">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -43,7 +43,7 @@
         <span>開檔與暫存可能受限。也可點右上角 ⋯ 改用其他瀏覽器開啟。</span>
       </div>
       <button id="inapp-open-external" type="button" class="btn-primary">用預設瀏覽器開啟</button>
-      <button id="inapp-banner-close" type="button" class="close-btn" title="關閉提示">&times;</button>
+      <button id="inapp-banner-close" type="button" class="close-btn" title="關閉提示" aria-label="關閉提示">&times;</button>
     </div>
     <div id="toolbar-toggle-tab" title="開啟選單：開檔、搜尋、翻頁">
       <span class="icon" aria-hidden="true">☰</span>
@@ -97,10 +97,14 @@
     <main id="main-content">
       <section id="pdf-container">
         <!-- Empty State -->
-        <div id="empty-state" class="empty-state-guide" role="button" tabindex="0">
-          <div class="icon" aria-hidden="true">📄</div>
-          <h2>開始您的專案</h2>
-          <p>點這裡開啟 PDF，即可使用關鍵字搜尋、分頁筆記等功能。</p>
+        <div id="empty-state-wrap">
+          <div id="empty-state" class="empty-state-guide" role="button" tabindex="0">
+            <div class="icon" aria-hidden="true">📄</div>
+            <h2>開始您的專案</h2>
+            <p>點這裡開啟 PDF，即可使用關鍵字搜尋、分頁筆記等功能。</p>
+          </div>
+          <!-- instructions.html was precached but had no way in from the UI -->
+          <a id="help-link" href="instructions.html" target="_blank" rel="noopener">📖 使用說明</a>
         </div>
 
         <!-- PDF Content Wrapper -->
@@ -122,8 +126,8 @@
           <span class="panel-title">🔍 搜尋結果</span>
           <span id="results-count"></span>
           <span class="results-stepper">
-            <button id="prev-result-btn" type="button" title="上一筆結果">‹</button>
-            <button id="next-result-btn" type="button" title="下一筆結果">›</button>
+            <button id="prev-result-btn" type="button" title="上一筆結果" aria-label="上一筆結果">‹</button>
+            <button id="next-result-btn" type="button" title="下一筆結果" aria-label="下一筆結果">›</button>
           </span>
         </h3>
         <button id="results-collapse-btn" type="button" title="收起搜尋結果" aria-label="收起搜尋結果">&times;</button>
@@ -157,7 +161,7 @@
         <button id="share-page-btn" class="btn-secondary" title="分享 PDF" aria-label="分享 PDF">
           <span class="icon">🔗</span>
         </button>
-        <button id="share-link-btn" class="btn-secondary" title="分享本站連結">
+        <button id="share-link-btn" class="btn-secondary" title="分享本站連結" aria-label="分享本站連結">
           <span class="icon">🌐</span>
         </button>
 
@@ -169,7 +173,7 @@
         <button id="toggle-highlighter-btn" class="btn-secondary" title="螢光筆標記選擇內容" aria-label="螢光筆標記選擇內容">
           <span class="icon">🖍️</span>
         </button>
-        <button id="clear-highlighter-btn" class="btn-secondary" title="清除所有標記" aria-label="清除所有標記">
+        <button id="clear-highlighter-btn" class="btn-secondary" title="清除本頁標記" aria-label="清除本頁標記">
           <span class="icon">🧹</span>
         </button>
 
@@ -221,7 +225,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3 id="note-modal-title">新增筆記</h3>
-          <button id="close-note-modal" class="close-btn">&times;</button>
+          <button id="close-note-modal" class="close-btn" title="關閉" aria-label="關閉筆記視窗">&times;</button>
         </div>
         <div class="modal-body">
           <textarea id="note-content" placeholder="在此輸入筆記內容..."></textarea>
@@ -239,7 +243,7 @@
       <div class="modal-content side-panel">
         <div class="modal-header">
           <h3 id="notes-list-title">所有分頁筆記</h3>
-          <button id="close-notes-list" class="close-btn">&times;</button>
+          <button id="close-notes-list" class="close-btn" title="關閉" aria-label="關閉筆記清單">&times;</button>
         </div>
         <div id="notes-list-container" class="modal-body">
           <!-- Notes will be loaded here -->
@@ -266,7 +270,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=38"></script>
+  <script type="module" src="./script.js?v=39"></script>
 </body>
 
 </html>
