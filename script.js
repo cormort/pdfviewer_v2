@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile } from './db.js';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=15';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -349,8 +349,7 @@ fileInput?.addEventListener('change', async function (e) {
 
     try {
         await saveFiles(files);
-        const restoreContainer = document.getElementById('restore-session-container');
-        if (restoreContainer) restoreContainer.style.display = 'none';
+        if (restoreSessionBtn) restoreSessionBtn.style.display = 'none';
     } catch (dbError) {
         console.warn("Could not save session to IndexedDB", dbError);
     }
@@ -368,7 +367,17 @@ fileInput?.addEventListener('change', async function (e) {
     }
 });
 
-clearSessionBtn?.addEventListener('click', resetApp);
+clearSessionBtn?.addEventListener('click', async () => {
+    if (!confirm('確定要清除已快取的工作階段嗎？此操作無法復原。')) return;
+    try {
+        await clearAllFiles();
+    } catch (err) {
+        console.error('Clear session error:', err);
+        showNotification('清除快取失敗：' + err.message, 'error');
+    }
+    resetApp();
+    if (restoreSessionBtn) restoreSessionBtn.style.display = 'none';
+});
 
 // === Helper: Get Doc and Local Page Info ===
 function getDocAndLocalPage(globalPage) {
@@ -1721,6 +1730,8 @@ function deactivateAllModes(except = null) {
     if (except !== 'highlighter') {
         highlighterEnabled = false;
         if (toggleHighlighterBtn) toggleHighlighterBtn.classList.remove('active');
+        // The canvas sits above the text layer; leaving it clickable kills text selection.
+        if (drawingCanvas) drawingCanvas.style.pointerEvents = '';
     }
     if (except !== 'magnifier') {
         localMagnifierEnabled = false;
@@ -1731,7 +1742,10 @@ function deactivateAllModes(except = null) {
     if (except !== 'selection') {
         textSelectionModeActive = false;
         if (toggleTextSelectionBtn) toggleTextSelectionBtn.classList.remove('active');
-        if (textLayerDivGlobal) textLayerDivGlobal.classList.remove('text-selection-active');
+        if (textLayerDivGlobal) {
+            textLayerDivGlobal.style.pointerEvents = '';
+            textLayerDivGlobal.classList.remove('text-selection-active');
+        }
         paragraphSelectionModeActive = false;
         if (toggleParagraphSelectionBtn) toggleParagraphSelectionBtn.classList.remove('active');
         clearParagraphHighlights();
@@ -2406,16 +2420,8 @@ async function initializeApp() {
     try {
         await initDB();
         const storedFiles = await getFiles();
-        if (storedFiles.length > 0) {
-            const restoreContainer = document.getElementById('restore-session-container');
-            const restoreBtn = document.getElementById('restore-session-btn');
-            if (restoreContainer) restoreContainer.style.display = 'block';
-            if (restoreBtn) {
-                restoreBtn.onclick = async () => {
-                    await loadAndProcessFiles(storedFiles);
-                    restoreContainer.style.display = 'none';
-                };
-            }
+        if (restoreSessionBtn) {
+            restoreSessionBtn.style.display = storedFiles.length > 0 ? 'inline-block' : 'none';
         }
     } catch (error) {
         console.error("Could not initialize app from IndexedDB:", error);

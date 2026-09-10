@@ -551,6 +551,84 @@ button {
     flex-shrink: 0;
 }
 
+/* =================== RESIZER =================== */
+#resizer {
+    width: 4px;
+    background: var(--border-color);
+    cursor: col-resize;
+    flex-shrink: 0;
+    display: none;
+    transition: background var(--transition-fast);
+    position: relative;
+}
+
+#resizer:hover {
+    background: var(--primary-color);
+}
+
+/* Widen the grab area without widening the visual bar */
+#resizer::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    right: -4px;
+    top: 0;
+    bottom: 0;
+}
+
+#app-container.results-panel-visible #resizer {
+    display: block;
+}
+
+/* =================== PARAGRAPH SELECTION =================== */
+.paragraph-highlight {
+    position: absolute;
+    background-color: rgba(14, 124, 134, 0.15);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--radius-sm);
+    z-index: 6;
+    pointer-events: none;
+    animation: fadeIn var(--transition-fast);
+}
+
+#copy-paragraph-btn {
+    position: absolute;
+    z-index: 7;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+#copy-paragraph-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+}
+
+/* =================== MAGNIFIER ZOOM CONTROLS =================== */
+#local-magnifier-zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#local-magnifier-zoom-controls label {
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+#local-magnifier-zoom-controls select {
+    padding: 8px 10px;
+}
+
 /* =================== SEARCH RESULTS PANEL =================== */
 #search-results-panel {
     display: none;
@@ -1736,6 +1814,10 @@ button:focus-visible {
     }
 
     /* === Compact Search Results Panel (Task 2026-01-03) === */
+    #resizer {
+        display: none !important;
+    }
+
     #search-results-panel {
         position: fixed;
         max-width: none;

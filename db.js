@@ -84,6 +84,19 @@ export function getFiles() {
   });
 }
 
+export function clearAllFiles() {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error('DB not initialized'));
+      return;
+    }
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    transaction.objectStore(STORE_NAME).clear();
+    transaction.onerror = (event) => reject(event.target.error);
+    transaction.oncomplete = () => resolve();
+  });
+}
+
 // === Notes CRUD Functions ===
 
 export function saveNote(note) {
