@@ -1,0 +1,12 @@
+{
+  "name": "pdfviewer-v2",
+  "private": true,
+  "description": "Static PDF reader. No runtime dependencies — devDependencies are lint-only and never ship to the browser.",
+  "scripts": {
+    "lint": "eslint script.js db.js",
+    "bump-cache": "node tools/bump-cache.mjs"
+  },
+  "devDependencies": {
+    "eslint": "^9.13.0"
+  }
+}

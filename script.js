@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=15';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026-09-10';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -27,15 +27,20 @@ let currentRenderTask = null; // Item 4: render task cancellation
 const textContentCache = new Map(); // Item 3: search text cache (key: "docIndex:localPage")
 
 // === Mobile Detection Helper (Item 2: unify CSS/JS breakpoints) ===
+// This string is the single source of truth for "mobile" and must stay
+// character-for-character identical to the media query style.css uses for its
+// mobile block. The old width arithmetic disagreed with it — an 800x600 window
+// was mobile to JS while CSS was still laying out the tablet rules.
+const MOBILE_MEDIA_QUERY = '(max-width: 768px), (orientation: landscape) and (max-height: 500px)';
+const mobileMediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY);
+
 function isMobileView() {
-    return window.innerWidth <= 768 ||
-           (window.innerWidth <= 896 && window.innerHeight < window.innerWidth);
+    return mobileMediaQuery.matches;
 }
 
 // === DOM Element Selection ===
 const canvas = document.getElementById('pdf-canvas');
 const ctx = canvas?.getContext('2d');
-const toolbar = document.getElementById('toolbar');
 const appContainer = document.getElementById('app-container');
 const pdfContainer = document.getElementById('pdf-container');
 const textLayerDivGlobal = document.getElementById('text-layer');
@@ -50,7 +55,6 @@ const goToPageBtn = document.getElementById('go-to-page-btn');
 const pageSlider = document.getElementById('page-slider');
 
 // Search Related
-const resultsDropdown = document.getElementById('resultsDropdown');
 const panelResultsDropdown = document.getElementById('panelResultsDropdown');
 const fileFilterDropdown = document.getElementById('fileFilterDropdown');
 const panelFileFilterDropdown = document.getElementById('panelFileFilterDropdown');
@@ -117,7 +121,7 @@ const toolbarToggleTab = document.getElementById('toolbar-toggle-tab');
 
 // === Mode Status ===
 let localMagnifierEnabled = false;
-let LOCAL_MAGNIFIER_SIZE = 120;
+const LOCAL_MAGNIFIER_SIZE = 120;
 let LOCAL_MAGNIFIER_ZOOM_LEVEL = 2.5;
 
 let showSearchResultsHighlights = true;
@@ -165,7 +169,6 @@ function resetApp() {
 
     // Reset dropdowns
     const dropdowns = [
-        { elem: resultsDropdown, default: '<option value="">搜尋結果</option>' },
         { elem: panelResultsDropdown, default: '<option value="">搜尋結果</option>' },
         { elem: fileFilterDropdown, default: '<option value="all">所有檔案</option>' },
         { elem: panelFileFilterDropdown, default: '<option value="all">所有檔案</option>' }
@@ -195,13 +198,7 @@ async function loadAndProcessFiles(files) {
     showLoadingOverlay('載入 PDF 中...');
     console.log('Starting loadAndProcessFiles...');
 
-    try {
-        resetApp();
-        console.log('App reset complete.');
-    } catch (e) {
-        console.error('Error in resetApp:', e);
-        throw e;
-    }
+    resetApp();
 
     currentZoomMode = 'width'; // 預設改為符合寬度
     if (searchInputElem) searchInputElem.value = '';
@@ -220,13 +217,7 @@ async function loadAndProcessFiles(files) {
     showSearchResultsHighlights = true;
     textLayerDivGlobal?.classList.remove('highlights-hidden');
 
-    try {
-        deactivateAllModes();
-        console.log('Modes deactivated.');
-    } catch (e) {
-        console.error('Error in deactivateAllModes:', e);
-        throw e;
-    }
+    deactivateAllModes();
 
     const loadingPromises = Array.from(files).map(file => {
         return new Promise((resolve) => {
@@ -833,7 +824,6 @@ function updateFileSwitchDropdown() {
 
     // Build unique file list with their starting page
     const fileList = [];
-    let pageOffset = 0;
     pageMap.forEach((mapping, index) => {
         if (mapping.localPage === 1) {
             fileList.push({
@@ -1429,7 +1419,6 @@ function searchKeyword() {
     currentFileFilter = 'all';
 
     const searchingOption = '<option value="">搜尋中...</option>';
-    if (resultsDropdown) resultsDropdown.innerHTML = searchingOption;
     if (panelResultsDropdown) panelResultsDropdown.innerHTML = searchingOption;
     if (fileFilterDropdown) fileFilterDropdown.innerHTML = '<option value="all">所有檔案</option>';
     if (panelFileFilterDropdown) panelFileFilterDropdown.innerHTML = '<option value="all">所有檔案</option>';
@@ -1438,7 +1427,6 @@ function searchKeyword() {
 
     if (!pdfDocs.length || !input) {
         if (pdfDocs.length > 0) renderPage(currentPage, null);
-        if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">Search Results</option>';
         if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">Search Results</option>';
         if (resultsList) resultsList.innerHTML = '';
         updateResultsNav();
@@ -1450,22 +1438,20 @@ function searchKeyword() {
         pattern = createSearchPattern(input);
         if (!pattern) {
             if (pdfDocs.length > 0) renderPage(currentPage, null);
-            if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">Search Results</option>';
-            if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">Search Results</option>';
+                if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">Search Results</option>';
             if (resultsList) resultsList.innerHTML = '';
             updateResultsNav();
             return;
         }
     } catch (e) {
         showNotification('正規表達式錯誤：' + e.message, 'error');
-        if (resultsDropdown) resultsDropdown.innerHTML = '<option value="">Search Results</option>';
         if (panelResultsDropdown) panelResultsDropdown.innerHTML = '<option value="">Search Results</option>';
         if (resultsList) resultsList.innerHTML = '';
         updateResultsNav();
         return;
     }
 
-    let jobs = [];
+    const jobs = [];
     let globalPageOffset = 0;
 
     // Item 3: Use cached text content for search performance
@@ -1522,13 +1508,11 @@ function searchKeyword() {
             .filter(r => r !== null)
             .sort((a, b) => a.page - b.page);
 
-        if (resultsDropdown) resultsDropdown.innerHTML = '';
         if (panelResultsDropdown) panelResultsDropdown.innerHTML = '';
         if (resultsList) resultsList.innerHTML = '';
 
         if (searchResults.length === 0) {
             const notFoundMsg = '<option>找不到關鍵字</option>';
-            if (resultsDropdown) resultsDropdown.innerHTML = notFoundMsg;
             if (panelResultsDropdown) panelResultsDropdown.innerHTML = notFoundMsg;
             if (fileFilterDropdown) fileFilterDropdown.innerHTML = '<option value="all">所有檔案</option>';
             if (panelFileFilterDropdown) panelFileFilterDropdown.innerHTML = '<option value="all">所有檔案</option>';
@@ -1557,7 +1541,6 @@ function searchKeyword() {
         if (searchToken !== currentSearchToken) return;
         console.error('An unexpected error occurred during search:', err);
         const errorMsg = '<option value="">搜尋錯誤</option>';
-        if (resultsDropdown) resultsDropdown.innerHTML = errorMsg;
         if (panelResultsDropdown) panelResultsDropdown.innerHTML = errorMsg;
         if (resultsList) resultsList.innerHTML = '<p style="padding: 10px;">搜尋時發生錯誤。</p>';
         renderPage(currentPage, null);
@@ -1603,7 +1586,7 @@ function updateFilterAndResults(selectedFile = 'all') {
     // Only one file in play: the filename tells the user nothing
     resultsList?.classList.toggle('single-doc', docNames.length <= 1);
 
-    const summaryDropdowns = [resultsDropdown, panelResultsDropdown];
+    const summaryDropdowns = [panelResultsDropdown];
     summaryDropdowns.forEach(dropdown => {
         if (!dropdown) return;
         dropdown.innerHTML = '';
@@ -1762,10 +1745,6 @@ searchInputElem?.addEventListener('keypress', e => {
     }
 });
 
-resultsDropdown?.addEventListener('change', () => {
-    goToPageDropdown(resultsDropdown.value);
-});
-
 panelResultsDropdown?.addEventListener('change', () => {
     goToPageDropdown(panelResultsDropdown.value);
 });
@@ -1810,7 +1789,6 @@ function goToPage(globalPageNum, highlightPatternForPage = null) {
 
     if (pageToGoInput) pageToGoInput.value = currentPage;
     if (pageSlider) pageSlider.value = currentPage;
-    if (resultsDropdown) resultsDropdown.value = currentPage;
     if (panelResultsDropdown) panelResultsDropdown.value = currentPage;
 }
 
@@ -1888,7 +1866,7 @@ function deactivateAllModes(except = null) {
         highlighterEnabled = false;
         if (toggleHighlighterBtn) toggleHighlighterBtn.classList.remove('active');
         // The canvas sits above the text layer; leaving it clickable kills text selection.
-        if (drawingCanvas) drawingCanvas.style.pointerEvents = '';
+        drawingCanvas?.classList.remove('highlighter-active');
     }
     if (except !== 'magnifier') {
         localMagnifierEnabled = false;
@@ -1899,10 +1877,7 @@ function deactivateAllModes(except = null) {
     if (except !== 'selection') {
         textSelectionModeActive = false;
         if (toggleTextSelectionBtn) toggleTextSelectionBtn.classList.remove('active');
-        if (textLayerDivGlobal) {
-            textLayerDivGlobal.style.pointerEvents = '';
-            textLayerDivGlobal.classList.remove('text-selection-active');
-        }
+        textLayerDivGlobal?.classList.remove('text-selection-active');
         paragraphSelectionModeActive = false;
         if (toggleParagraphSelectionBtn) toggleParagraphSelectionBtn.classList.remove('active');
         clearParagraphHighlights();
@@ -1923,7 +1898,7 @@ toggleHighlighterBtn?.addEventListener('click', () => {
     deactivateAllModes();
     if (!wasActive) {
         highlighterEnabled = true;
-        if (drawingCanvas) drawingCanvas.style.pointerEvents = 'auto';
+        drawingCanvas?.classList.add('highlighter-active');
     }
     updatePageControls();
 });
@@ -1955,10 +1930,7 @@ toggleTextSelectionBtn?.addEventListener('click', () => {
     deactivateAllModes();
     if (!wasActive) {
         textSelectionModeActive = true;
-        if (textLayerDivGlobal) {
-            textLayerDivGlobal.style.pointerEvents = 'auto';
-            textLayerDivGlobal.classList.add('text-selection-active');
-        }
+        textLayerDivGlobal?.classList.add('text-selection-active');
         // Keep canvas visible - text layer is transparent overlay
     }
     updatePageControls();
@@ -1979,10 +1951,7 @@ toggleParagraphSelectionBtn?.addEventListener('click', () => {
 
     paragraphSelectionModeActive = !paragraphSelectionModeActive;
 
-    if (paragraphSelectionModeActive) {
-        if (pdfContainer) pdfContainer.classList.add('paragraph-selection-mode');
-    } else {
-        if (pdfContainer) pdfContainer.classList.remove('paragraph-selection-mode');
+    if (!paragraphSelectionModeActive) {
         clearParagraphHighlights();
     }
 
@@ -2418,7 +2387,7 @@ function handleParagraphSelection(e) {
     });
     lines.push(currentLine.sort((a, b) => a.transform[4] - b.transform[4]));
 
-    let clickedLineIndex = lines.findIndex(line => line.includes(closestItem));
+    const clickedLineIndex = lines.findIndex(line => line.includes(closestItem));
     if (clickedLineIndex === -1) return;
 
     let paragraphStartLine = clickedLineIndex;
@@ -2639,6 +2608,13 @@ pdfContainer?.addEventListener('click', () => {
         appContainer.classList.remove('menu-active');
     }
 });
+
+// Show the pdf.js version the app is actually running, rather than trusting a
+// checked-in text file to be kept in step with it.
+const appVersionEl = document.querySelector('.app-version');
+if (appVersionEl && window.pdfjsLib?.version) {
+    appVersionEl.textContent += ` · pdf.js ${window.pdfjsLib.version}`;
+}
 
 // === Start Application ===
 initLocalMagnifier();

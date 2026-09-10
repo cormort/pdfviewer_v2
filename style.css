@@ -142,6 +142,7 @@ body {
 /* When text selection mode is active */
 #text-layer.text-selection-active {
     opacity: 1;
+    pointer-events: auto;
 }
 
 #text-layer.text-selection-active span[role="presentation"] {
@@ -380,7 +381,8 @@ body {
 
 /* Visually hidden rather than display:none — display:none drops the input out
    of the tab order, leaving no keyboard route to the file picker. */
-.custom-file-upload input[type="file"] {
+.custom-file-upload input[type="file"],
+#toolbar label[for="fileInput"] input[type="file"] {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -991,10 +993,6 @@ body.results-bar-visible #floating-action-buttons {
     display: none;
 }
 
-#fab-backdrop {
-    display: none;
-}
-
 /* =================== OVERLAYS =================== */
 .page-nav-overlay {
     position: fixed;
@@ -1320,14 +1318,6 @@ body.results-bar-visible #floating-action-buttons {
     font-size: 0.938rem;
 }
 
-/* =================== ANIMATIONS & KEYFRAMES =================== */
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
     50% {
         opacity: 0.5;
     }
@@ -1385,11 +1375,6 @@ body.results-bar-visible #floating-action-buttons {
     to {
         transform: rotate(360deg);
     }
-}
-
-/* =================== LOADING STATE =================== */
-.loading {
-    animation: pulse 1.5s ease-in-out infinite;
 }
 
 /* =================== NOTIFICATION SYSTEM =================== */
@@ -1742,19 +1727,6 @@ button:focus-visible {
         /* Prevent wrapping */
     }
 
-    /* Hide the native file input text on mobile so only the label text shows */
-    #toolbar label[for="fileInput"] input[type="file"] {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border-width: 0;
-    }
-
     .title-section {
         display: flex;
         align-items: center;
@@ -2044,11 +2016,6 @@ button:focus-visible {
     }
 
     #fab-speed-dial.active button::before {
-        display: none !important;
-    }
-
-    /* Backdrop — hidden, panel is compact enough without it */
-    #fab-backdrop {
         display: none !important;
     }
 
