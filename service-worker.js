@@ -59,7 +59,10 @@ async function cacheFirst(request) {
     // already the answer, and offline this simply fails.
     // Same 'no-cache' as networkFirst. These files only change with a
     // CACHE_VERSION bump, but if one ever changes without it, a plain fetch
-    // here would refresh the entry from the HTTP cache and keep it stale.
+    // here would re-store the HTTP cache's copy and hold the stale entry for
+    // as long as that copy stays fresh — minutes in production, days behind a
+    // local server that only sends Last-Modified. Revalidating bounds it to a
+    // single load instead: this launch serves the old file, the next the new.
     fetch(request, { cache: 'no-cache' })
       .then(response => (response && response.ok ? store(request, response) : undefined))
       .catch(() => { /* offline */ });
