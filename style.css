@@ -885,141 +885,98 @@ body.results-bar-visible #floating-action-buttons {
 
 
 
-.fab {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: white;
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    cursor: pointer;
-    box-shadow: var(--shadow-lg);
-    transition: var(--transition-ui-normal);
-    position: relative;
-    backdrop-filter: blur(10px);
-}
+/* Desktop-only speed dial: a vertical grid of icon buttons with hover
+   tooltips. Scoped, because the mobile panel is a different component
+   (labelled tiles) and used to need ~30 !important just to outrank these.
+   The condition is the exact complement of the mobile query used elsewhere:
+   NOT (max-width:768px OR short landscape). */
+@media screen and (min-width: 769px) and (min-height: 501px),
+       screen and (min-width: 769px) and (orientation: portrait) {
+    /* FAB Menu Buttons with Tooltip */
+    .fab-menu button {
+        position: relative;
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: var(--radius-md);
+        padding: 10px 14px;
+        background: white;
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: var(--transition-ui);
+        box-shadow: var(--shadow-md);
+    }
 
-.fab:hover {
-    transform: scale(1.1);
-    background: var(--primary-color);
-    color: white;
-}
+    /* Match the mobile speed dial — 14px inherited from button was unreadable */
+    .fab-menu button .icon {
+        font-size: 20px;
+        line-height: 1;
+    }
 
-.fab.active {
-    background: var(--primary-color);
-    color: white;
-    box-shadow: 0 0 0 4px var(--primary-light);
-}
+    .fab-menu button:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        transform: translateX(-4px);
+    }
 
-.fab::after {
-    content: attr(title);
-    position: absolute;
-    right: calc(100% + 12px);
-    padding: 6px 12px;
-    background: rgba(17, 24, 28, 0.95);
-    color: white;
-    font-size: 12px;
-    border-radius: var(--radius-sm);
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: var(--transition-ui-200);
-    pointer-events: none;
-}
+    .fab-menu button.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
 
-.fab:hover::after {
-    opacity: 1;
-    visibility: visible;
-}
+    /* Tooltip for FAB menu buttons */
+    .fab-menu button::after {
+        content: attr(title);
+        position: absolute;
+        right: calc(100% + 10px);
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 8px 12px;
+        background: rgba(17, 24, 28, 0.95);
+        color: white;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: var(--radius-sm);
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition-ui-200);
+        pointer-events: none;
+        z-index: 1001;
+        box-shadow: var(--shadow-md);
+    }
 
-/* FAB Menu Buttons with Tooltip */
-.fab-menu button {
-    position: relative;
-    min-width: 44px;
-    min-height: 44px;
-    border-radius: var(--radius-md);
-    padding: 10px 14px;
-    background: white;
-    border: 1px solid var(--border-color);
-    cursor: pointer;
-    transition: var(--transition-ui);
-    box-shadow: var(--shadow-md);
-}
+    .fab-menu button::before {
+        content: '';
+        position: absolute;
+        right: calc(100% + 4px);
+        top: 50%;
+        transform: translateY(-50%);
+        border: 6px solid transparent;
+        border-left-color: rgba(17, 24, 28, 0.95);
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition-ui-200);
+        pointer-events: none;
+    }
 
-/* Match the mobile speed dial — 14px inherited from button was unreadable */
-.fab-menu button .icon {
-    font-size: 20px;
-    line-height: 1;
-}
+    .fab-menu button:hover::after,
+    .fab-menu button:hover::before {
+        opacity: 1;
+        visibility: visible;
+    }
 
-.fab-menu button:hover {
-    background: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-    transform: translateX(-4px);
-}
+    .fab-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: 4px 0;
+    }
 
-.fab-menu button.active {
-    background: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
-/* Tooltip for FAB menu buttons */
-.fab-menu button::after {
-    content: attr(title);
-    position: absolute;
-    right: calc(100% + 10px);
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 8px 12px;
-    background: rgba(17, 24, 28, 0.95);
-    color: white;
-    font-size: 12px;
-    font-weight: 500;
-    border-radius: var(--radius-sm);
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: var(--transition-ui-200);
-    pointer-events: none;
-    z-index: 1001;
-    box-shadow: var(--shadow-md);
-}
-
-.fab-menu button::before {
-    content: '';
-    position: absolute;
-    right: calc(100% + 4px);
-    top: 50%;
-    transform: translateY(-50%);
-    border: 6px solid transparent;
-    border-left-color: rgba(17, 24, 28, 0.95);
-    opacity: 0;
-    visibility: hidden;
-    transition: var(--transition-ui-200);
-    pointer-events: none;
-}
-
-.fab-menu button:hover::after,
-.fab-menu button:hover::before {
-    opacity: 1;
-    visibility: visible;
-}
-
-.fab-divider {
-    height: 1px;
-    background: var(--border-color);
-    margin: 4px 0;
-}
-
-/* Group label — hidden on desktop (dividers already separate groups) */
-.fab-group-label {
-    display: none;
+    /* Group label — hidden on desktop (dividers already separate groups) */
+    .fab-group-label {
+        display: none;
+    }
 }
 
 /* =================== OVERLAYS =================== */
@@ -2126,9 +2083,11 @@ button:focus-visible {
         position: relative;
     }
 
-    /* Hide speed dial and dividers/labels by default */
+    /* Hide speed dial and dividers/labels by default. No !important: the
+       desktop rules it used to fight are now scoped to desktop, so
+       #fab-speed-dial.active wins on specificity as it should. */
     #fab-speed-dial {
-        display: none !important;
+        display: none;
     }
 
     .fab-divider,
@@ -2148,7 +2107,7 @@ button:focus-visible {
 
     /* Floating panel when active — appears above the FAB button */
     #fab-speed-dial.active {
-        display: grid !important;
+        display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
         padding: 10px;
@@ -2164,56 +2123,56 @@ button:focus-visible {
 
     /* Compact tile buttons */
     #fab-speed-dial.active button {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 4px !important;
-        width: 100% !important;
-        height: 64px !important;
-        border-radius: 10px !important;
-        padding: 6px 4px !important;
-        background: rgba(243, 244, 246, 0.9) !important;
-        border: 1px solid rgba(0, 0, 0, 0.07) !important;
-        box-shadow: none !important;
-        transform: none !important;
-        color: var(--text-primary) !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        width: 100%;
+        height: 64px;
+        border-radius: 10px;
+        padding: 6px 4px;
+        background: rgba(243, 244, 246, 0.9);
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        box-shadow: none;
+        transform: none;
+        color: var(--text-primary);
         box-sizing: border-box;
     }
 
     #fab-speed-dial.active button.active {
-        background: var(--primary-color) !important;
-        color: white !important;
-        border-color: var(--primary-color) !important;
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
     }
 
     #fab-speed-dial.active button span.icon {
-        display: inline-flex !important;
-        font-size: 22px !important;
-        line-height: 1 !important;
+        display: inline-flex;
+        font-size: 22px;
+        line-height: 1;
     }
 
     /* Tooltip as label */
     #fab-speed-dial.active button::after {
-        content: attr(title) !important;
-        position: static !important;
-        transform: none !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        background: transparent !important;
-        color: inherit !important;
-        font-size: 10px !important;
-        font-weight: 500 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        white-space: normal !important;
-        text-align: center !important;
-        line-height: 1.2 !important;
-        max-width: 100% !important;
+        content: attr(title);
+        position: static;
+        transform: none;
+        opacity: 1;
+        visibility: visible;
+        background: transparent;
+        color: inherit;
+        font-size: 10px;
+        font-weight: 500;
+        padding: 0;
+        box-shadow: none;
+        white-space: normal;
+        text-align: center;
+        line-height: 1.2;
+        max-width: 100%;
     }
 
     #fab-speed-dial.active button::before {
-        display: none !important;
+        display: none;
     }
 
     #main-fab {
@@ -2242,8 +2201,8 @@ button:focus-visible {
     }
 
     #fab-speed-dial.active {
-        grid-template-columns: repeat(4, 1fr) !important;
-        width: 296px !important;
+        grid-template-columns: repeat(4, 1fr);
+        width: 296px;
     }
 
     @keyframes fabPanelIn {
