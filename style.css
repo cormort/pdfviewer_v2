@@ -805,17 +805,29 @@ body.results-bar-visible #floating-action-buttons {
     right: 390px;
 }
 
-/* ponytail: 同 .page-nav-overlay 的淡出策略 — idle 讓出頁面，互動或選單展開時恢復 */
-#main-fab {
-    opacity: 0.2;
-    transition: opacity var(--transition-fast);
+/* ponytail: 同 .page-nav-overlay 的淡出策略 — idle 讓出頁面，互動或選單展開時恢復。
+   淡出整組而不是逐顆按鈕：逐顆的話得先猜對位置才看得到那顆圖示。 */
+#floating-action-buttons {
+    align-items: flex-end;
+    opacity: 0.35;
+    transition: opacity var(--transition-fast), right var(--transition-normal);
 }
 
-#main-fab:hover,
-#main-fab:focus-visible,
-#main-fab:active,
-#main-fab.active {
+#floating-action-buttons:hover,
+#floating-action-buttons:focus-within {
     opacity: 1;
+}
+
+/* Two columns so the ten tools still fit a short window without overflowing */
+.fab-menu {
+    display: grid;
+    grid-template-columns: repeat(2, 44px);
+    justify-content: end;
+    gap: 8px;
+}
+
+.fab-divider {
+    grid-column: 1 / -1;
 }
 
 
@@ -883,13 +895,12 @@ body.results-bar-visible #floating-action-buttons {
     cursor: pointer;
     transition: all var(--transition-fast);
     box-shadow: var(--shadow-md);
-    opacity: 0.2;
 }
 
-.fab-menu button:hover,
-.fab-menu button:focus-visible,
-.fab-menu button.active {
-    opacity: 1;
+/* Match the mobile speed dial — 14px inherited from button was unreadable */
+.fab-menu button .icon {
+    font-size: 20px;
+    line-height: 1;
 }
 
 .fab-menu button:hover {
