@@ -61,7 +61,7 @@ Search Mode: After you have performed a search, swiping left or right will jump 
 
 Stepping through results wraps around: past the last result you land back on the first. Your position is always shown in the results bar as i / total.
 
-Note: To avoid conflicts, the swipe-to-navigate feature is temporarily disabled when the highlighter, text selection, or magnifier tools are active.
+Note: To avoid conflicts, the swipe-to-navigate feature is temporarily disabled when the highlighter, text selection, paragraph selection, or magnifier tools are active.
 
 🎨 Markup and View Functions (Floating buttons in the bottom-right corner)
 Q8: What do the buttons in the bottom-right corner do?
