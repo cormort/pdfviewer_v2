@@ -814,7 +814,8 @@ body.results-bar-visible #floating-action-buttons {
 }
 
 #floating-action-buttons:hover,
-#floating-action-buttons:focus-within {
+#floating-action-buttons:focus-within,
+#floating-action-buttons.controls-near {
     opacity: 1;
 }
 
@@ -997,7 +998,8 @@ body.results-bar-visible #floating-action-buttons {
 
 .page-nav-overlay:hover,
 .page-nav-overlay:focus-within,
-.page-nav-overlay:active {
+.page-nav-overlay:active,
+.page-nav-overlay.controls-near {
     opacity: 1;
     backdrop-filter: blur(8px);
 }

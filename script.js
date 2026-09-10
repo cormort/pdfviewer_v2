@@ -327,6 +327,44 @@ document.addEventListener('click', (e) => {
 });
 
 
+// === Proximity reveal for the floating controls ===
+// ponytail: idle 淡出是刻意的，但逐顆 hover 才亮等於要先猜位置。改成「靠近整區就整組全亮」，
+// 用 rAF 節流 + 每幀只量兩個 rect；不用隱形的 hover pad，那會擋掉 PDF 上的點擊。
+const PROXIMITY_MARGIN = 140;
+const proximityTargets = [
+    document.getElementById('floating-action-buttons'),
+    document.querySelector('.page-nav-overlay')
+].filter(Boolean);
+
+if (proximityTargets.length && window.matchMedia('(hover: hover)').matches) {
+    let pointer = null;
+    let queued = false;
+
+    const applyProximity = () => {
+        queued = false;
+        if (!pointer) return;
+        for (const el of proximityTargets) {
+            const r = el.getBoundingClientRect();
+            const near = pointer.x >= r.left - PROXIMITY_MARGIN && pointer.x <= r.right + PROXIMITY_MARGIN &&
+                         pointer.y >= r.top - PROXIMITY_MARGIN && pointer.y <= r.bottom + PROXIMITY_MARGIN;
+            el.classList.toggle('controls-near', near);
+        }
+    };
+
+    document.addEventListener('mousemove', (e) => {
+        pointer = { x: e.clientX, y: e.clientY };
+        if (!queued) {
+            queued = true;
+            requestAnimationFrame(applyProximity);
+        }
+    }, { passive: true });
+
+    document.addEventListener('mouseleave', () => {
+        pointer = null;
+        proximityTargets.forEach(el => el.classList.remove('controls-near'));
+    });
+}
+
 async function handleRestoreSession() {
     try {
         const files = await getFiles();
