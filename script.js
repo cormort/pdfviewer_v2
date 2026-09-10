@@ -126,12 +126,25 @@ let textSelectionModeActive = false;
 let notesModeActive = false;
 let currentEditingNote = null;
 let currentNotePosition = null;
+let currentRenderEpoch = 0;
+let currentSearchToken = 0;
+const highlighterStrokes = new Map(); // `${docIndex}:${localPage}` -> stroke[]
+let currentStroke = null;
 let isDrawing = false;
 let lastX = 0;
 let lastY = 0;
 
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 // === Core Function: Reset App ===
 function resetApp() {
+    // Dropping the array alone leaks the worker-side document; reopening files
+    // repeatedly kept every previous one alive.
+    pdfDocs.forEach(doc => {
+        try { doc.destroy(); } catch (e) { console.warn('Failed to destroy PDF document', e); }
+    });
     pdfDocs = [];
     pageMap = [];
     globalTotalPages = 0;
@@ -141,6 +154,8 @@ function resetApp() {
     notesModeActive = false;
     currentEditingNote = null;
     textContentCache.clear(); // Item 3: clear search cache
+    highlighterStrokes.clear();
+    currentRenderEpoch++; // orphan any in-flight render before tearing state down
     if (currentRenderTask) { currentRenderTask.cancel(); currentRenderTask = null; } // Item 4
 
     ctx?.clearRect(0, 0, canvas.width, canvas.height);
@@ -424,6 +439,7 @@ function getDocAndLocalPage(globalPage) {
     if (!mapping || pdfDocs[mapping.docIndex] === undefined) return null;
     return {
         doc: pdfDocs[mapping.docIndex],
+        docIndex: mapping.docIndex,
         localPage: mapping.localPage,
         docName: mapping.docName
     };
@@ -660,16 +676,30 @@ importNotesInput?.addEventListener('change', async (e) => {
     const reader = new FileReader();
     reader.onload = async (event) => {
         try {
-            const notes = JSON.parse(event.target.result);
-            if (!Array.isArray(notes)) {
+            const parsed = JSON.parse(event.target.result);
+            if (!Array.isArray(parsed)) {
                 throw new Error('Invalid backup file format (not an array)');
+            }
+
+            // A note missing fileId/pageNum/x/y renders as `left: undefined%`,
+            // so drop the malformed entries rather than storing them.
+            const isValidNote = n => n && typeof n === 'object' &&
+                typeof n.fileId === 'string' && n.fileId !== '' &&
+                Number.isFinite(Number(n.pageNum)) &&
+                Number.isFinite(Number(n.x)) && Number.isFinite(Number(n.y));
+            const notes = parsed.filter(isValidNote);
+            const skipped = parsed.length - notes.length;
+            if (notes.length === 0) {
+                throw new Error('備份檔中沒有格式正確的筆記');
             }
 
             showLoadingOverlay('匯入筆記中...');
             await importAllNotes(notes);
             hideLoadingOverlay();
 
-            showNotification(`成功匯入 ${notes.length} 則筆記！`, 'success');
+            showNotification(
+                `成功匯入 ${notes.length} 則筆記！` + (skipped ? `（略過 ${skipped} 則格式錯誤）` : ''),
+                'success');
             renderNotes();
             if (notesListPanel?.classList.contains('active')) {
                 showNotesList();
@@ -1019,6 +1049,12 @@ function renderPage(globalPageNum, highlightPattern = null) {
         currentRenderTask = null;
     }
 
+    // A cancelled render still settles later. Without a generation stamp its
+    // handlers would clear currentRenderTask (breaking the next cancel) and
+    // finish laying out the text layer over whatever page is now on screen.
+    const renderEpoch = ++currentRenderEpoch;
+    const isStale = () => renderEpoch !== currentRenderEpoch;
+
     pageRendering = true;
     currentPageTextContent = null;
     currentViewport = null;
@@ -1035,9 +1071,10 @@ function renderPage(globalPageNum, highlightPattern = null) {
         return;
     }
 
-    const { doc, localPage } = pageInfo;
+    const { doc, docIndex, localPage } = pageInfo;
 
     doc.getPage(localPage).then(page => {
+        if (isStale()) return;
         const viewportOriginal = page.getViewport({ scale: 1 });
         let scaleForCss;
 
@@ -1082,6 +1119,7 @@ function renderPage(globalPageNum, highlightPattern = null) {
         currentRenderTask = renderTask;
 
         renderTask.promise.then(() => {
+            if (isStale()) return;
             currentRenderTask = null;
             pageRendering = false;
             updatePageControls();
@@ -1118,14 +1156,15 @@ function renderPage(globalPageNum, highlightPattern = null) {
                 drawingCtx.lineWidth = 15;
                 drawingCtx.lineJoin = 'round';
                 drawingCtx.lineCap = 'round';
+                redrawHighlighterStrokes();
             }
 
-            return renderTextLayer(page, viewportCss, highlightPattern);
+            return renderTextLayer(page, viewportCss, highlightPattern, docIndex, localPage, isStale);
         }).catch(reason => {
+            if (isStale()) return;
             currentRenderTask = null;
             // Item 4: Gracefully handle cancelled renders
             if (reason?.name === 'RenderingCancelledException') {
-                console.log('Render cancelled (page switch)');
                 return;
             }
             console.error(`Error rendering page ${localPage}:`, reason);
@@ -1133,23 +1172,36 @@ function renderPage(globalPageNum, highlightPattern = null) {
             updatePageControls();
         });
     }).catch(reason => {
+        if (isStale()) return;
         console.error(`Error getting page ${localPage}:`, reason);
         pageRendering = false;
         updatePageControls();
     });
 }
 
-// Item 3: Cached text content retrieval
+// Item 3: Cached text content retrieval.
+// Bounded LRU — a full textContent per page is heavy, and the old unbounded
+// Map held every page of every open document until the next reset.
+const TEXT_CACHE_LIMIT = 300;
+
 async function getCachedTextContent(docIndex, localPage) {
     const key = `${docIndex}:${localPage}`;
-    if (textContentCache.has(key)) return textContentCache.get(key);
+    if (textContentCache.has(key)) {
+        const hit = textContentCache.get(key);
+        textContentCache.delete(key);   // re-insert to mark as most recent
+        textContentCache.set(key, hit);
+        return hit;
+    }
     const page = await pdfDocs[docIndex].getPage(localPage);
     const tc = await page.getTextContent();
     textContentCache.set(key, tc);
+    if (textContentCache.size > TEXT_CACHE_LIMIT) {
+        textContentCache.delete(textContentCache.keys().next().value);
+    }
     return tc;
 }
 
-function renderTextLayer(page, viewport, highlightPattern) {
+function renderTextLayer(page, viewport, highlightPattern, docIndex, localPage, isStale = () => false) {
     if (!textLayerDivGlobal) return Promise.resolve();
 
     // Clear existing text layer
@@ -1160,7 +1212,8 @@ function renderTextLayer(page, viewport, highlightPattern) {
         return Promise.resolve();
     }
 
-    return page.getTextContent().then(textContent => {
+    return getCachedTextContent(docIndex, localPage).then(textContent => {
+        if (isStale()) return;
         currentPageTextContent = textContent;
 
         // Handle empty text content (scanned PDFs / image-based PDFs)
@@ -1183,7 +1236,7 @@ function renderTextLayer(page, viewport, highlightPattern) {
         });
 
         return textLayer.render().then(() => {
-            if (!highlightPattern) return;
+            if (isStale() || !highlightPattern) return;
             for (const span of textLayerDivGlobal.querySelectorAll('span[role="presentation"]')) {
                 highlightPattern.lastIndex = 0;
                 if (highlightPattern.test(span.textContent)) {
@@ -1217,11 +1270,37 @@ function getEventPosition(canvasElem, evt) {
     };
 }
 
+// Strokes are kept per page in normalised (0..1) coordinates and repainted
+// after every render. The canvas is resized and cleared on each page turn,
+// zoom change and resize, so without this the marks lasted until the next one.
+function currentStrokeKey() {
+    const info = getDocAndLocalPage(currentPage);
+    return info ? `${info.docIndex}:${info.localPage}` : null;
+}
+
+function redrawHighlighterStrokes() {
+    if (!drawingCtx || !drawingCanvas) return;
+    const key = currentStrokeKey();
+    const strokes = key && highlighterStrokes.get(key);
+    if (!strokes?.length) return;
+    const { width, height } = drawingCanvas;
+    for (const stroke of strokes) {
+        drawingCtx.beginPath();
+        stroke.forEach(({ x, y }, i) => {
+            const px = x * width, py = y * height;
+            if (i === 0) drawingCtx.moveTo(px, py);
+            else drawingCtx.lineTo(px, py);
+        });
+        drawingCtx.stroke();
+    }
+}
+
 function startDrawing(e) {
     if (!highlighterEnabled || !drawingCtx) return;
     isDrawing = true;
     const pos = getEventPosition(drawingCanvas, e);
     [lastX, lastY] = [pos.x, pos.y];
+    currentStroke = [{ x: pos.x / drawingCanvas.width, y: pos.y / drawingCanvas.height }];
     drawingCtx.beginPath();
     drawingCtx.moveTo(lastX, lastY);
     if (e.type === 'touchstart') e.preventDefault();
@@ -1232,6 +1311,7 @@ function draw(e) {
     const pos = getEventPosition(drawingCanvas, e);
     drawingCtx.lineTo(pos.x, pos.y);
     drawingCtx.stroke();
+    currentStroke?.push({ x: pos.x / drawingCanvas.width, y: pos.y / drawingCanvas.height });
     [lastX, lastY] = [pos.x, pos.y];
     if (e.type === 'touchmove') e.preventDefault();
 }
@@ -1239,6 +1319,12 @@ function draw(e) {
 function stopDrawing() {
     if (!isDrawing) return;
     isDrawing = false;
+    const key = currentStrokeKey();
+    if (key && currentStroke?.length > 1) {
+        if (!highlighterStrokes.has(key)) highlighterStrokes.set(key, []);
+        highlighterStrokes.get(key).push(currentStroke);
+    }
+    currentStroke = null;
 }
 
 if (drawingCanvas) {
@@ -1253,15 +1339,24 @@ if (drawingCanvas) {
 }
 
 // === Thumbnail Rendering ===
-async function renderThumbnail(docIndex, localPageNum, canvasEl) {
+const THUMBNAIL_RETRY_LIMIT = 5;
+
+async function renderThumbnail(docIndex, localPageNum, canvasEl, attempt = 0) {
     try {
         const doc = pdfDocs[docIndex];
         if (!doc || !canvasEl) return;
 
-        // Guard: If parent width is 0 or too small, wait and retry
+        // List mode hides the thumbnails entirely — rendering a full page into
+        // a display:none canvas is pure waste, and list is the default view.
+        if (resultsList?.classList.contains('mode-list')) return;
+
+        // Guard: If parent width is 0 or too small, wait and retry.
+        // Bounded: an unmounted canvas never gets a width, and the old
+        // unbounded recursion kept both the timer and the element alive.
         const parentWidth = canvasEl.parentElement?.clientWidth || 0;
         if (parentWidth <= 30) {
-            setTimeout(() => renderThumbnail(docIndex, localPageNum, canvasEl), 150);
+            if (!canvasEl.isConnected || attempt >= THUMBNAIL_RETRY_LIMIT) return;
+            setTimeout(() => renderThumbnail(docIndex, localPageNum, canvasEl, attempt + 1), 150);
             return;
         }
 
@@ -1305,8 +1400,28 @@ function initThumbnailObserver() {
 
 
 // === Search Function ===
+// Runs `jobs` with a fixed number in flight. Promise.all over every page of
+// every document queued thousands of getTextContent calls at once.
+const SEARCH_CONCURRENCY = 8;
+
+function runPool(jobs, limit) {
+    const results = new Array(jobs.length);
+    let next = 0;
+    const worker = async () => {
+        while (next < jobs.length) {
+            const i = next++;
+            results[i] = await jobs[i]();
+        }
+    };
+    return Promise.all(
+        Array.from({ length: Math.min(limit, jobs.length) }, worker)
+    ).then(() => results);
+}
+
 function searchKeyword() {
     const input = searchInputElem?.value.trim();
+    // A search still in flight must not overwrite the results of a newer one.
+    const searchToken = ++currentSearchToken;
     searchResults = [];
     currentFileFilter = 'all';
 
@@ -1347,7 +1462,7 @@ function searchKeyword() {
         return;
     }
 
-    let promises = [];
+    let jobs = [];
     let globalPageOffset = 0;
 
     // Item 3: Use cached text content for search performance
@@ -1356,9 +1471,10 @@ function searchKeyword() {
             const currentGlobalPageForSearch = globalPageOffset + i;
             const pageInfo = pageMap[currentGlobalPageForSearch - 1];
 
-            promises.push(
+            jobs.push(() =>
                 getCachedTextContent(docIndex, i)
                     .then(textContent => {
+                        if (searchToken !== currentSearchToken) return null;
                         const pageText = textContent.items.map(item => item.str).join('');
                         pattern.lastIndex = 0;
                         if (pattern.test(pageText)) {
@@ -1372,7 +1488,7 @@ function searchKeyword() {
                                 const contextLength = 40;
                                 const startIndex = Math.max(0, matchIndex - contextLength);
                                 const endIndex = Math.min(pageText.length, matchIndex + matchedText.length + contextLength);
-                                const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                                const esc = escapeHtml;
                                 const preMatch = esc(pageText.substring(startIndex, matchIndex).replace(/\n/g, ' '));
                                 const highlightedMatch = esc(matchedText.replace(/\n/g, ' '));
                                 const postMatch = esc(pageText.substring(matchIndex + matchedText.length, endIndex).replace(/\n/g, ' '));
@@ -1397,7 +1513,8 @@ function searchKeyword() {
         globalPageOffset += doc.numPages;
     });
 
-    Promise.all(promises).then(allPageResults => {
+    runPool(jobs, SEARCH_CONCURRENCY).then(allPageResults => {
+        if (searchToken !== currentSearchToken) return;
         searchResults = allPageResults
             .filter(r => r !== null)
             .sort((a, b) => a.page - b.page);
@@ -1434,6 +1551,7 @@ function searchKeyword() {
             appContainer.classList.remove('menu-active');
         }
     }).catch(err => {
+        if (searchToken !== currentSearchToken) return;
         console.error('An unexpected error occurred during search:', err);
         const errorMsg = '<option value="">搜尋錯誤</option>';
         if (resultsDropdown) resultsDropdown.innerHTML = errorMsg;
@@ -1510,7 +1628,7 @@ function updateFilterAndResults(selectedFile = 'all') {
                 resultItem.dataset.page = result.page;
                 resultItem.innerHTML = `
                     <canvas class="thumbnail-canvas" data-doc-index="${result.docIndex}" data-local-page="${result.localPage}"></canvas>
-                    <div class="page-info">第 ${result.page} 頁 <span class="doc-name">(檔案: ${result.docName})</span></div>
+                    <div class="page-info">第 ${result.page} 頁 <span class="doc-name">(檔案: ${escapeHtml(result.docName)})</span></div>
                     <div class="context-snippet">${result.summary}</div>
                 `;
                 resultItem.addEventListener('click', () => {
@@ -1672,13 +1790,11 @@ function goToPage(globalPageNum, highlightPatternForPage = null) {
     const requestedPatternKey = getPatternKey(highlightPatternForPage);
     const currentPatternKey = getPatternKey(currentGlobalPattern);
 
+    // Only a genuine no-op is worth skipping. renderPage already cancels the
+    // in-flight render, so refusing to start one while pageRendering is true
+    // just swallowed the second of two quick page turns.
     if (pageRendering && currentPage === n &&
         requestedPatternKey === currentPatternKey) {
-        return;
-    }
-
-    if (pageRendering && !(currentPage === n &&
-        requestedPatternKey !== currentPatternKey)) {
         return;
     }
 
@@ -1872,8 +1988,10 @@ toggleParagraphSelectionBtn?.addEventListener('click', () => {
 
 clearHighlighterBtn?.addEventListener('click', () => {
     if (!pdfDocs.length) return;
+    const key = currentStrokeKey();
+    if (key) highlighterStrokes.delete(key);
     drawingCtx?.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-    showNotification('已清除螢光筆標記', 'success');
+    showNotification('已清除本頁螢光筆標記', 'success');
 });
 
 // Note Modal Actions
@@ -2505,9 +2623,18 @@ document.addEventListener('pointerdown', (e) => {
 const resultsViewToggle = document.getElementById('results-view-toggle');
 
 function applyResultsView(mode) {
+    const wasList = resultsList?.classList.contains('mode-list');
     resultsList?.classList.toggle('mode-thumb', mode === 'thumb');
     resultsList?.classList.toggle('mode-list', mode !== 'thumb');
     if (resultsViewToggle) resultsViewToggle.textContent = mode === 'thumb' ? '☰ 列表' : '▦ 縮圖';
+
+    // Thumbnails are skipped while in list mode, so the canvases the observer
+    // already consumed are still blank when we switch back.
+    if (mode === 'thumb' && wasList && thumbnailObserver && resultsList) {
+        for (const c of resultsList.querySelectorAll('.thumbnail-canvas')) {
+            if (!c.width) thumbnailObserver.observe(c);
+        }
+    }
 }
 
 applyResultsView(localStorage.getItem('resultsView') || 'list');
