@@ -83,10 +83,17 @@ body {
     flex: 1 1 auto;
     position: relative;
     overflow: auto;
-    padding: 40px;
+    /* Four-value shorthand on purpose: a separate padding-bottom gets wiped by
+       any later `padding:` shorthand, and that is how the phone breakpoint
+       silently lost the room reserved for the floating controls. */
+    padding: 40px 40px 100px;
+    /* Reserve the scrollbar up front. Fit-to-width measures clientWidth, sizes
+       the page, and the taller page then summons a vertical scrollbar — which
+       shrinks clientWidth by the scrollbar width and leaves the page that much
+       too wide. Invisible where scrollbars overlay (phones), 10px on desktop. */
+    scrollbar-gutter: stable;
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 100px;
     min-width: 200px;
     display: flex;
     justify-content: center;
@@ -983,7 +990,9 @@ body.results-bar-visible #floating-action-buttons {
 .page-nav-overlay {
     position: fixed;
     left: 50%;
-    bottom: 24px;
+    /* Clear the home indicator: a bare 24px puts this inside the system
+       gesture area on a notched phone. Only the FABs were doing this. */
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
     transform: translateX(-50%);
     background: var(--glass-bg);
     padding: 8px 24px;
@@ -1898,7 +1907,7 @@ button:focus-visible {
         max-width: none;
         left: 12px;
         right: 12px;
-        bottom: 12px;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
         height: auto;
         /* changed from 70vh */
         width: auto !important;
@@ -2064,7 +2073,7 @@ button:focus-visible {
     /* Stack above the results sheet instead of underneath it.
        --panel-h is measured in JS when the panel opens. */
     body.results-bar-visible .page-nav-overlay {
-        bottom: calc(var(--panel-h, 0px) + 12px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + var(--panel-h, 0px) + 12px);
     }
 
     /* Choosing a page from the carousel: zoom controls have no part in that,
@@ -2187,13 +2196,19 @@ button:focus-visible {
     }
 
     #pdf-container {
-        padding: 12px;
-        padding-bottom: 100px;
+        padding: 12px 12px 100px;
     }
 }
 
 /* === Landscape: put panel to the LEFT of FAB (viewport too short for stacked) === */
 @media screen and (orientation: landscape) and (max-height: 500px) {
+    /* Short landscape has little height to spare, and the controls sit in a
+       single compact row rather than the stacked portrait chrome — reserving
+       the full 100px here just shrinks the page and adds dead scroll. */
+    #pdf-container {
+        padding: 10px 10px 56px;
+    }
+
     #floating-action-buttons {
         flex-direction: row-reverse !important;
         align-items: center !important;
@@ -2332,7 +2347,7 @@ button:focus-visible {
     }
 
     #pdf-container {
-        padding: 10px;
+        padding: 10px 10px 100px;
     }
 }
 
@@ -2345,6 +2360,56 @@ button:focus-visible {
     to {
         transform: translateY(0);
         opacity: 1;
+    }
+}
+
+/* =================== TOUCH TARGETS =================== */
+/* 44x44 is the practical floor for a finger. These controls were 24-42px,
+   which is fine for a cursor and a coin-toss for a thumb. Growing the hit area
+   rather than the visible box keeps the compact look. */
+@media (hover: none) {
+
+    #zoom-in-btn,
+    #zoom-out-btn,
+    #results-collapse-btn,
+    #prev-result-btn,
+    #next-result-btn,
+    #clear-search-btn,
+    .close-btn {
+        position: relative;
+    }
+
+    #zoom-in-btn::after,
+    #zoom-out-btn::after,
+    #results-collapse-btn::after,
+    #prev-result-btn::after,
+    #next-result-btn::after,
+    #clear-search-btn::after,
+    .close-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 44px;
+        height: 44px;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* =================== TOUCH: NO IDLE FADE =================== */
+/* The idle fade is a pointer affordance: on desktop the controls come back as
+   the cursor approaches (.controls-near, added on mousemove). A touch device
+   has no cursor and no hover, so that never fires and the controls simply stay
+   dim — you have to tap a control you can barely see before it becomes legible.
+   Composited against the page, the 0.45 label was measuring under 2:1.
+   Keep the fade where there is a pointer to justify it; everywhere else, don't. */
+@media (hover: none) {
+
+    .page-nav-overlay,
+    #floating-action-buttons,
+    #toolbar-toggle-tab,
+    #main-fab {
+        opacity: 1 !important;
     }
 }
 

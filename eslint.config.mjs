@@ -2,6 +2,7 @@
 // the page, the service worker, and the Node build helpers.
 const browser = {
     window: 'readonly', document: 'readonly', navigator: 'readonly',
+    getComputedStyle: 'readonly',
     console: 'readonly', localStorage: 'readonly', sessionStorage: 'readonly',
     indexedDB: 'readonly', caches: 'readonly',
     setTimeout: 'readonly', clearTimeout: 'readonly', setInterval: 'readonly',

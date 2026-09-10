@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=48';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=50';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -352,6 +352,9 @@ const proximityTargets = [
     document.querySelector('.page-nav-overlay')
 ].filter(Boolean);
 
+// Pointer devices only. Touch devices never fire mousemove, so the class would
+// never be added and the controls would stay faded — they are pinned to full
+// opacity in CSS under `@media (hover: none)` instead.
 if (proximityTargets.length && window.matchMedia('(hover: hover)').matches) {
     let pointer = null;
     let queued = false;
@@ -1133,10 +1136,23 @@ function renderPage(globalPageNum, highlightPattern = null) {
         const viewportOriginal = page.getViewport({ scale: 1 });
         let scaleForCss;
 
+        // clientWidth/clientHeight include the container's padding, and the
+        // canvas adds a 1px border on each side. Fitting to them made the page
+        // wider than the space it had to sit in — 11px clipped off each side on
+        // a 390px phone, 41px on desktop — so "fit width" never actually fit.
+        const containerStyle = getComputedStyle(pdfContainer);
+        const px = v => parseFloat(v) || 0;
+        const CANVAS_BORDER = 2;   // 1px each side, set below
+
         if (currentZoomMode === 'width') {
-            scaleForCss = pdfContainer.clientWidth / viewportOriginal.width;
+            const availableWidth = pdfContainer.clientWidth
+                - px(containerStyle.paddingLeft) - px(containerStyle.paddingRight)
+                - CANVAS_BORDER;
+            scaleForCss = availableWidth / viewportOriginal.width;
         } else if (currentZoomMode === 'height') {
-            const availableHeight = pdfContainer.clientHeight - 20;
+            const availableHeight = pdfContainer.clientHeight
+                - px(containerStyle.paddingTop) - px(containerStyle.paddingBottom)
+                - CANVAS_BORDER;
             scaleForCss = availableHeight / viewportOriginal.height;
         } else {
             scaleForCss = currentScale;
