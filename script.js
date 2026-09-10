@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=43';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=44';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -2009,9 +2009,16 @@ function getPatternFromSearchInput() {
     }
 }
 
+// Only /.../ with a valid flag tail is a regex. Without the flag check, a
+// plain search for a path or a date — /usr/bin, /2026/09 — was read as a
+// regex whose flags are "bin" or "09", and the user got "正規表達式錯誤"
+// instead of the literal search they meant.
+const REGEX_FLAGS = /^[dgimsuvy]*$/;
+
 function createSearchPattern(input) {
-    if (input.startsWith('/') && input.lastIndexOf('/') > 0) {
-        const lastSlashIndex = input.lastIndexOf('/');
+    const lastSlashIndex = input.lastIndexOf('/');
+    if (input.startsWith('/') && lastSlashIndex > 0 &&
+        REGEX_FLAGS.test(input.slice(lastSlashIndex + 1))) {
         return new RegExp(input.slice(1, lastSlashIndex), input.slice(lastSlashIndex + 1));
     }
 
