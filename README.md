@@ -84,3 +84,8 @@ TS: Enable Text Selection. By default, text selection is disabled to allow for s
 Q9: How do I adjust the magnifier's zoom level?
 
 When the magnifier tool 🔍 is enabled, a "Magnifier Zoom" option will appear in the function menu. You can select a zoom level from 1.5x to 3.5x.
+
+📄 License
+The code written for this project is released under the MIT License. See LICENSE.
+
+It bundles PDF.js, which Mozilla releases under the Apache License 2.0. That license and the notices required with it are collected in THIRD-PARTY-NOTICES.md.

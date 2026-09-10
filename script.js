@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026-09-10';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=38';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -184,7 +184,7 @@ function resetApp() {
     // Show/hide file input
     if (fileInputLabel) fileInputLabel.style.display = 'inline-flex';
     if (clearSessionBtn) clearSessionBtn.style.display = 'none';
-    if (restoreSessionBtn) restoreSessionBtn.style.display = 'inline-block';
+    syncRestoreButton();
 
     updatePageControls();
     updateResultsNav();
@@ -384,6 +384,19 @@ async function handleRestoreSession() {
     }
 }
 
+// A restore button with nothing behind it is worse than no button, so its
+// visibility follows what is actually stored.
+async function syncRestoreButton() {
+    if (!restoreSessionBtn) return;
+    try {
+        const files = await getFiles();
+        restoreSessionBtn.style.display = files?.length ? '' : 'none';
+    } catch (err) {
+        console.warn('Could not read the stored session:', err);
+        restoreSessionBtn.style.display = 'none';
+    }
+}
+
 restoreSessionBtn?.addEventListener('click', handleRestoreSession);
 
 // === File Input Handling ===
@@ -393,7 +406,6 @@ fileInput?.addEventListener('change', async function (e) {
 
     try {
         await saveFiles(files);
-        if (restoreSessionBtn) restoreSessionBtn.style.display = 'none';
     } catch (dbError) {
         console.warn("Could not save session to IndexedDB", dbError);
     }
@@ -419,8 +431,7 @@ clearSessionBtn?.addEventListener('click', async () => {
         console.error('Clear session error:', err);
         showNotification('清除快取失敗：' + err.message, 'error');
     }
-    resetApp();
-    if (restoreSessionBtn) restoreSessionBtn.style.display = 'none';
+    resetApp();   // its syncRestoreButton() call re-reads the now-empty store
 });
 
 // === Helper: Get Doc and Local Page Info ===
@@ -878,7 +889,42 @@ fileSwitchDropdown?.addEventListener('change', e => {
 });
 
 // Mark (and scroll to) the result item for the page being viewed
+// Thumbnail carousel: whichever card sits closest to the middle is the one the
+// reader is looking at, so that is the card we light up. Separate from
+// .is-current, which marks the page actually open behind the sheet.
+let carouselFocusQueued = false;
+
+function syncCarouselFocus() {
+    carouselFocusQueued = false;
+    if (!resultsList?.classList.contains('mode-thumb')) return;
+    const items = [...resultsList.querySelectorAll('.result-item')];
+    if (items.length === 0) return;
+
+    const listRect = resultsList.getBoundingClientRect();
+    const middle = listRect.left + listRect.width / 2;
+    let focused = null;
+    let shortest = Infinity;
+    items.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        const distance = Math.abs(rect.left + rect.width / 2 - middle);
+        if (distance < shortest) {
+            shortest = distance;
+            focused = item;
+        }
+    });
+    items.forEach(item => item.classList.toggle('is-focused', item === focused));
+}
+
+function queueCarouselFocus() {
+    if (carouselFocusQueued) return;
+    carouselFocusQueued = true;
+    requestAnimationFrame(syncCarouselFocus);
+}
+
+resultsList?.addEventListener('scroll', queueCarouselFocus, { passive: true });
+
 function highlightCurrentResult() {
+    syncResultsBar();
     resultsList?.querySelectorAll('.result-item').forEach(item => {
         const isCurrent = Number(item.dataset.page) === currentPage;
         item.classList.toggle('is-current', isCurrent);
@@ -1355,7 +1401,10 @@ async function renderThumbnail(docIndex, localPageNum, canvasEl, attempt = 0) {
 
         const page = await doc.getPage(localPageNum);
         const viewport = page.getViewport({ scale: 1 });
-        const scale = (parentWidth - 20) / viewport.width;
+        // The card is CSS-sized, so the backing store can carry device pixels.
+        // Capped at 2x: the carousel shows these near full width and 1x is soft.
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const scale = ((parentWidth - 20) * dpr) / viewport.width;
         const scaledViewport = page.getViewport({ scale });
         const thumbnailCtx = canvasEl.getContext('2d');
 
@@ -1368,9 +1417,58 @@ async function renderThumbnail(docIndex, localPageNum, canvasEl, attempt = 0) {
             viewport: scaledViewport
         };
         await page.render(renderContext).promise;
+
+        await drawThumbnailMatches(page, scaledViewport, thumbnailCtx, getPatternFromSearchInput());
     } catch (error) {
         console.error(`Failed to render thumbnail for doc ${docIndex} page ${localPageNum}:`, error);
     }
+}
+
+// The reading view marks a match by underlining the whole text run that
+// contains it (see the text layer above). A thumbnail has no text layer, so the
+// same marks are drawn straight onto the canvas, which is also what lets the
+// exported PNG and the carousel card show where the keyword sits.
+async function drawThumbnailMatches(page, viewport, ctx, pattern) {
+    if (!pattern) return;
+
+    const textContent = await page.getTextContent();
+    if (!textContent?.items?.length) return;      // scanned PDF: nothing to mark
+
+    ctx.save();
+    ctx.strokeStyle = '#f31260';                  // --danger-color, as in the reading view
+    ctx.lineWidth = Math.max(1, viewport.scale * 0.9);
+    ctx.lineJoin = 'round';
+
+    for (const item of textContent.items) {
+        if (!item.str) continue;
+        pattern.lastIndex = 0;
+        if (!pattern.test(item.str)) continue;
+
+        // item.transform is text space; this puts its baseline on the canvas.
+        const [a, b, , , e, f] = pdfjsLib.Util.transform(viewport.transform, item.transform);
+        const width = item.width * viewport.scale;
+        if (width <= 0) continue;
+
+        // Rotated or vertical runs would need the full matrix; underlining them
+        // horizontally would land the mark in the wrong place, so leave them.
+        if (Math.abs(b) > Math.abs(a) * 0.1) continue;
+
+        const fontSize = Math.hypot(a, b) || viewport.scale * 10;
+        drawWavyLine(ctx, e, f + fontSize * 0.18, width, fontSize * 0.16);
+    }
+
+    ctx.restore();
+}
+
+// A sine wave, so the mark reads the same as the CSS wavy underline it mirrors.
+function drawWavyLine(ctx, x, y, width, amplitude) {
+    const wavelength = Math.max(3, amplitude * 4);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    for (let dx = 0; dx <= width; dx += 1) {
+        ctx.lineTo(x + dx, y + Math.sin((dx / wavelength) * Math.PI * 2) * amplitude);
+    }
+    ctx.stroke();
 }
 
 function initThumbnailObserver() {
@@ -1549,16 +1647,96 @@ function searchKeyword() {
     });
 }
 
+// Picking a page is the end of the search, so the sheet gets out of the way and
+// leaves a bar behind. Mobile only: the desktop panel is a column beside the
+// document, not on top of it.
+const resultsPanelHeader = document.getElementById('results-panel-header');
+const resultsCount = document.getElementById('results-count');
+
+const prevResultBtn = document.getElementById('prev-result-btn');
+const nextResultBtn = document.getElementById('next-result-btn');
+
+function setResultsCollapsed(collapsed) {
+    document.body.classList.toggle('results-collapsed', collapsed);
+}
+
+function getFilteredResults() {
+    return currentFileFilter === 'all'
+        ? searchResults
+        : searchResults.filter(r => r.docName === currentFileFilter);
+}
+
+// The collapsed bar is a find bar: step through the hits without reopening the
+// sheet, which is what you usually want after picking one.
+function stepResult(delta) {
+    const results = getFilteredResults();
+    if (results.length === 0) return;
+
+    const index = results.findIndex(r => r.page === currentPage);
+    let target;
+    if (index === -1) {
+        target = delta > 0
+            ? results.find(r => r.page > currentPage) || results[0]
+            : [...results].reverse().find(r => r.page < currentPage) || results[results.length - 1];
+    } else {
+        target = results[(index + delta + results.length) % results.length];
+    }
+    goToPage(target.page, getPatternFromSearchInput());
+}
+
+function syncResultsBar() {
+    if (!resultsCount) return;
+    const results = getFilteredResults();
+    if (results.length === 0) {
+        resultsCount.textContent = '';
+        return;
+    }
+    const index = results.findIndex(r => r.page === currentPage);
+    resultsCount.textContent = index === -1
+        ? `共 ${results.length} 筆`
+        : `第 ${currentPage} 頁 · ${index + 1} / ${results.length}`;
+}
+
+// Collapsing used to need a page tap. This is the way out that does not also
+// navigate somewhere.
+document.getElementById('results-collapse-btn')?.addEventListener('click', () => {
+    setResultsCollapsed(true);
+});
+
+resultsPanelHeader?.addEventListener('click', () => {
+    if (!isMobileView()) return;
+    setResultsCollapsed(!document.body.classList.contains('results-collapsed'));
+});
+
+prevResultBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    stepResult(-1);
+});
+
+nextResultBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    stepResult(1);
+});
+
+// ponytail: bottom bars need the sheet's real height.
+// +12 matches the mobile sheet's bottom gutter.
+function syncPanelHeight() {
+    const visible = document.body.classList.contains('results-bar-visible');
+    const h = visible && searchResultsPanel ? searchResultsPanel.offsetHeight + 12 : 0;
+    document.body.style.setProperty('--panel-h', `${h}px`);
+}
+
+// The sheet grows and shrinks on its own: list mode versus thumbnail mode,
+// a new set of results, a rotated phone. Measuring once was not enough.
+if (searchResultsPanel && 'ResizeObserver' in window) {
+    new ResizeObserver(syncPanelHeight).observe(searchResultsPanel);
+}
+
 function updateResultsNav() {
     const hasResults = searchResults.length > 0;
     document.body.classList.toggle('results-bar-visible', hasResults);
     appContainer?.classList.toggle('results-panel-visible', hasResults);
-    // ponytail: bottom bars need the sheet's real height; measure after layout
-    requestAnimationFrame(() => {
-        // +12 matches the mobile sheet's bottom gutter
-        const h = hasResults && searchResultsPanel ? searchResultsPanel.offsetHeight + 12 : 0;
-        document.body.style.setProperty('--panel-h', `${h}px`);
-    });
+    requestAnimationFrame(syncPanelHeight);
 }
 
 
@@ -1579,9 +1757,7 @@ function updateFilterAndResults(selectedFile = 'all') {
         dropdown.value = currentFileFilter;
     });
 
-    const filteredResults = currentFileFilter === 'all'
-        ? searchResults
-        : searchResults.filter(r => r.docName === currentFileFilter);
+    const filteredResults = getFilteredResults();
 
     // Only one file in play: the filename tells the user nothing
     resultsList?.classList.toggle('single-doc', docNames.length <= 1);
@@ -1619,6 +1795,7 @@ function updateFilterAndResults(selectedFile = 'all') {
                 `;
                 resultItem.addEventListener('click', () => {
                     goToPage(result.page, getPatternFromSearchInput());
+                    if (isMobileView()) setResultsCollapsed(true);
                 });
                 resultsList.appendChild(resultItem);
                 const thumbnailCanvas = resultItem.querySelector('.thumbnail-canvas');
@@ -1627,7 +1804,11 @@ function updateFilterAndResults(selectedFile = 'all') {
         }
     }
 
+    // A new search or filter is a new question: show the answers, not the bar.
+    if (filteredResults.length > 0) setResultsCollapsed(false);
+
     highlightCurrentResult();
+    queueCarouselFocus();
 
     const currentPageResult = filteredResults.find(r => r.page === currentPage);
     if (currentPageResult) {
@@ -1642,29 +1823,6 @@ function updateFilterAndResults(selectedFile = 'all') {
 // CJK text for free from the system fonts instead of shipping a ~10MB CJK font
 // for pdf-lib. Upgrade path: embed a subset font if selectable TOC text matters.
 
-// pdf-lib is vendored (lib/pdf-lib/) rather than pulled from a CDN at click
-// time: the README promises everything runs locally, and the CDN import made
-// export the one feature that failed offline or behind a restrictive network.
-// Still loaded lazily — it is ~525KB and only export needs it.
-let pdfLibPromise = null;
-
-function loadPdfLib() {
-    if (pdfLibPromise) return pdfLibPromise;
-    pdfLibPromise = new Promise((resolve, reject) => {
-        if (window.PDFLib) return resolve(window.PDFLib);
-        const script = document.createElement('script');
-        script.src = 'lib/pdf-lib/pdf-lib.min.js';
-        script.onload = () => window.PDFLib
-            ? resolve(window.PDFLib)
-            : reject(new Error('pdf-lib loaded but exposed no global'));
-        script.onerror = () => {
-            pdfLibPromise = null;   // let a later attempt retry
-            reject(new Error('無法載入 pdf-lib'));
-        };
-        document.head.appendChild(script);
-    });
-    return pdfLibPromise;
-}
 const TOC_ITEMS_PER_PAGE = 22;
 
 function plainSummary(html) {
@@ -1714,7 +1872,7 @@ async function exportResultsToPdf() {
     }
     showNotification('正在產生 PDF…', 'info');
     try {
-        const { PDFDocument } = await loadPdfLib();
+        const { PDFDocument } = await import('./lib/pdf-lib/pdf-lib.esm.min.js');
         const keyword = searchInputElem?.value.trim() || '';
         const tocPages = Math.ceil(results.length / TOC_ITEMS_PER_PAGE);
         const entries = results.map((r, i) => ({
@@ -1771,6 +1929,7 @@ searchInputElem?.addEventListener('keypress', e => {
 
 panelResultsDropdown?.addEventListener('change', () => {
     goToPageDropdown(panelResultsDropdown.value);
+    if (isMobileView()) setResultsCollapsed(true);
 });
 
 fileFilterDropdown?.addEventListener('change', e => {
@@ -2019,6 +2178,116 @@ copyPageTextBtn?.addEventListener('click', async () => {
     } catch (err) {
         console.error('Failed to copy text:', err);
         showNotification('複製頁面文字失敗', 'error');
+    }
+});
+
+// === Installable app ===
+// The whole viewer runs on the device already, so a service worker is all that
+// stands between this and working with no network at all.
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .catch(err => console.warn('Service worker registration failed:', err));
+    });
+}
+
+// Installed as an app, it can be picked as the handler for a PDF. The file
+// arrives through the launch queue rather than the file input.
+if ('launchQueue' in window && 'files' in LaunchParams.prototype) {
+    window.launchQueue.setConsumer(async launchParams => {
+        if (!launchParams.files || launchParams.files.length === 0) return;
+        try {
+            const files = await Promise.all(launchParams.files.map(handle => handle.getFile()));
+            loadAndProcessFiles(files);
+        } catch (err) {
+            console.error('Launch file error:', err);
+            showNotification('無法開啟傳入的檔案', 'error');
+        }
+    });
+}
+
+// === LINE in-app browser notice ===
+// LINE's built-in browser reports itself as "Line/<version>" and, on newer
+// builds, "/IAB". Nothing in a page can push itself out of that webview, so
+// the banner offers the platform's best escape and, above it, the manual route
+// that always works.
+const inappBanner = document.getElementById('inapp-browser-banner');
+
+function isLineInAppBrowser() {
+    return /\bLine\/\d/i.test(navigator.userAgent);
+}
+
+function openInExternalBrowser() {
+    const target = new URL(window.location.href);
+    target.hash = '';
+    target.searchParams.set('openExternalBrowser', '1');
+    const httpsUrl = target.toString();
+
+    if (/android/i.test(navigator.userAgent)) {
+        const scheme = target.protocol.replace(':', '');
+        window.location.href =
+            `intent://${target.host}${target.pathname}${target.search}` +
+            `#Intent;scheme=${scheme};package=com.android.chrome;` +
+            `S.browser_fallback_url=${encodeURIComponent(httpsUrl)};end`;
+        return;
+    }
+
+    // iOS: this scheme hands the URL to Safari from inside a webview. When the
+    // webview refuses it nothing happens, which is why the banner keeps the
+    // manual instruction visible.
+    window.location.href = httpsUrl.replace(/^https?:/, 'x-safari-https:');
+}
+
+if (inappBanner) {
+    if (isLineInAppBrowser() && sessionStorage.getItem('inappNoticeDismissed') !== '1') {
+        inappBanner.classList.add('is-visible');
+    }
+
+    document.getElementById('inapp-open-external')?.addEventListener('click', openInExternalBrowser);
+
+    document.getElementById('inapp-banner-close')?.addEventListener('click', () => {
+        inappBanner.classList.remove('is-visible');
+        try {
+            sessionStorage.setItem('inappNoticeDismissed', '1');
+        } catch {
+            /* private mode: the notice simply comes back next load */
+        }
+    });
+}
+
+// Links opened from inside LINE land in its built-in browser, where file
+// pickers and storage behave differently. LINE hands a link to the phone's
+// default browser instead when it carries openExternalBrowser=1, and the
+// parameter has to be in the link that gets sent, so the app builds it here.
+// Every other app just sees an extra query parameter and ignores it.
+const shareLinkBtn = document.getElementById('share-link-btn');
+
+function buildExternalBrowserLink() {
+    const url = new URL(window.location.href);
+    url.hash = '';
+    url.searchParams.set('openExternalBrowser', '1');
+    return url.toString();
+}
+
+shareLinkBtn?.addEventListener('click', async () => {
+    const link = buildExternalBrowserLink();
+    const payload = { title: 'PDF 專業工作室', text: 'PDF 關鍵字搜尋與註解工具', url: link };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(payload);
+            return;
+        }
+        await navigator.clipboard.writeText(link);
+        showNotification('已複製連結，貼到 LINE 就會用預設瀏覽器開啟', 'success');
+    } catch (err) {
+        if (err.name === 'AbortError') return;
+        try {
+            await navigator.clipboard.writeText(link);
+            showNotification('已複製連結，貼到 LINE 就會用預設瀏覽器開啟', 'success');
+        } catch {
+            showNotification('無法分享連結：' + err.message, 'error');
+        }
     }
 });
 
@@ -2610,10 +2879,7 @@ document.addEventListener('keydown', e => {
 async function initializeApp() {
     try {
         await initDB();
-        const storedFiles = await getFiles();
-        if (restoreSessionBtn) {
-            restoreSessionBtn.style.display = storedFiles.length > 0 ? 'inline-block' : 'none';
-        }
+        await syncRestoreButton();
     } catch (error) {
         console.error("Could not initialize app from IndexedDB:", error);
     }
@@ -2668,6 +2934,9 @@ function applyResultsView(mode) {
     const wasList = resultsList?.classList.contains('mode-list');
     resultsList?.classList.toggle('mode-thumb', mode === 'thumb');
     resultsList?.classList.toggle('mode-list', mode !== 'thumb');
+    // The carousel is a page picker, so the strip left above it should belong
+    // to the document, not to controls that do nothing while you are choosing.
+    document.body.classList.toggle('thumb-mode', mode === 'thumb');
     if (resultsViewToggle) resultsViewToggle.textContent = mode === 'thumb' ? '☰ 列表' : '▦ 縮圖';
 
     // Thumbnails are skipped while in list mode, so the canvases the observer
@@ -2686,6 +2955,7 @@ resultsViewToggle?.addEventListener('click', () => {
     localStorage.setItem('resultsView', next);
     applyResultsView(next);
     highlightCurrentResult();
+    queueCarouselFocus();
 });
 
 // Tapping the empty state is the same as hitting 開啟 PDF.

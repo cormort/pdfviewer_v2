@@ -669,6 +669,16 @@ button {
     flex-direction: column;
 }
 
+.results-stepper {
+    display: none;
+}
+
+/* The collapse button belongs to the mobile sheet, which sits on top of the
+   document. The desktop panel is a column beside it and stays put. */
+#results-collapse-btn {
+    display: none;
+}
+
 #search-results-panel h3 {
     margin: 0;
     padding: 20px;
@@ -1596,39 +1606,145 @@ button:focus-visible {
     }
 }
 
+/* =================== IN-APP BROWSER NOTICE =================== */
+/* Hidden until script.js finds it is running inside LINE */
+#inapp-browser-banner {
+    display: none;
+}
+
+#inapp-browser-banner.is-visible {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    align-items: center;
+    gap: 10px;
+    /* Room on the right for the close button, which sits out of the flow */
+    padding: 10px 34px 10px 12px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+#inapp-browser-banner .banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+#inapp-browser-banner .banner-text strong {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+#inapp-browser-banner .banner-text span {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+}
+
+#inapp-browser-banner #inapp-open-external {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+}
+
+#inapp-browser-banner .close-btn {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    border: none;
+    background: transparent;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px 6px;
+}
+
+/* Narrow phones: the button drops under the text rather than squeezing it */
+@media screen and (max-width: 420px) {
+    #inapp-browser-banner.is-visible {
+        flex-wrap: wrap;
+    }
+
+    #inapp-browser-banner #inapp-open-external {
+        width: 100%;
+        padding: 7px 12px;
+    }
+}
+
 /* Hide toolbar toggle tab on desktop */
 #toolbar-toggle-tab {
+    display: none;
+}
+
+/* Captions belong to the mobile floating buttons only */
+.fab-label {
     display: none;
 }
 
 @media screen and (max-width: 768px),
        screen and (orientation: landscape) and (max-height: 500px) {
 
-    /* Mobile Menu Toggle — circular button matching FAB style */
+    /* Mobile Menu Toggle — mirrors #main-fab at the opposite bottom corner */
     #toolbar-toggle-tab {
-        display: flex;
         position: fixed;
-        top: 16px;
-        left: 12px;
-        transition: left var(--transition-slow), transform var(--transition-fast), opacity var(--transition-fast);
+        top: auto;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+        left: 16px;
+        transition: bottom var(--transition-normal),
+                    transform var(--transition-fast), opacity var(--transition-fast);
         z-index: 9999;
         background: var(--primary-color);
         border: none;
-        border-radius: 50%;
-        padding: 0;
         cursor: pointer;
-        font-size: 18px;
-        width: 44px;
-        height: 44px;
-        align-items: center;
-        justify-content: center;
         box-shadow: var(--shadow-xl);
         color: white;
     }
 
-    /* ponytail: 同 #main-fab — idle 讓出頁面，互動或選單展開時恢復 */
-    #toolbar-toggle-tab {
-        opacity: 0.2;
+    /* Menu and tools read as one pair: same size, same height, opposite corners */
+    #toolbar-toggle-tab,
+    #main-fab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        width: 56px;
+        height: 56px;
+        padding: 0;
+        border-radius: 18px;
+        flex-shrink: 0;
+    }
+
+    #toolbar-toggle-tab .icon,
+    #main-fab .icon {
+        font-size: 21px;
+        line-height: 1;
+    }
+
+    /* The caption is the point: "選單" / "工具" instead of three unexplained lines */
+    #toolbar-toggle-tab .fab-label,
+    #main-fab .fab-label {
+        display: block;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: 0.02em;
+    }
+
+    /* ponytail: idle 讓出頁面，互動或選單展開時恢復。
+       比純圖示的 0.2 高一點，文字才讀得出來。 */
+    #toolbar-toggle-tab,
+    #main-fab {
+        opacity: 0.45;
     }
 
     #toolbar-toggle-tab:active,
@@ -1640,17 +1756,26 @@ button:focus-visible {
         transform: scale(0.92);
     }
 
-    #toolbar-toggle-tab .icon {
-        transition: transform var(--transition-slow);
+    /* Drawer open: same button, same spot, now reading as the way out.
+       Staying put keeps it clear of the tools button at the other corner. */
+    #app-container.menu-active #toolbar-toggle-tab .icon,
+    #app-container.menu-active #toolbar-toggle-tab .fab-label {
+        display: none;
+    }
+
+    #app-container.menu-active #toolbar-toggle-tab::before {
+        content: "\2715";
+        font-size: 20px;
         line-height: 1;
     }
 
-    #app-container.menu-active #toolbar-toggle-tab {
-        left: 292px;
-    }
-
-    #app-container.menu-active #toolbar-toggle-tab .icon {
-        transform: rotate(90deg);
+    #app-container.menu-active #toolbar-toggle-tab::after {
+        content: "關閉";
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: 0.02em;
+        margin-top: 2px;
     }
 
     /* Mobile Sidebar Menu */
@@ -1688,11 +1813,9 @@ button:focus-visible {
         flex-shrink: 0;
     }
 
-    /* Hide session buttons on mobile */
-    #restore-session-btn,
-    #clear-session-btn {
-        display: none !important;
-    }
+    /* The session buttons live in the drawer on mobile. They used to be hidden
+       here, which left no way at all to restore a previous set of files on a
+       phone; the drawer has room for them now. */
 
     /* Limit SVG sizes in toolbar */
     #toolbar svg {
@@ -1875,6 +1998,100 @@ button:focus-visible {
         display: none !important;
     }
 
+    /* Expanded, the sheet gets a close button in its own top right corner.
+       Before this the only way to collapse it was to tap a page, which also
+       navigated. */
+    body:not(.results-collapsed) #results-collapse-btn {
+        display: flex;
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 2;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 1px solid var(--border-color);
+        border-radius: 50%;
+        background: var(--bg-primary);
+        color: var(--text-secondary);
+        font-size: 1.25rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    body:not(.results-collapsed) #results-collapse-btn:active {
+        background: var(--bg-secondary);
+    }
+
+    /* Room for it, so it never sits on top of the export button */
+    body:not(.results-collapsed) #panel-dropdown-container {
+        padding-right: 48px;
+    }
+
+    /* Collapsed after a page is picked: the sheet leaves a bar behind, and the
+       bar is what brings it back. Expanded, the title stays hidden so the
+       carousel keeps every pixel it has. */
+    body.results-collapsed #search-results-panel h3 {
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 18px;
+        border-bottom: none;
+        background: transparent;
+        font-size: 0.95rem;
+        cursor: pointer;
+    }
+
+    body.results-collapsed #search-results-panel h3::after {
+        content: '▲';
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+    }
+
+    /* Step through hits straight from the bar, the way a find bar works */
+    body.results-collapsed .results-stepper {
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+        margin-right: 4px;
+    }
+
+    body.results-collapsed .results-stepper button {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 1px solid var(--border-color);
+        border-radius: 50%;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    body.results-collapsed .results-stepper button:active {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    /* The bar carries the position, so the static title is just noise there */
+    body.results-collapsed #search-results-panel h3 .panel-title {
+        display: none;
+    }
+
+    #results-count {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    body.results-collapsed #panel-dropdown-container,
+    body.results-collapsed #results-list {
+        display: none !important;
+    }
+
     /* Style the container to look like a bottom bar */
     #panel-dropdown-container {
         display: flex !important;
@@ -1921,7 +2138,15 @@ button:focus-visible {
         bottom: calc(var(--panel-h, 0px) + 12px);
     }
 
-    body.results-bar-visible #floating-action-buttons {
+    /* Choosing a page from the carousel: zoom controls have no part in that,
+       so they hand the remaining strip back to the document. */
+    body.results-bar-visible.thumb-mode:not(.results-collapsed) .page-nav-overlay {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    body.results-bar-visible #floating-action-buttons,
+    body.results-bar-visible #toolbar-toggle-tab {
         bottom: calc(var(--panel-h, 0px) + 72px);
     }
 
@@ -2020,14 +2245,9 @@ button:focus-visible {
     }
 
     #main-fab {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
         background: var(--primary-color);
         color: white;
-        font-size: 22px;
         box-shadow: var(--shadow-xl);
-        flex-shrink: 0;
     }
 
     @keyframes fabPanelIn {
@@ -2330,26 +2550,61 @@ button:focus-visible {
 
 @media screen and (max-width: 768px),
        screen and (orientation: landscape) and (max-height: 500px) {
-    /* Thumbnails become a horizontal strip so the sheet stays short */
+    /* Thumbnails become a snap carousel: the page you are on fills the sheet,
+       its neighbours peek in from both edges so the strip reads as browsable.
+       The side padding is what makes the peek, so the card itself asks for the
+       full content width. */
     #results-list.mode-thumb {
         display: flex;
         flex-direction: row;
-        gap: 8px;
+        gap: 10px;
         max-height: none;
         overflow-x: auto;
         overflow-y: hidden;
-        padding: 0 12px 10px;
+        padding: 2px 9% 10px;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    #results-list.mode-thumb::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Touch leaves :hover stuck on the last card tapped, which would read as a
+       second selection next to the focused one. */
+    #results-list.mode-thumb .result-item:not(.is-current):not(.is-focused):hover {
+        border-color: var(--border-color);
+        box-shadow: none;
     }
 
     #results-list.mode-thumb .result-item {
-        flex: 0 0 92px;
+        flex: 0 0 100%;
         margin-bottom: 0;
-        padding: 6px;
+        padding: 8px;
+        scroll-snap-align: center;
+        transition: transform var(--transition-normal), opacity var(--transition-normal);
     }
 
+    /* The card in the middle is the one being browsed, so it stays lit and the
+       rest step back. Guarded by :has() so nothing dims before the first
+       measurement, and on browsers without :has() everything simply stays lit. */
+    #results-list.mode-thumb:has(.is-focused) .result-item:not(.is-focused) {
+        opacity: 0.45;
+        transform: scale(0.92);
+    }
+
+    /* Portrait-page ratio, so an A4 or Letter page fills the card edge to edge
+       instead of sitting in a letterbox. Set up front, so the card does not
+       jump when the thumbnail finishes rendering. */
     #results-list.mode-thumb .thumbnail-canvas {
         min-height: 0;
-        margin-bottom: 4px;
+        height: auto;
+        aspect-ratio: 1 / 1.414;
+        max-height: min(58vh, 520px);
+        object-fit: contain;
+        margin-bottom: 6px;
     }
 
     #results-list.mode-thumb .page-info {
@@ -2383,10 +2638,35 @@ button:focus-visible {
         max-height: 22vh;
     }
 
-    /* Short screen: cap the thumbnail so the snippet still fits */
+    /* Short screen: height is the scarce axis, so it drives the card and the
+       width follows the page shape. A wide card here would letterbox the page
+       into a sliver. The side padding is exactly half a card, which is what
+       lets the first and last cards reach the middle. */
+    #results-list.mode-thumb {
+        --thumb-h: min(28vh, 150px);
+        /* + 18px covers the card's own padding and border, so the canvas inside
+           lands exactly on the page ratio */
+        --thumb-card-w: calc(var(--thumb-h) / 1.414 + 18px);
+        padding-inline: calc(50% - var(--thumb-card-w) / 2);
+    }
+
+    #results-list.mode-thumb .result-item {
+        flex: 0 0 var(--thumb-card-w);
+        box-sizing: border-box;
+        /* Without this the caption's minimum size widens the card past its
+           basis, and the page ends up letterboxed inside it again. */
+        min-width: 0;
+    }
+
     #results-list.mode-thumb .thumbnail-canvas {
-        max-height: 76px;
-        object-fit: contain;
+        height: var(--thumb-h);
+        max-height: none;
+        aspect-ratio: auto;
+    }
+
+    /* One line of context: the sheet has no room for two here */
+    #results-list.mode-thumb .context-snippet {
+        -webkit-line-clamp: 1;
     }
 }
 

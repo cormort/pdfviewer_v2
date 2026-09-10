@@ -13,6 +13,8 @@ export default [
                 Image: 'readonly', Event: 'readonly', MouseEvent: 'readonly',
                 alert: 'readonly', confirm: 'readonly', fetch: 'readonly',
                 URL: 'readonly', DataTransfer: 'readonly',
+                ResizeObserver: 'readonly', sessionStorage: 'readonly',
+                LaunchParams: 'readonly',
                 pdfjsLib: 'readonly'
             }
         },

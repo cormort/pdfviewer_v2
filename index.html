@@ -5,9 +5,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF 專業工作室 - 關鍵字搜尋與註解</title>
-  <!-- One token for every local asset (style.css, script.js, db.js). Bump all of
-       them together with: npm run bump-cache -- <new-token> -->
-  <link rel="stylesheet" href="style.css?v=2026-09-10">
+  <!-- Installable web app: manifest + icons + service-worker.js -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0E7C86">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="PDF 工作室">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <!-- One ?v= token for every local asset (style.css, script.js, db.js) —
+       they used to drift apart. Bump all three with: npm run bump-cache -->
+  <link rel="stylesheet" href="style.css?v=38">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -27,8 +36,18 @@
 
 <body>
   <div id="app-container">
-    <div id="toolbar-toggle-tab" title="切換選單">
-      <span class="icon">☰</span>
+    <!-- Shown only inside the LINE in-app browser (see script.js) -->
+    <div id="inapp-browser-banner">
+      <div class="banner-text">
+        <strong>目前在 LINE 內建瀏覽器</strong>
+        <span>開檔與暫存可能受限。也可點右上角 ⋯ 改用其他瀏覽器開啟。</span>
+      </div>
+      <button id="inapp-open-external" type="button" class="btn-primary">用預設瀏覽器開啟</button>
+      <button id="inapp-banner-close" type="button" class="close-btn" title="關閉提示">&times;</button>
+    </div>
+    <div id="toolbar-toggle-tab" title="開啟選單：開檔、搜尋、翻頁">
+      <span class="icon" aria-hidden="true">☰</span>
+      <span class="fab-label">選單</span>
     </div>
     <header id="toolbar">
       <div class="title-section">
@@ -37,7 +56,7 @@
       </div>
 
       <div class="file-section">
-        <button id="restore-session-btn" class="btn-secondary" style="display: none;" title="恢復上一個工作階段" aria-label="恢復上一個工作階段">🔄 恢復</button>
+        <button id="restore-session-btn" class="btn-secondary" style="display: none;" title="開啟上次使用的檔案" aria-label="開啟上次使用的檔案">🔄 開啟上次檔案</button>
         <button id="clear-session-btn" class="btn-danger" style="display: none;" title="清除工作階段" aria-label="清除工作階段">🗑️
           清除</button>
         <label for="fileInput" class="custom-file-upload">
@@ -99,7 +118,15 @@
       <div id="resizer"></div>
 
       <div id="search-results-panel">
-        <h3>🔍 搜尋結果</h3>
+        <h3 id="results-panel-header" title="展開或收起搜尋結果">
+          <span class="panel-title">🔍 搜尋結果</span>
+          <span id="results-count"></span>
+          <span class="results-stepper">
+            <button id="prev-result-btn" type="button" title="上一筆結果">‹</button>
+            <button id="next-result-btn" type="button" title="下一筆結果">›</button>
+          </span>
+        </h3>
+        <button id="results-collapse-btn" type="button" title="收起搜尋結果" aria-label="收起搜尋結果">&times;</button>
         <div id="panel-dropdown-container">
           <select id="panelFileFilterDropdown">
             <option value="all">所有檔案</option>
@@ -121,13 +148,17 @@
     <div id="floating-action-buttons" class="fab-container">
       <!-- Overlay Panel Trigger (Mobile Speed Dial) -->
       <button id="main-fab" class="btn-primary" title="工具選單" aria-label="工具選單">
-        <span class="icon">🛠️</span>
+        <span class="icon" aria-hidden="true">🛠️</span>
+        <span class="fab-label">工具</span>
       </button>
 
       <div class="fab-menu" id="fab-speed-dial">
         <div class="fab-group-label">分享與截圖</div>
         <button id="share-page-btn" class="btn-secondary" title="分享 PDF" aria-label="分享 PDF">
           <span class="icon">🔗</span>
+        </button>
+        <button id="share-link-btn" class="btn-secondary" title="分享本站連結">
+          <span class="icon">🌐</span>
         </button>
 
         <div class="fab-divider"></div>
@@ -235,7 +266,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=2026-09-10"></script>
+  <script type="module" src="./script.js?v=38"></script>
 </body>
 
 </html>
