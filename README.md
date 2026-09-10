@@ -2,6 +2,8 @@ Multi-PDF Smart Searcher - User Guide
 🚀 Core Feature
 This tool is a PDF viewer and search utility that runs entirely within your browser. It allows you to load multiple PDF files simultaneously and treat them as a single, continuous document for global search and navigation. All operations are performed locally on your device; your files are never uploaded to any server.
 
+Third parties: the page loads Google Analytics (gtag.js) from Google's servers, so page views are reported to Google. That is the only outbound request the app makes — no part of a PDF, its filename, your search terms or your notes is ever sent anywhere. Everything else, pdf.js and pdf-lib included, is served from this site, so the viewer works offline once the page is cached.
+
 🛠️ Interface and Operations
 Q1: How do I get started?
 
@@ -28,15 +30,15 @@ Enter your keywords in the "Keyword or Regex" input box. You can separate multip
 
 Click the Search button.
 
-Once the search is complete, a "Search Results" dropdown menu will appear at the bottom of the screen, listing all pages that contain the keywords.
+Once the search is complete, a search results panel opens, listing every page that contains the keywords with a snippet of the surrounding text.
 
-Results in the menu are grouped by file and separated by a title like --- Results from [filename] ---, so you can clearly identify the source of each result.
+Use the file filter above the list to narrow it to a single document, and the ☰ / ▦ button to switch between the compact list and thumbnail previews.
 
 Advanced Search Tip: You can use regular expressions for more powerful searches. Simply enclose your expression in slashes. For example, /Chapter \d+/i will perform a case-insensitive search for "Chapter" followed by one or more digits.
 
 Q5: On a computer, how can I see which file a search result came from?
 
-Hover your mouse pointer over an option in the "Search Results" dropdown menu at the bottom. A tooltip will appear, displaying the original filename for that result.
+Each entry in the results panel shows its source filename next to the page number, whenever more than one file is loaded.
 
 Q6: How do I navigate between pages?
 
@@ -72,19 +74,13 @@ TS: Enable Text Selection. By default, text selection is disabled to allow for s
 
 🖌️: Enable Highlighter. After clicking, you can freely draw on the PDF page, just like using a real highlighter.
 
-🗑️: Clear Highlights. Erases all highlighter marks from the current page.
+🗑️: Clear Highlights. Erases the highlighter marks on the current page. Marks on other pages are kept, and they stay put when you change pages or zoom — but they live in memory only, so they are gone once you reload.
 
 🔍: Toggle Magnifier. When enabled, move your mouse (on a computer) or drag your finger (on a mobile device) to see a real-time magnified view.
-
-📷: Export as Image. Exports the current page view, including your highlights, as a PNG image and downloads it.
 
 🔗: Share Page. If your browser supports it, this allows you to share the current page (with highlights) as an image to other applications.
 
 ⚙️ Other Settings
-Q9: How can I adjust the display quality?
-
-In the function menu, you can choose between "Standard," "High," and "Highest" quality settings. Higher quality results in sharper text and images but may render slightly slower and consume more device resources. The default is "High," which provides a good balance on most devices.
-
-Q10: How do I adjust the magnifier's zoom level?
+Q9: How do I adjust the magnifier's zoom level?
 
 When the magnifier tool 🔍 is enabled, a "Magnifier Zoom" option will appear in the function menu. You can select a zoom level from 1.5x to 3.5x.

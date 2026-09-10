@@ -1641,6 +1641,30 @@ function updateFilterAndResults(selectedFile = 'all') {
 // ponytail: TOC pages are drawn on a <canvas> and embedded as images, so we get
 // CJK text for free from the system fonts instead of shipping a ~10MB CJK font
 // for pdf-lib. Upgrade path: embed a subset font if selectable TOC text matters.
+
+// pdf-lib is vendored (lib/pdf-lib/) rather than pulled from a CDN at click
+// time: the README promises everything runs locally, and the CDN import made
+// export the one feature that failed offline or behind a restrictive network.
+// Still loaded lazily — it is ~525KB and only export needs it.
+let pdfLibPromise = null;
+
+function loadPdfLib() {
+    if (pdfLibPromise) return pdfLibPromise;
+    pdfLibPromise = new Promise((resolve, reject) => {
+        if (window.PDFLib) return resolve(window.PDFLib);
+        const script = document.createElement('script');
+        script.src = 'lib/pdf-lib/pdf-lib.min.js';
+        script.onload = () => window.PDFLib
+            ? resolve(window.PDFLib)
+            : reject(new Error('pdf-lib loaded but exposed no global'));
+        script.onerror = () => {
+            pdfLibPromise = null;   // let a later attempt retry
+            reject(new Error('無法載入 pdf-lib'));
+        };
+        document.head.appendChild(script);
+    });
+    return pdfLibPromise;
+}
 const TOC_ITEMS_PER_PAGE = 22;
 
 function plainSummary(html) {
@@ -1690,7 +1714,7 @@ async function exportResultsToPdf() {
     }
     showNotification('正在產生 PDF…', 'info');
     try {
-        const { PDFDocument } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
+        const { PDFDocument } = await loadPdfLib();
         const keyword = searchInputElem?.value.trim() || '';
         const tocPages = Math.ceil(results.length / TOC_ITEMS_PER_PAGE);
         const entries = results.map((r, i) => ({
