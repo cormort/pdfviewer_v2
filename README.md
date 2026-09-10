@@ -111,18 +111,25 @@ copy. There are two layers:
 
 - The HTTP cache. style.css, script.js and db.js carry a `?v=` token, so a
   bump changes the URL and sidesteps it — run `npm run bump-cache` to move all
-  three together. index.html and instructions.html have no token, so a browser
-  that cached them heuristically (a plain static server sends Last-Modified and
-  no Cache-Control) will re-serve the old copy. In DevTools → Network, a Size
-  of `(disk cache)` — or `transferSize` 0 from
-  `performance.getEntriesByType('navigation')[0]` — means the network was never
-  reached. The service worker asks for these with `cache: 'no-cache'`, so once
-  it controls the page every navigation revalidates. It cannot help with the
-  *first* navigation of a fresh profile, which the browser handles before the
-  worker is installed: on that one, `workerStart` is 0 and a heuristically
-  fresh copy is served regardless. Unregistering the worker from the console
-  does not clear the HTTP cache either, which is why the reliable reset is
-  Clear site data, not `caches.delete()`.
+  three together. index.html and instructions.html have no token, so they can
+  be re-served from cache instead of fetched. This bites hardest locally:
+  `python3 -m http.server` sends Last-Modified and no Cache-Control, so the
+  browser caches heuristically and a file untouched for weeks stays "fresh"
+  for days. GitHub Pages sends `Cache-Control: max-age=600` with an ETag, so
+  in production the same window is ten minutes and then a cheap 304.
+  To tell whether the network was reached: `transferSize` of 0 from
+  `performance.getEntriesByType('navigation')[0]` is the cross-browser signal;
+  a Size of `(disk cache)` in DevTools and `deliveryType === 'cache'` say the
+  same thing but are Chromium-only.
+  The service worker fetches with `cache: 'no-cache'`, so once it controls the
+  page every request revalidates. It cannot help with the *first* navigation
+  of a fresh profile, which the browser handles before the worker exists —
+  `workerStart` is 0 there (note that `workerStart` is also 0 for cross-origin
+  responses without Timing-Allow-Origin, so only read it for same-origin).
+  Unregistering the worker from the console does not clear the HTTP cache, so
+  for a quick iteration use DevTools' Disable cache or Empty Cache and Hard
+  Reload, and keep Clear site data for when you want a genuinely clean
+  profile.
 - The service worker cache. Bump `CACHE_VERSION` in service-worker.js whenever
   a precached file changes. To start clean: unregister the worker and clear
   the caches (Application → Storage → Clear site data).

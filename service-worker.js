@@ -9,7 +9,7 @@
 //
 // Bump CACHE_VERSION when a precached library changes, or to force every
 // installed copy to discard what it has.
-const CACHE_VERSION = 'pdf-studio-v17';
+const CACHE_VERSION = 'pdf-studio-v18';
 
 const PRECACHE = [
   './',
@@ -57,13 +57,16 @@ async function cacheFirst(request) {
   if (cached) {
     // Best effort refresh for the next launch. Not awaited: the cached copy is
     // already the answer, and offline this simply fails.
-    fetch(request)
+    // Same 'no-cache' as networkFirst. These files only change with a
+    // CACHE_VERSION bump, but if one ever changes without it, a plain fetch
+    // here would refresh the entry from the HTTP cache and keep it stale.
+    fetch(request, { cache: 'no-cache' })
       .then(response => (response && response.ok ? store(request, response) : undefined))
       .catch(() => { /* offline */ });
     return cached;
   }
   try {
-    const response = await fetch(request);
+    const response = await fetch(request, { cache: 'no-cache' });
     if (response && response.ok) await store(request, response.clone());
     return response;
   } catch {
