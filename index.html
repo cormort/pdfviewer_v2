@@ -16,7 +16,7 @@
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <!-- One ?v= token for every local asset (style.css, script.js, db.js) —
        they used to drift apart. Bump all three with: npm run bump-cache -->
-  <link rel="stylesheet" href="style.css?v=51">
+  <link rel="stylesheet" href="style.css?v=54">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -61,6 +61,8 @@
   <symbol id="i-pilcrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4v16" /> <path d="M17 4v16" /> <path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13" /></symbol>
   <symbol id="i-clipboard-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /> <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /> <path d="M16 4h2a2 2 0 0 1 2 2v4" /> <path d="M21 14H11" /> <path d="m15 10-4 4 4 4" /></symbol>
   <symbol id="i-notebook-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h4" /> <path d="M2 10h4" /> <path d="M2 14h4" /> <path d="M2 18h4" /> <rect width="16" height="20" x="4" y="2" rx="2" /> <path d="M9.5 8h5" /> <path d="M9.5 12H16" /> <path d="M9.5 16H14" /></symbol>
+  <symbol id="i-move-horizontal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 8 4 4-4 4" /> <path d="M2 12h20" /> <path d="m6 8-4 4 4 4" /></symbol>
+  <symbol id="i-move-vertical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20" /> <path d="m8 18 4 4 4-4" /> <path d="m8 6 4-4 4 4" /></symbol>
   <symbol id="i-zoom-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /> <line x1="21" x2="16.65" y1="21" y2="16.65" /> <line x1="11" x2="11" y1="8" y2="14" /> <line x1="8" x2="14" y1="11" y2="11" /></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5" /> <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" /></symbol>
   <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></symbol>
@@ -204,6 +206,15 @@
         </button>
 
         <div class="fab-divider"></div>
+        <div class="fab-group-label">顯示</div>
+        <button id="fab-fit-width-btn" class="btn-secondary fit-width-btn" title="符合寬度" aria-label="符合寬度">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-move-horizontal"/></svg>
+        </button>
+        <button id="fab-fit-height-btn" class="btn-secondary fit-height-btn" title="符合高度" aria-label="符合高度">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-move-vertical"/></svg>
+        </button>
+
+        <div class="fab-divider"></div>
         <div class="fab-group-label">文字工具</div>
         <button id="toggle-underline-btn" class="btn-secondary" title="切換搜尋底線" aria-label="切換搜尋底線">
           <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-underline"/></svg></span>
@@ -247,6 +258,7 @@
       <button id="fit-width-btn" class="fit-width-btn">寬度</button>
       <button id="fit-height-btn" class="fit-height-btn">高度</button>
       <div class="toolbar-divider"></div>
+      <div id="page-chip" aria-live="polite">–/–</div>
       <input type="range" id="page-slider" min="1" max="1" value="1" disabled>
     </div>
 
@@ -308,7 +320,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=51"></script>
+  <script type="module" src="./script.js?v=54"></script>
 </body>
 
 </html>

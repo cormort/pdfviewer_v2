@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=51';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=54';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -53,6 +53,7 @@ const pageNumDisplay = document.getElementById('page-num-display');
 const pageToGoInput = document.getElementById('page-to-go');
 const goToPageBtn = document.getElementById('go-to-page-btn');
 const pageSlider = document.getElementById('page-slider');
+const pageChip = document.getElementById('page-chip');
 
 // Search Related
 const panelResultsDropdown = document.getElementById('panelResultsDropdown');
@@ -1039,6 +1040,12 @@ function updatePageControls() {
         pageSlider.max = globalTotalPages;
         pageSlider.value = currentPage;
         pageSlider.disabled = (globalTotalPages === 1);
+    }
+
+    // The phone has no page number anywhere else: #toolbar .nav-section, which
+    // holds #page-num-display along with the prev/next buttons, is hidden there.
+    if (pageChip) {
+        pageChip.textContent = hasDocs ? `${currentPage}/${globalTotalPages}` : '–/–';
     }
 
     fabContainer.style.display = 'flex';

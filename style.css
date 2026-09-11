@@ -1010,6 +1010,18 @@ body.results-bar-visible #floating-action-buttons {
     }
 }
 
+/* The toolbar already shows "第 N / M 頁" where there is room for it; this chip
+   exists for the phone, where that whole .nav-section is hidden. */
+#page-chip {
+    display: none;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    flex: none;
+}
+
 /* =================== OVERLAYS =================== */
 .page-nav-overlay {
     position: fixed;
@@ -2405,6 +2417,35 @@ button:focus-visible {
     to {
         transform: translateY(0);
         opacity: 1;
+    }
+}
+
+/* The fit buttons exist twice: in the bottom bar (roomy on desktop) and in the
+   tools menu (where a phone has space for them). Each context shows one. */
+#fab-fit-width-btn,
+#fab-fit-height-btn {
+    display: none;
+}
+
+/* The two fit buttons cost 124px of a 374px bar, leaving the slider 52px —
+   0.26px per page in a 200-page document, so one pixel of thumb travel jumped
+   four pages. On a phone they live in the tools menu instead and the slider
+   gets the width back. Same mobile condition as the rest of the file. */
+@media screen and (max-width: 768px),
+       screen and (orientation: landscape) and (max-height: 500px) {
+
+    .page-nav-overlay .fit-width-btn,
+    .page-nav-overlay .fit-height-btn {
+        display: none;
+    }
+
+    #fab-fit-width-btn,
+    #fab-fit-height-btn {
+        display: inline-flex;
+    }
+
+    #page-chip {
+        display: block;
     }
 }
 
