@@ -47,6 +47,10 @@
 
     --glass-bg: rgba(251, 251, 249, 0.7);
     --glass-border: rgba(255, 255, 255, 0.5);
+
+    /* One generated-content chevron, kept as a data URI because CSS ::after
+       cannot reference the sprite. See #search-results-panel h3::after. */
+    --icon-chevron-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m18 15-6-6-6 6'/%3E%3C/svg%3E");
 }
 
 /* =================== BASE LAYOUT =================== */
@@ -227,9 +231,9 @@ body {
     font-size: 12px;
 }
 
-.note-marker::after {
-    content: '📌';
-    font-size: 14px;
+.note-marker .icon {
+    width: 14px;
+    height: 14px;
 }
 
 .note-marker:hover {
@@ -327,6 +331,18 @@ body {
     margin: 0;
     color: var(--text-secondary);
     line-height: 1.6;
+}
+
+/* =================== ICONS =================== */
+/* Inline SVG referenced from #icon-sprite in index.html. Sized in em so the
+   existing font-size rules still control it, and coloured by currentColor so a
+   button's hover/active state themes its icon for free. */
+.icon {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.125em;
+    flex: none;
 }
 
 /* =================== TOOLBAR =================== */
@@ -491,6 +507,14 @@ select:focus {
     flex: 1;
     min-width: 0;
     padding-right: 34px;
+}
+
+/* The button carries the `hidden` attribute while the box is empty, but the
+   generic `button { display: inline-flex }` outranks the UA's [hidden] rule, so
+   it used to stay visible as a dead control. Found while verifying the icon
+   swap; one line, no effect on the visible state. */
+#clear-search-btn[hidden] {
+    display: none;
 }
 
 #clear-search-btn {
@@ -1331,6 +1355,10 @@ body.results-bar-visible #floating-action-buttons {
     flex-direction: column;
     gap: 10px;
     max-width: 350px;
+    /* Toasts report; they are not controls. A toast parked over the page must
+       not swallow taps for its three seconds — only its close button, which
+       opts back in below, stays clickable. */
+    pointer-events: none;
 }
 
 .notification {
@@ -1364,6 +1392,7 @@ body.results-bar-visible #floating-action-buttons {
 }
 
 .notification-close {
+    pointer-events: auto;
     background: none;
     border: none;
     color: white;
@@ -1695,20 +1724,29 @@ button:focus-visible {
     }
 
     /* Drawer open: same button, same spot, now reading as the way out.
-       Staying put keeps it clear of the tools button at the other corner. */
-    #app-container.menu-active #toolbar-toggle-tab .icon,
-    #app-container.menu-active #toolbar-toggle-tab .fab-label {
+       Staying put keeps it clear of the tools button at the other corner.
+       Both states are real DOM now (icon + label pairs) rather than generated
+       content, so each one can be sized like every other icon. */
+    #toolbar-toggle-tab .icon-close,
+    #toolbar-toggle-tab .label-close {
         display: none;
     }
 
-    #app-container.menu-active #toolbar-toggle-tab::before {
-        content: "\2715";
-        font-size: 20px;
-        line-height: 1;
+    #app-container.menu-active #toolbar-toggle-tab .icon-menu,
+    #app-container.menu-active #toolbar-toggle-tab .label-menu {
+        display: none;
     }
 
-    #app-container.menu-active #toolbar-toggle-tab::after {
-        content: "關閉";
+    #app-container.menu-active #toolbar-toggle-tab .icon-close,
+    #app-container.menu-active #toolbar-toggle-tab .label-close {
+        display: block;
+    }
+
+    #app-container.menu-active #toolbar-toggle-tab .icon-close {
+        font-size: 21px;
+    }
+
+    #toolbar-toggle-tab .label-close {
         font-size: 10px;
         font-weight: 600;
         line-height: 1;
@@ -1982,10 +2020,17 @@ button:focus-visible {
         cursor: pointer;
     }
 
+    /* The only icon that cannot be a sprite <use>: generated content has no
+       child element. Same Lucide chevron-up path, as a mask so it still takes
+       its colour from currentColor. */
     body.results-collapsed #search-results-panel h3::after {
-        content: '▲';
-        font-size: 0.7rem;
-        color: var(--text-tertiary);
+        content: '';
+        width: 12px;
+        height: 12px;
+        flex: none;
+        background-color: var(--text-tertiary);
+        -webkit-mask: var(--icon-chevron-up) center / contain no-repeat;
+        mask: var(--icon-chevron-up) center / contain no-repeat;
     }
 
     /* Step through hits straight from the bar, the way a find bar works */

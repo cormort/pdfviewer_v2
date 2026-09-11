@@ -16,7 +16,7 @@
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <!-- One ?v= token for every local asset (style.css, script.js, db.js) —
        they used to drift apart. Bump all three with: npm run bump-cache -->
-  <link rel="stylesheet" href="style.css?v=50">
+  <link rel="stylesheet" href="style.css?v=51">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -35,6 +35,45 @@
 </head>
 
 <body>
+<!-- Icon sprite: Lucide v0.544.0 (ISC). See THIRD-PARTY-NOTICES.md.
+     Referenced as <svg class="icon"><use href="#i-name"/></svg>. -->
+<svg id="icon-sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;overflow:hidden">
+  <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16" /> <path d="M4 12h16" /> <path d="M4 19h16" /></symbol>
+  <symbol id="i-rotate-ccw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></symbol>
+  <symbol id="i-trash-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></symbol>
+  <symbol id="i-folder-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" /></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></symbol>
+  <symbol id="i-chevrons-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5" /> <path d="m18 17-5-5 5-5" /></symbol>
+  <symbol id="i-file-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /> <path d="M14 2v4a2 2 0 0 0 2 2h4" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></symbol>
+  <symbol id="i-book-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14" /> <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></symbol>
+  <symbol id="i-layout-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /> <rect width="7" height="7" x="14" y="3" rx="1" /> <rect width="7" height="7" x="14" y="14" rx="1" /> <rect width="7" height="7" x="3" y="14" rx="1" /></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h.01" /> <path d="M3 12h.01" /> <path d="M3 19h.01" /> <path d="M8 5h13" /> <path d="M8 12h13" /> <path d="M8 19h13" /></symbol>
+  <symbol id="i-file-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /> <path d="M14 2v4a2 2 0 0 0 2 2h4" /> <path d="M12 18v-6" /> <path d="m9 15 3 3 3-3" /></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z" /></symbol>
+  <symbol id="i-share-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /> <circle cx="6" cy="12" r="3" /> <circle cx="18" cy="19" r="3" /> <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /> <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></symbol>
+  <symbol id="i-link-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2" /> <path d="M15 7h2a5 5 0 1 1 0 10h-2" /> <line x1="8" x2="16" y1="12" y2="12" /></symbol>
+  <symbol id="i-underline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v6a6 6 0 0 0 12 0V4" /> <line x1="4" x2="20" y1="20" y2="20" /></symbol>
+  <symbol id="i-highlighter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11-6 6v3h9l3-3" /> <path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" /></symbol>
+  <symbol id="i-eraser" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21" /> <path d="m5.082 11.09 8.828 8.828" /></symbol>
+  <symbol id="i-text-cursor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 22h-1a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4h1" /> <path d="M7 22h1a4 4 0 0 0 4-4v-1" /> <path d="M7 2h1a4 4 0 0 1 4 4v1" /></symbol>
+  <symbol id="i-pilcrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4v16" /> <path d="M17 4v16" /> <path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13" /></symbol>
+  <symbol id="i-clipboard-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /> <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /> <path d="M16 4h2a2 2 0 0 1 2 2v4" /> <path d="M21 14H11" /> <path d="m15 10-4 4 4 4" /></symbol>
+  <symbol id="i-notebook-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h4" /> <path d="M2 10h4" /> <path d="M2 14h4" /> <path d="M2 18h4" /> <rect width="16" height="20" x="4" y="2" rx="2" /> <path d="M9.5 8h5" /> <path d="M9.5 12H16" /> <path d="M9.5 16H14" /></symbol>
+  <symbol id="i-zoom-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /> <line x1="21" x2="16.65" y1="21" y2="16.65" /> <line x1="11" x2="11" y1="8" y2="14" /> <line x1="8" x2="14" y1="11" y2="11" /></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5" /> <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" /></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12" /> <path d="m17 8-5-5-5 5" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /> <path d="M12 5v14" /></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></symbol>
+  <symbol id="i-triangle-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" /></symbol>
+  <symbol id="i-map-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /> <circle cx="12" cy="10" r="3" /></symbol>
+  <symbol id="i-chevron-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6" /></symbol>
+</svg>
   <div id="app-container">
     <!-- Shown only inside the LINE in-app browser (see script.js) -->
     <div id="inapp-browser-banner">
@@ -43,11 +82,13 @@
         <span>開檔與暫存可能受限。也可點右上角 ⋯ 改用其他瀏覽器開啟。</span>
       </div>
       <button id="inapp-open-external" type="button" class="btn-primary">用預設瀏覽器開啟</button>
-      <button id="inapp-banner-close" type="button" class="close-btn" title="關閉提示" aria-label="關閉提示">&times;</button>
+      <button id="inapp-banner-close" type="button" class="close-btn" title="關閉提示" aria-label="關閉提示"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
     </div>
     <div id="toolbar-toggle-tab" title="開啟選單：開檔、搜尋、翻頁">
-      <span class="icon" aria-hidden="true">☰</span>
-      <span class="fab-label">選單</span>
+      <svg class="icon icon-menu" aria-hidden="true" focusable="false"><use href="#i-menu"/></svg>
+      <svg class="icon icon-close" aria-hidden="true" focusable="false"><use href="#i-x"/></svg>
+      <span class="fab-label label-menu">選單</span>
+      <span class="fab-label label-close">關閉</span>
     </div>
     <header id="toolbar">
       <div class="title-section">
@@ -56,11 +97,11 @@
       </div>
 
       <div class="file-section">
-        <button id="restore-session-btn" class="btn-secondary" style="display: none;" title="開啟上次使用的檔案" aria-label="開啟上次使用的檔案">🔄 開啟上次檔案</button>
-        <button id="clear-session-btn" class="btn-danger" style="display: none;" title="清除工作階段" aria-label="清除工作階段">🗑️
+        <button id="restore-session-btn" class="btn-secondary" style="display: none;" title="開啟上次使用的檔案" aria-label="開啟上次使用的檔案"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-rotate-ccw"/></svg> 開啟上次檔案</button>
+        <button id="clear-session-btn" class="btn-danger" style="display: none;" title="清除工作階段" aria-label="清除工作階段"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-trash-2"/></svg>
           清除</button>
         <label for="fileInput" class="custom-file-upload">
-          <span>📁 開啟 PDF</span>
+          <span><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-folder-open"/></svg> 開啟 PDF</span>
           <input type="file" id="fileInput" multiple accept="application/pdf">
         </label>
       </div>
@@ -68,7 +109,7 @@
       <div class="search-section">
         <div class="search-input-wrap">
           <input type="text" id="searchInput" placeholder="搜尋關鍵字..." autocomplete="off">
-          <button id="clear-search-btn" type="button" title="清除搜尋" hidden aria-label="清除搜尋">×</button>
+          <button id="clear-search-btn" type="button" title="清除搜尋" hidden aria-label="清除搜尋"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
         </div>
         <button id="search-action-button" class="btn-primary">搜尋</button>
         <select id="fileFilterDropdown">
@@ -83,10 +124,10 @@
       </div>
 
       <div class="nav-section">
-        <button id="go-to-first-page" title="第一頁" aria-label="第一頁">«</button>
-        <button id="prev-page" title="上一頁" aria-label="上一頁">‹</button>
+        <button id="go-to-first-page" title="第一頁" aria-label="第一頁"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevrons-left"/></svg></button>
+        <button id="prev-page" title="上一頁" aria-label="上一頁"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevron-left"/></svg></button>
         <div id="page-num-display">第 - / - 頁</div>
-        <button id="next-page" title="下一頁" aria-label="下一頁">›</button>
+        <button id="next-page" title="下一頁" aria-label="下一頁"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevron-right"/></svg></button>
         <input type="number" id="page-to-go" min="1" value="1" title="前往頁面">
         <button id="go-to-page-btn" class="btn-secondary">前往</button>
       </div>
@@ -99,12 +140,12 @@
         <!-- Empty State -->
         <div id="empty-state-wrap">
           <div id="empty-state" class="empty-state-guide" role="button" tabindex="0">
-            <div class="icon" aria-hidden="true">📄</div>
+            <div class="icon" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-file-text"/></svg></div>
             <h2>開始您的專案</h2>
             <p>點這裡開啟 PDF，即可使用關鍵字搜尋、分頁筆記等功能。</p>
           </div>
           <!-- instructions.html was precached but had no way in from the UI -->
-          <a id="help-link" href="instructions.html" target="_blank" rel="noopener">📖 使用說明</a>
+          <a id="help-link" href="instructions.html" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-book-open"/></svg> 使用說明</a>
         </div>
 
         <!-- PDF Content Wrapper -->
@@ -123,14 +164,14 @@
 
       <div id="search-results-panel">
         <h3 id="results-panel-header" title="展開或收起搜尋結果">
-          <span class="panel-title">🔍 搜尋結果</span>
+          <span class="panel-title"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"/></svg> 搜尋結果</span>
           <span id="results-count"></span>
           <span class="results-stepper">
-            <button id="prev-result-btn" type="button" title="上一筆結果" aria-label="上一筆結果">‹</button>
-            <button id="next-result-btn" type="button" title="下一筆結果" aria-label="下一筆結果">›</button>
+            <button id="prev-result-btn" type="button" title="上一筆結果" aria-label="上一筆結果"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevron-left"/></svg></button>
+            <button id="next-result-btn" type="button" title="下一筆結果" aria-label="下一筆結果"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevron-right"/></svg></button>
           </span>
         </h3>
-        <button id="results-collapse-btn" type="button" title="收起搜尋結果" aria-label="收起搜尋結果">&times;</button>
+        <button id="results-collapse-btn" type="button" title="收起搜尋結果" aria-label="收起搜尋結果"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
         <div id="panel-dropdown-container">
           <select id="panelFileFilterDropdown">
             <option value="all">所有檔案</option>
@@ -138,8 +179,8 @@
           <select id="panelResultsDropdown">
             <option value="">搜尋結果</option>
           </select>
-        <button id="results-view-toggle" title="切換列表／縮圖：橫式（寬）的文件建議用列表，直式（長）的文件建議用縮圖" aria-label="切換列表／縮圖：橫式（寬）的文件建議用列表，直式（長）的文件建議用縮圖">▦ 縮圖</button>
-        <button id="export-results-pdf-btn" title="把搜尋到的頁面匯出成一份含目錄的 PDF" aria-label="把搜尋到的頁面匯出成一份含目錄的 PDF">📄 匯出結果 PDF</button>
+        <button id="results-view-toggle" title="切換列表／縮圖：橫式（寬）的文件建議用列表，直式（長）的文件建議用縮圖" aria-label="切換列表／縮圖：橫式（寬）的文件建議用列表，直式（長）的文件建議用縮圖"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-layout-grid"/></svg><span id="results-view-label">縮圖</span></button>
+        <button id="export-results-pdf-btn" title="把搜尋到的頁面匯出成一份含目錄的 PDF" aria-label="把搜尋到的頁面匯出成一份含目錄的 PDF"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-file-down"/></svg> 匯出結果 PDF</button>
         </div>
         <div id="results-list"></div>
       </div>
@@ -149,59 +190,59 @@
     <div id="floating-action-buttons" class="fab-container">
       <!-- Overlay Panel Trigger (Mobile Speed Dial) -->
       <button id="main-fab" class="btn-primary" title="工具選單" aria-label="工具選單">
-        <span class="icon" aria-hidden="true">🛠️</span>
+        <span class="icon" aria-hidden="true"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-wrench"/></svg></span>
         <span class="fab-label">工具</span>
       </button>
 
       <div class="fab-menu" id="fab-speed-dial">
         <div class="fab-group-label">分享與截圖</div>
         <button id="share-page-btn" class="btn-secondary" title="分享 PDF" aria-label="分享 PDF">
-          <span class="icon">🔗</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-share-2"/></svg></span>
         </button>
         <button id="share-link-btn" class="btn-secondary" title="分享本站連結" aria-label="分享本站連結">
-          <span class="icon">🌐</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-link-2"/></svg></span>
         </button>
 
         <div class="fab-divider"></div>
         <div class="fab-group-label">文字工具</div>
         <button id="toggle-underline-btn" class="btn-secondary" title="切換搜尋底線" aria-label="切換搜尋底線">
-          <span class="icon">S̲</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-underline"/></svg></span>
         </button>
         <button id="toggle-highlighter-btn" class="btn-secondary" title="螢光筆標記選擇內容" aria-label="螢光筆標記選擇內容">
-          <span class="icon">🖍️</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-highlighter"/></svg></span>
         </button>
         <button id="clear-highlighter-btn" class="btn-secondary" title="清除本頁標記" aria-label="清除本頁標記">
-          <span class="icon">🧹</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-eraser"/></svg></span>
         </button>
 
         <div class="fab-divider"></div>
         <div class="fab-group-label">選取與筆記</div>
         <button id="toggle-text-selection-btn" class="btn-secondary" title="選擇文字" aria-label="選擇文字">
-          <span class="icon">📄</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-text-cursor"/></svg></span>
         </button>
         <button id="toggle-paragraph-selection-btn" class="btn-secondary" title="選擇段落" aria-label="選擇段落">
-          <span class="icon">¶</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-pilcrow"/></svg></span>
         </button>
         <button id="copy-page-text-btn" class="btn-secondary" title="複製選擇內容" aria-label="複製選擇內容">
-          <span class="icon">📋</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-clipboard-copy"/></svg></span>
         </button>
         <button id="view-notes-btn" class="btn-secondary" title="所有分頁筆記" aria-label="所有分頁筆記">
-          <span class="icon">📝</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-notebook-text"/></svg></span>
         </button>
         <button id="toggle-local-magnifier-btn" class="btn-secondary" title="放大鏡 (點擊 PDF)" aria-label="放大鏡 (點擊 PDF)">
-          <span class="icon">🔍</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-zoom-in"/></svg></span>
         </button>
         <button id="toggle-notes-btn" class="btn-secondary" title="新增筆記 (點擊 PDF)" aria-label="新增筆記 (點擊 PDF)">
-          <span class="icon">📌</span>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-pin"/></svg></span>
         </button>
       </div>
     </div>
 
     <!-- Zoom Controls Overlay -->
     <div class="page-nav-overlay">
-      <button id="zoom-out-btn" class="zoom-out-btn" title="縮小" aria-label="縮小">-</button>
+      <button id="zoom-out-btn" class="zoom-out-btn" title="縮小" aria-label="縮小"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-minus"/></svg></button>
       <div id="zoom-level-display">100%</div>
-      <button id="zoom-in-btn" class="zoom-in-btn" title="放大" aria-label="放大">+</button>
+      <button id="zoom-in-btn" class="zoom-in-btn" title="放大" aria-label="放大"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></button>
       <div class="toolbar-divider"></div>
       <button id="fit-width-btn" class="fit-width-btn">寬度</button>
       <button id="fit-height-btn" class="fit-height-btn">高度</button>
@@ -222,7 +263,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3 id="note-modal-title">新增筆記</h3>
-          <button id="close-note-modal" class="close-btn" title="關閉" aria-label="關閉筆記視窗">&times;</button>
+          <button id="close-note-modal" class="close-btn" title="關閉" aria-label="關閉筆記視窗"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
         </div>
         <div class="modal-body">
           <textarea id="note-content" placeholder="在此輸入筆記內容..."></textarea>
@@ -240,14 +281,14 @@
       <div class="modal-content side-panel">
         <div class="modal-header">
           <h3 id="notes-list-title">所有分頁筆記</h3>
-          <button id="close-notes-list" class="close-btn" title="關閉" aria-label="關閉筆記清單">&times;</button>
+          <button id="close-notes-list" class="close-btn" title="關閉" aria-label="關閉筆記清單"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
         </div>
         <div id="notes-list-container" class="modal-body">
           <!-- Notes will be loaded here -->
         </div>
         <div class="modal-footer backup-actions">
-          <button id="export-notes-btn" class="btn-secondary" title="將所有筆記匯出為 JSON 檔案" aria-label="將所有筆記匯出為 JSON 檔案">📤 匯出備份</button>
-          <button id="import-notes-trigger-btn" class="btn-secondary" title="從 JSON 備份檔案匯入筆記" aria-label="從 JSON 備份檔案匯入筆記">📥 匯入備份</button>
+          <button id="export-notes-btn" class="btn-secondary" title="將所有筆記匯出為 JSON 檔案" aria-label="將所有筆記匯出為 JSON 檔案"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-download"/></svg> 匯出備份</button>
+          <button id="import-notes-trigger-btn" class="btn-secondary" title="從 JSON 備份檔案匯入筆記" aria-label="從 JSON 備份檔案匯入筆記"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-upload"/></svg> 匯入備份</button>
           <input type="file" id="import-notes-input" accept=".json" class="sr-only">
         </div>
       </div>
@@ -267,7 +308,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=50"></script>
+  <script type="module" src="./script.js?v=51"></script>
 </body>
 
 </html>

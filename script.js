@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=50';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=51';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -142,6 +142,14 @@ let lastY = 0;
 
 function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Icons are references into the inline sprite in index.html (see
+// THIRD-PARTY-NOTICES.md). Inline SVG instead of emoji: the glyphs rendered
+// differently on every platform, could not follow currentColor, and four of the
+// tool buttons were near-indistinguishable paper emoji.
+function iconSvg(name) {
+    return `<svg class="icon" aria-hidden="true" focusable="false"><use href="#i-${name}"/></svg>`;
 }
 
 // === Core Function: Reset App ===
@@ -474,6 +482,7 @@ async function renderNotes() {
         notes.forEach(note => {
             const marker = document.createElement('div');
             marker.className = 'note-marker';
+            marker.innerHTML = iconSvg('map-pin');
             marker.style.left = `${note.x}%`;
             marker.style.top = `${note.y}%`;
             marker.title = note.content;
@@ -602,7 +611,7 @@ async function showNotesList() {
         if (allNotes.length === 0) {
             notesListContainer.innerHTML = `
                 <div class="empty-notes-message">
-                    <div class="icon">📝</div>
+                    <div class="icon">${iconSvg('notebook-text')}</div>
                     <p>找不到任何載入檔案的筆記。</p>
                 </div>
             `;
@@ -2528,15 +2537,15 @@ function showNotification(message, type = 'info') {
     notification.className = `notification notification-${type}`;
 
     const icons = {
-        success: '✓',
-        error: '✕',
-        warning: '⚠',
-        info: 'ℹ'
+        success: 'check',
+        error: 'x',
+        warning: 'triangle-alert',
+        info: 'info'
     };
 
     const iconSpan = document.createElement('span');
     iconSpan.className = 'notification-icon';
-    iconSpan.textContent = icons[type] || icons.info;
+    iconSpan.innerHTML = iconSvg(icons[type] || icons.info);
 
     const msgSpan = document.createElement('span');
     msgSpan.className = 'notification-message';
@@ -2544,7 +2553,8 @@ function showNotification(message, type = 'info') {
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'notification-close';
-    closeBtn.textContent = '×';
+    closeBtn.setAttribute('aria-label', '關閉通知');
+    closeBtn.innerHTML = iconSvg('x');
     closeBtn.addEventListener('click', () => notification.remove());
 
     notification.appendChild(iconSpan);
@@ -2955,7 +2965,12 @@ function applyResultsView(mode) {
     // The carousel is a page picker, so the strip left above it should belong
     // to the document, not to controls that do nothing while you are choosing.
     document.body.classList.toggle('thumb-mode', mode === 'thumb');
-    if (resultsViewToggle) resultsViewToggle.textContent = mode === 'thumb' ? '☰ 列表' : '▦ 縮圖';
+    if (resultsViewToggle) {
+        const toList = mode === 'thumb';
+        resultsViewToggle.innerHTML =
+            iconSvg(toList ? 'list' : 'layout-grid') +
+            `<span id="results-view-label">${toList ? '列表' : '縮圖'}</span>`;
+    }
 
     // Thumbnails are skipped while in list mode, so the canvases the observer
     // already consumed are still blank when we switch back.
