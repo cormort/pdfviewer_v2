@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=60';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=61';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -2956,6 +2956,20 @@ updatePageControls();
 
 initResizer();
 initializeApp();
+
+// First visit only: the browser's own banner offers to install the app, and
+// nothing says that installing is optional. Say it once — not when we are
+// already running as an installed app, where the point is moot.
+try {
+    const installed = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    if (!installed && !localStorage.getItem('pwaOptionalNoticeSeen')) {
+        showNotification('不需安裝也能使用：直接用瀏覽器開啟即可，安裝只是多了主畫面圖示。', 'info');
+        localStorage.setItem('pwaOptionalNoticeSeen', '1');
+    }
+} catch {
+    // Private mode can throw on localStorage; the hint is not worth failing over.
+}
 
 console.log('✓ PDF 閱讀器已優化並初始化。');
 console.log('鍵盤快速鍵：');
