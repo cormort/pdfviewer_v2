@@ -2842,6 +2842,14 @@ button:focus-visible {
 }
 
 /* Version line: only in the mobile drawer, so users can report what they see */
+/* 安裝按鈕：只在瀏覽器回報「這個站可以安裝」時由 script.js 取消 hidden，
+   靠右站在工具列尾端。手機上工具列是抽屜，改由 DOM 順序排在最下方。 */
+#install-app-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
 .app-version {
     display: none;
 }
