@@ -1720,15 +1720,24 @@ button:focus-visible {
     }
 
     /* ponytail: idle 讓出頁面，互動或選單展開時恢復。
-       比純圖示的 0.2 高一點，文字才讀得出來。 */
+       Only the disc is translucent — never the whole button. Fading the element
+       fades the label too, so text and background converge on the page colour;
+       white on #0E7C86 is 4.95:1 to begin with, so any whole-element alpha at
+       all drops it under AA (0.9 already measures 4.13:1). Letting the page
+       show through a darker disc keeps the label at full strength: the 25%
+       here measures 4.53:1 on a white page and 4.95:1 on the container grey. */
     #toolbar-toggle-tab,
     #main-fab {
-        opacity: 0.45;
+        background: rgba(10, 84, 91, 0.75);
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
     }
 
     #toolbar-toggle-tab:active,
-    #app-container.menu-active #toolbar-toggle-tab {
-        opacity: 1;
+    #app-container.menu-active #toolbar-toggle-tab,
+    #main-fab:active,
+    #main-fab.active {
+        background: var(--primary-color);
     }
 
     #toolbar-toggle-tab:active {
@@ -2241,8 +2250,10 @@ button:focus-visible {
         display: none;
     }
 
+    /* Colour is set with its pair further up (translucent disc); this block
+       only needs the properties specific to the tools button. Re-declaring
+       background here would beat that rule on source order alone. */
     #main-fab {
-        background: var(--primary-color);
         color: white;
         box-shadow: var(--shadow-xl);
     }
@@ -2535,13 +2546,13 @@ button:focus-visible {
    has no cursor and no hover, so that never fires and the controls simply stay
    dim — you have to tap a control you can barely see before it becomes legible.
    Composited against the page, the 0.45 label was measuring under 2:1.
-   Keep the fade where there is a pointer to justify it; everywhere else, don't. */
+   Keep the fade where there is a pointer to justify it; everywhere else, don't.
+   The menu and tools buttons are not listed: they are translucent by
+   background rather than by opacity, so they stay readable on their own. */
 @media (hover: none) {
 
     .page-nav-overlay,
-    #floating-action-buttons,
-    #toolbar-toggle-tab,
-    #main-fab {
+    #floating-action-buttons {
         opacity: 1 !important;
     }
 }
