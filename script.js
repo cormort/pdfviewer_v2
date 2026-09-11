@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=61';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=62';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -126,9 +126,11 @@ const toolbarToggleTab = document.getElementById('toolbar-toggle-tab');
 // === Mode Status ===
 let localMagnifierEnabled = false;
 // A reading strip rather than a round glass: a line of text stays whole
-// across the width, instead of being clipped by a circle.
-const LOCAL_MAGNIFIER_WIDTH = 320;
-const LOCAL_MAGNIFIER_HEIGHT = 96;
+// across the width, instead of being clipped by a circle. The strip takes as
+// much width as the window allows so it shows several lines at once, and is
+// re-measured on resize.
+let LOCAL_MAGNIFIER_WIDTH = 560;
+let LOCAL_MAGNIFIER_HEIGHT = 200;
 let LOCAL_MAGNIFIER_ZOOM_LEVEL = 2.5;
 
 let showSearchResultsHighlights = true;
@@ -753,13 +755,19 @@ importNotesInput?.addEventListener('change', async (e) => {
 });
 
 // === Magnifier Function ===
-function initLocalMagnifier() {
+function sizeLocalMagnifier() {
+    LOCAL_MAGNIFIER_WIDTH = Math.min(560, Math.max(240, window.innerWidth - 24));
+    LOCAL_MAGNIFIER_HEIGHT = Math.round(LOCAL_MAGNIFIER_WIDTH * 0.36);
     if (magnifierCanvas && magnifierGlass) {
         magnifierGlass.style.width = `${LOCAL_MAGNIFIER_WIDTH}px`;
         magnifierGlass.style.height = `${LOCAL_MAGNIFIER_HEIGHT}px`;
         magnifierCanvas.width = LOCAL_MAGNIFIER_WIDTH;
         magnifierCanvas.height = LOCAL_MAGNIFIER_HEIGHT;
     }
+}
+
+function initLocalMagnifier() {
+    sizeLocalMagnifier();
     if (localMagnifierZoomSelector) {
         LOCAL_MAGNIFIER_ZOOM_LEVEL = parseFloat(localMagnifierZoomSelector.value);
     }
@@ -2533,6 +2541,7 @@ let resizeTimeout;
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
+        sizeLocalMagnifier();
         if (pdfDocs.length > 0) {
             renderPage(currentPage, getPatternFromSearchInput());
         }
