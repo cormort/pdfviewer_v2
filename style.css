@@ -2507,6 +2507,15 @@ button:focus-visible {
     }
 }
 
+/* Short landscape puts 選單 and 工具 in the same left/right columns as these
+   arrows, and the viewport is too short for a centred arrow to clear them.
+   Centre it in the strip above that control band instead. */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .page-arrow {
+        top: calc((100% - env(safe-area-inset-bottom, 0px) - 136px) / 2);
+    }
+}
+
 /* =================== TOUCH TARGETS =================== */
 /* 44x44 is the practical floor for a finger. These controls were 24-42px,
    which is fine for a cursor and a coin-toss for a thumb. Growing the hit area
