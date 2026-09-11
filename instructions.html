@@ -67,6 +67,13 @@
             font-weight: bold;
             margin: 0 3px;
         }
+        .key .icon {
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.12em;
+            stroke: currentColor;
+            fill: none;
+        }
         .note {
             background-color: #fff3cd;
             border-left: 5px solid #ffc107;
@@ -99,6 +106,35 @@
 </script>
 </head>
 <body>
+<!-- Icon sprite: the same Lucide symbols the app uses, trimmed to the ones
+     this guide references, so the pictures here match the buttons on screen. -->
+<svg id="icon-sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;overflow:hidden">
+  <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16" /> <path d="M4 12h16" /> <path d="M4 19h16" /></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z" /></symbol>
+  <symbol id="i-folder-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" /></symbol>
+  <symbol id="i-rotate-ccw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></symbol>
+  <symbol id="i-chevrons-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5" /> <path d="m18 17-5-5 5-5" /></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h.01" /> <path d="M3 12h.01" /> <path d="M3 19h.01" /> <path d="M8 5h13" /> <path d="M8 12h13" /> <path d="M8 19h13" /></symbol>
+  <symbol id="i-layout-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /> <rect width="7" height="7" x="14" y="3" rx="1" /> <rect width="7" height="7" x="14" y="14" rx="1" /> <rect width="7" height="7" x="3" y="14" rx="1" /></symbol>
+  <symbol id="i-move-horizontal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 8 4 4-4 4" /> <path d="M2 12h20" /> <path d="m6 8-4 4 4 4" /></symbol>
+  <symbol id="i-move-vertical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20" /> <path d="m8 18 4 4 4-4" /> <path d="m8 6 4-4 4 4" /></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /> <path d="M12 5v14" /></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /></symbol>
+  <symbol id="i-underline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v6a6 6 0 0 0 12 0V4" /> <line x1="4" x2="20" y1="20" y2="20" /></symbol>
+  <symbol id="i-highlighter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11-6 6v3h9l3-3" /> <path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" /></symbol>
+  <symbol id="i-eraser" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21" /> <path d="m5.082 11.09 8.828 8.828" /></symbol>
+  <symbol id="i-text-cursor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 22h-1a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4h1" /> <path d="M7 22h1a4 4 0 0 0 4-4v-1" /> <path d="M7 2h1a4 4 0 0 1 4 4v1" /></symbol>
+  <symbol id="i-pilcrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4v16" /> <path d="M17 4v16" /> <path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13" /></symbol>
+  <symbol id="i-clipboard-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /> <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /> <path d="M16 4h2a2 2 0 0 1 2 2v4" /> <path d="M21 14H11" /> <path d="m15 10-4 4 4 4" /></symbol>
+  <symbol id="i-notebook-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h4" /> <path d="M2 10h4" /> <path d="M2 14h4" /> <path d="M2 18h4" /> <rect width="16" height="20" x="4" y="2" rx="2" /> <path d="M9.5 8h5" /> <path d="M9.5 12H16" /> <path d="M9.5 16H14" /></symbol>
+  <symbol id="i-zoom-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /> <line x1="21" x2="16.65" y1="21" y2="16.65" /> <line x1="11" x2="11" y1="8" y2="14" /> <line x1="8" x2="14" y1="11" y2="11" /></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5" /> <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" /></symbol>
+  <symbol id="i-share-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /> <circle cx="6" cy="12" r="3" /> <circle cx="18" cy="19" r="3" /> <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /> <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></symbol>
+  <symbol id="i-link-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2" /> <path d="M15 7h2a5 5 0 1 1 0 10h-2" /> <line x1="8" x2="16" y1="12" y2="12" /></symbol>
+</svg>
     <div class="container">
         <h1>Multi-PDF Smart Searcher - User Guide</h1>
 
@@ -115,7 +151,7 @@
         <h2>🛠️ 介面與操作</h2>
         
         <h3>Q1: 如何開始使用？</h3>
-        <p>點擊左上角的 <span class="key">開啟 PDF</span> 按鈕，從您的電腦或行動裝置中選擇您想檢視的 PDF 檔案。您可以按住 <span class="key">Ctrl</span> (Windows) 或 <span class="key">Command ⌘</span> (Mac) 來一次選擇多個檔案。</p>
+        <p>點擊左上角的 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-folder-open"/></svg> 開啟 PDF</span> 按鈕，從您的電腦或行動裝置中選擇您想檢視的 PDF 檔案。您可以按住 <span class="key">Ctrl</span> (Windows) 或 <span class="key">Command ⌘</span> (Mac) 來一次選擇多個檔案。</p>
         
         <h3>Q2: 為什麼有時會出現「還原上次的工作階段」按鈕？</h3>
         <p>為了提升您的工作效率，本工具具備「記憶上次工作階段」的功能。</p>
@@ -124,7 +160,7 @@
                 <strong>首次使用：</strong> 當您第一次載入一個或多個 PDF 檔案後，工具會自動將這些檔案的安全副本儲存在您的**個人瀏覽器**中。
             </li>
             <li>
-                <strong>再次訪問：</strong> 下次您打開此頁面時，應用程式會偵測到這些已儲存的檔案，並在工具列顯示一個 <span class="key">開啟上次檔案</span> 按鈕。這讓您只需一鍵即可還原上次的工作階段，無需重新選擇檔案。
+                <strong>再次訪問：</strong> 下次您打開此頁面時，應用程式會偵測到這些已儲存的檔案，並在工具列顯示一個 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-rotate-ccw"/></svg> 開啟上次檔案</span> 按鈕。這讓您只需一鍵即可還原上次的工作階段，無需重新選擇檔案。
             </li>
         </ul>
         <div class="note">
@@ -133,17 +169,17 @@
         </div>
 
         <h3>Q3: 如何在行動裝置上開關功能選單？</h3>
-        <p>在手機或平板等觸控裝置上，您會在左側看到一個青色的 <span class="key">☰ 選單</span> 把手。點擊此把手可以滑出或收回功能選單。您也可以透過點擊右側的 PDF 內容區域來快速收合選單。</p>
+        <p>在手機或平板等觸控裝置上，畫面<strong>左下角</strong>有一顆半透明的 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-menu"/></svg> 選單</span> 按鈕，點一下即可滑出或收回功能選單（開檔、搜尋、切換檔案）；展開時它會變成 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-menu"/></svg> 關閉</span> 的叉號。右下角則是 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-wrench"/></svg> 工具</span>，裡面是標記與檢視工具（見 Q8）。您也可以直接點 PDF 內容區域來快速收合選單。</p>
 
         <h3>Q4: 如何跨多個 PDF 檔案進行搜尋？</h3>
         <ol>
             <li>在搜尋框中輸入您的關鍵字。您可以用空格分隔多個關鍵字，例如：<code>company report</code>，會找出同一頁中依序出現這些詞的地方。</li>
-            <li>點擊 <span class="key">Search</span> 按鈕。</li>
+            <li>點擊 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"/></svg> 搜尋</span> 按鈕。</li>
             <li>
                 搜尋完成後，結果會根據您的裝置以不同方式呈現：
                 <ul>
-                    <li><strong>電腦版：</strong> 畫面右側會展開搜尋結果面板，列出所有包含關鍵字的頁面，含頁碼、來源檔名與上下文片段。面板寬度可以拖曳分隔線調整，右上角的 <span class="key">列表</span> / <span class="key">縮圖</span> 可切換精簡清單與縮圖預覽。</li>
-                    <li><strong>行動裝置版：</strong> 畫面底部會滑出結果面板，內容相同。挑定一筆之後面板會收合成一條細長的列，顯示「第 N 頁 · i / 總數」與 <span class="key">‹</span> <span class="key">›</span> 上下筆按鈕，方便逐筆看而不遮住頁面。</li>
+                    <li><strong>電腦版：</strong> 畫面右側會展開搜尋結果面板，列出所有包含關鍵字的頁面，含頁碼、來源檔名與上下文片段。面板寬度可以拖曳分隔線調整，右上角的 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-list"/></svg> 列表</span> / <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-layout-grid"/></svg> 縮圖</span> 可切換精簡清單與縮圖預覽。</li>
+                    <li><strong>行動裝置版：</strong> 畫面底部會滑出結果面板，內容相同。挑定一筆之後面板會收合成一條細長的列，顯示「第 N 頁 · i / 總數」與 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevron-left"/></svg></span> <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevron-right"/></svg></span> 上下筆按鈕，方便逐筆看而不遮住頁面。</li>
                 </ul>
             </li>
             <li>點擊任何一個結果即可快速跳轉到該頁面。</li>
@@ -156,9 +192,9 @@
         
         <h3>Q5: 如何導覽頁面與搜尋結果？</h3>
         <ul>
-            <li>使用 <span class="key">Prev</span> / <span class="key">Next</span> 按鈕逐頁翻閱。</li>
+            <li>使用 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevron-left"/></svg> 上一頁</span> / <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevron-right"/></svg> 下一頁</span> 按鈕逐頁翻閱；<span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevrons-left"/></svg> 第一頁</span> 可直接回到第一頁。手機與橫向畫面上，頁面左右兩側也各有一顆半透明箭頭可以翻頁。</li>
             <li>拖曳頁碼旁邊的**滑桿**進行快速跳頁。</li>
-            <li>在輸入框中輸入頁碼並點擊 <span class="key">Go</span> 按鈕，可直接跳轉到指定的全域頁碼。</li>
+            <li>在輸入框中輸入頁碼並點擊 <span class="key">前往</span> 按鈕，可直接跳轉到指定的全域頁碼。</li>
             <li>在搜尋模式下，點擊右側面板中的縮圖或下拉選單中的項目，可直接跳到該搜尋結果。</li>
             <li><b>(推薦)</b> 在觸控裝置上，直接在 PDF 上**左右滑動**即可翻頁或跳至上/下一個搜尋結果。</li>
         </ul>
@@ -166,9 +202,9 @@
         <h3>Q6: 如何調整頁面顯示比例？</h3>
         <p>在頂部工具列（電腦版）或滑出選單中（行動裝置版），您可以使用縮放控制項：</p>
         <ul>
-            <li><span class="key">Fit Height</span>: (預設模式) 讓頁面高度符合檢視器的高度，適合垂直閱讀。</li>
-            <li><span class="key">Fit Width</span>: 讓頁面寬度符合檢視器的寬度。</li>
-            <li><span class="key">+</span> / <span class="key">-</span>: 手動放大或縮小頁面。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-move-vertical"/></svg> 高度</span>：(預設模式) 讓頁面高度符合檢視器的高度，適合垂直閱讀。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-move-horizontal"/></svg> 寬度</span>：讓頁面寬度符合檢視器的寬度。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></span> / <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-minus"/></svg></span>：手動放大或縮小頁面，中間顯示目前的百分比。</li>
         </ul>
 
         <h2>📱 行動裝置體驗</h2>
@@ -182,26 +218,42 @@
             <li><div class="note" style="padding: 10px; margin-top: 10px;">注意：為避免操作衝突，當螢光筆、文字選取、段落選取或放大鏡工具啟用時，滑動導覽功能會暫時停用。</div></li>
         </ul>
         
-        <h2>🎨 標記與檢視功能 (右下角浮動按鈕)</h2>
-        
-        <h3>Q8: 右下角的按鈕有哪些功能？</h3>
-        <p>這是一組快速動作按鈕，讓您在閱讀時方便使用各種工具。</p>
+        <h2>🎨 標記與檢視功能（右下角 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-wrench"/></svg> 工具</span>）</h2>
+
+        <h3>Q8: 「工具」裡有哪些功能？</h3>
+        <p>點右下角的 <span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-wrench"/></svg> 工具</span> 會展開一組快速動作按鈕，依用途分成四組：</p>
+        <h4 style="margin-bottom:6px">分享與截圖</h4>
         <ul>
-            <li><strong>切換搜尋底線</strong>：如果您覺得搜尋結果的波浪底線很干擾，點此按鈕可暫時隱藏它們。再點一次即可恢復顯示。</li>
-            <li><strong>啟用段落選取</strong>：啟用後，只需在 PDF 頁面上點擊一下，工具就會自動選取您點擊所在的整個段落，並顯示一個「Copy」按鈕供您快速複製。</li>
-            <li><strong>複製整頁文字</strong>：點擊此按鈕可將當前頁面的所有文字複製到剪貼簿。</li>
-            <li><strong>啟用文字選取</strong>：預設情況下，文字選取是關閉的，以利於更流暢的縮放與滑動手勢。點擊此按鈕可讓 PDF 內容變為可選取狀態，方便您複製特定文字。再點一次即可關閉。</li>
-            <li><strong>啟用螢光筆</strong>：點擊後，您可以在 PDF 頁面上自由繪製，就像使用真的螢光筆一樣。</li>
-            <li><strong>清除螢光筆</strong>：清除當前頁面上所有的螢光筆標記。</li>
-            <li><strong>切換放大鏡</strong>：啟用後，移動滑鼠（電腦）或拖曳手指（行動裝置）即可看到即時的放大畫面。</li>
-            <li><strong>分享頁面</strong>：如果您的瀏覽器支援，這可以讓您將當前頁面（含標記）以圖片形式分享到其他應用程式。</li>
-            <li><strong>分享本站連結</strong>：分享這個工具本身的網址，並帶上參數讓 LINE 改用預設瀏覽器開啟。</li>
-            <li><strong>所有分頁筆記</strong>：列出目前已載入檔案的所有筆記，點一則即可跳到該頁。</li>
-            <li><strong>新增筆記</strong>：點 PDF 任一處放置筆記（手機版不提供此按鈕）。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-share-2"/></svg> 分享 PDF</span>：將當前頁面（含標記）以圖片形式分享到其他應用程式，需瀏覽器支援。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-link-2"/></svg> 分享本站連結</span>：分享這個工具本身的網址，並帶上參數讓 LINE 改用預設瀏覽器開啟。</li>
         </ul>
+        <h4 style="margin-bottom:6px">顯示</h4>
+        <ul>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-move-horizontal"/></svg> 符合寬度</span>：讓頁面寬度填滿檢視器。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-move-vertical"/></svg> 符合高度</span>：讓頁面高度填滿檢視器（預設）。</li>
+        </ul>
+        <h4 style="margin-bottom:6px">文字工具</h4>
+        <ul>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-underline"/></svg> 切換搜尋底線</span>：覺得搜尋結果的波浪底線干擾時，點此暫時隱藏，再點一次恢復。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-highlighter"/></svg> 螢光筆標記選擇內容</span>：在 PDF 上自由繪製，就像使用真的螢光筆。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-eraser"/></svg> 清除本頁標記</span>：清除當前頁面上所有的螢光筆標記。</li>
+        </ul>
+        <h4 style="margin-bottom:6px">選取與筆記</h4>
+        <ul>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-text-cursor"/></svg> 選擇文字</span>：預設關閉文字選取以利縮放與滑動手勢；點此讓 PDF 內容變為可選取，再點一次關閉。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-pilcrow"/></svg> 選擇段落</span>：啟用後在頁面上點一下，即自動選取整個段落並顯示複製按鈕。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-clipboard-copy"/></svg> 複製選擇內容</span>：把選取到的文字複製到剪貼簿。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-notebook-text"/></svg> 所有分頁筆記</span>：列出目前已載入檔案的所有筆記，點一則即可跳到該頁。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-zoom-in"/></svg> 放大鏡</span>：啟用後移動滑鼠（電腦）或拖曳手指（行動裝置）即可看到即時放大畫面。</li>
+            <li><span class="key"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-pin"/></svg> 新增筆記</span>：點 PDF 任一處放置筆記。</li>
+        </ul>
+        <div class="note">
+            <strong>手機版比較精簡：</strong>
+            螢幕較窄時只留下最常用的幾顆（分享、符合寬度／高度、螢光筆、清除標記、放大鏡）；切換底線、選字、選段、複製、筆記等按鈕在電腦版才會出現。
+        </div>
 
         <h3>Q9: 如何調整放大鏡的縮放等級？</h3>
-        <p>當放大鏡工具啟用時，功能選單中會出現「Magnifier Zoom」選項。您可以選擇 1.5x 到 3.5x 的縮放等級。</p>
+        <p>當放大鏡工具啟用時，畫面上會出現一個「縮放」下拉選單。您可以選擇 1.5x 到 3.5x 的放大倍率。</p>
 
         <a href="./index.html" class="back-link">返回 PDF 搜尋器</a>
     </div>
