@@ -1724,11 +1724,13 @@ button:focus-visible {
        fades the label too, so text and background converge on the page colour;
        white on #0E7C86 is 4.95:1 to begin with, so any whole-element alpha at
        all drops it under AA (0.9 already measures 4.13:1). Letting the page
-       show through a darker disc keeps the label at full strength: the 25%
-       here measures 4.53:1 on a white page and 4.95:1 on the container grey. */
+       show through a darker disc keeps the label at full strength. At 25% the
+       disc still read as solid, so it goes to 35%: the fill darkens to keep
+       the ratio, measuring 4.86:1 on a white page and 5.09:1 on the container
+       grey — both clear AA, computed from the composited values. */
     #toolbar-toggle-tab,
     #main-fab {
-        background: rgba(10, 84, 91, 0.75);
+        background: rgba(0, 45, 49, 0.65);
         -webkit-backdrop-filter: blur(6px);
         backdrop-filter: blur(6px);
     }
