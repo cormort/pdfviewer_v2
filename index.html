@@ -16,7 +16,7 @@
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <!-- One ?v= token for every local asset (style.css, script.js, db.js) —
        they used to drift apart. Bump all three with: npm run bump-cache -->
-  <link rel="stylesheet" href="style.css?v=56">
+  <link rel="stylesheet" href="style.css?v=57">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -219,10 +219,10 @@
         <div class="fab-divider"></div>
         <div class="fab-group-label">顯示</div>
         <button id="fab-fit-width-btn" class="btn-secondary fit-width-btn" title="符合寬度" aria-label="符合寬度">
-          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-move-horizontal"/></svg>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-move-horizontal"/></svg></span>
         </button>
         <button id="fab-fit-height-btn" class="btn-secondary fit-height-btn" title="符合高度" aria-label="符合高度">
-          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-move-vertical"/></svg>
+          <span class="icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-move-vertical"/></svg></span>
         </button>
 
         <div class="fab-divider"></div>
@@ -331,7 +331,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=56"></script>
+  <script type="module" src="./script.js?v=57"></script>
 </body>
 
 </html>
