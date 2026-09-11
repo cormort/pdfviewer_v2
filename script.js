@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=59';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=60';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -2268,6 +2268,35 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.warn('Service worker registration failed:', err));
     });
 }
+
+// === Install prompt ===
+// Chrome/Edge would show their own install bar on arrival. preventDefault()
+// stops that: the event is kept, the toolbar button appears, and the real
+// prompt only opens when the user asks for it. The event fires once per
+// visit, so after a dismissal the button waits for the next one.
+let deferredInstallPrompt = null;
+const installAppBtn = document.getElementById('install-app-btn');
+
+window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    if (installAppBtn) installAppBtn.hidden = false;
+});
+
+if (installAppBtn) {
+    installAppBtn.addEventListener('click', async () => {
+        if (!deferredInstallPrompt) return;
+        installAppBtn.hidden = true;
+        const prompt = deferredInstallPrompt;
+        deferredInstallPrompt = null;
+        await prompt.prompt();
+    });
+}
+
+window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    if (installAppBtn) installAppBtn.hidden = true;
+});
 
 // Installed as an app, it can be picked as the handler for a PDF. The file
 // arrives through the launch queue rather than the file input.
