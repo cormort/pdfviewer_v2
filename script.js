@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=54';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=56';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -48,6 +48,8 @@ const textLayerDivGlobal = document.getElementById('text-layer');
 // Navigation Controls
 const goToFirstPageBtn = document.getElementById('go-to-first-page');
 const prevPageBtn = document.getElementById('prev-page');
+const pagePrevOverlay = document.getElementById('page-prev-overlay');
+const pageNextOverlay = document.getElementById('page-next-overlay');
 const nextPageBtn = document.getElementById('next-page');
 const pageNumDisplay = document.getElementById('page-num-display');
 const pageToGoInput = document.getElementById('page-to-go');
@@ -1035,6 +1037,8 @@ function updatePageControls() {
     if (goToFirstPageBtn) goToFirstPageBtn.disabled = (currentPage === 1);
     if (prevPageBtn) prevPageBtn.disabled = (currentPage === 1);
     if (nextPageBtn) nextPageBtn.disabled = (currentPage === globalTotalPages);
+    if (pagePrevOverlay) pagePrevOverlay.disabled = !hasDocs || currentPage === 1;
+    if (pageNextOverlay) pageNextOverlay.disabled = !hasDocs || currentPage === globalTotalPages;
 
     if (pageSlider) {
         pageSlider.max = globalTotalPages;
@@ -2071,6 +2075,11 @@ function getPatternKey(pattern) {
 goToFirstPageBtn?.addEventListener('click', () => {
     if (pdfDocs.length > 0) goToPage(1, getPatternFromSearchInput());
 });
+
+// The overlays are a second surface for the same action, not a second
+// implementation — forward to the buttons that already own the behaviour.
+pagePrevOverlay?.addEventListener('click', () => prevPageBtn?.click());
+pageNextOverlay?.addEventListener('click', () => nextPageBtn?.click());
 
 prevPageBtn?.addEventListener('click', () => {
     if (currentPage > 1) goToPage(currentPage - 1, getPatternFromSearchInput());

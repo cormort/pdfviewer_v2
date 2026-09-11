@@ -2449,6 +2449,53 @@ button:focus-visible {
     }
 }
 
+/* Mobile page arrows: on a phone the only ways to turn a page were a swipe
+   that nothing advertises, and the slider. Desktop has the toolbar pair. */
+.page-arrow {
+    display: none;
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-md);
+    color: var(--text-primary);
+    /* Semi-transparent because these sit on the page itself — solid would
+       cover the text they exist to help you read. Full opacity while pressed
+       so a tap still confirms itself. */
+    opacity: 0.55;
+    z-index: 900;
+}
+
+#page-prev-overlay { left: 8px; }
+#page-next-overlay { right: 8px; }
+
+.page-arrow:active {
+    opacity: 1;
+    transform: translateY(-50%) scale(0.92);
+}
+
+/* At the first or last page it would do nothing; hide it rather than leave a
+   dead control sitting on top of the page swallowing taps. */
+.page-arrow[disabled] {
+    display: none !important;
+}
+
+@media screen and (max-width: 768px),
+       screen and (orientation: landscape) and (max-height: 500px) {
+
+    #app-container.has-docs .page-arrow {
+        display: inline-flex;
+    }
+}
+
 /* =================== TOUCH TARGETS =================== */
 /* 44x44 is the practical floor for a finger. These controls were 24-42px,
    which is fine for a cursor and a coin-toss for a thumb. Growing the hit area

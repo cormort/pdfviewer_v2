@@ -16,7 +16,7 @@
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <!-- One ?v= token for every local asset (style.css, script.js, db.js) —
        they used to drift apart. Bump all three with: npm run bump-cache -->
-  <link rel="stylesheet" href="style.css?v=54">
+  <link rel="stylesheet" href="style.css?v=56">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
@@ -188,6 +188,17 @@
       </div>
     </main>
 
+    <!-- Mobile page arrows. Kept out of #toolbar on purpose: its
+         backdrop-filter makes it a containing block for position:fixed, so
+         arrows nested there would be positioned against the 280px drawer
+         rather than the viewport. -->
+    <button id="page-prev-overlay" class="page-arrow" type="button" title="上一頁" aria-label="上一頁">
+      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevron-left"/></svg>
+    </button>
+    <button id="page-next-overlay" class="page-arrow" type="button" title="下一頁" aria-label="下一頁">
+      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chevron-right"/></svg>
+    </button>
+
     <!-- Floating Action Buttons -->
     <div id="floating-action-buttons" class="fab-container">
       <!-- Overlay Panel Trigger (Mobile Speed Dial) -->
@@ -320,7 +331,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=54"></script>
+  <script type="module" src="./script.js?v=56"></script>
 </body>
 
 </html>
