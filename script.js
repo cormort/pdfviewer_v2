@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=62';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=63';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -2288,8 +2288,31 @@ if ('serviceWorker' in navigator) {
 let deferredInstallPrompt = null;
 const installAppBtn = document.getElementById('install-app-btn');
 
+// Launched from the home screen or the Windows/macOS app list, not a browser
+// tab. Chrome fires beforeinstallprompt in an installed window too, so without
+// this the button would offer to install what is already installed.
+function isRunningInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.matchMedia('(display-mode: minimal-ui)').matches ||
+        window.navigator.standalone === true;
+}
+
+const INSTALL_CONFIRM_MESSAGE = [
+    '要把「PDF 專業工作室」安裝成 App 嗎？',
+    '',
+    '安裝後：',
+    '‧ 主畫面／桌面會多一個圖示，開啟時沒有網址列。',
+    '‧ 程式本體會存在裝置上離線使用，約佔數 MB 空間。',
+    '‧ 這個網站可能被設為 PDF 檔案的開啟方式之一。',
+    '‧ 你的 PDF 與筆記一律留在本機，不會上傳。',
+    '',
+    '不想要時，可以像一般 App 一樣解除安裝。'
+].join('\n');
+
 window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
+    if (isRunningInstalled()) return;
     deferredInstallPrompt = event;
     if (installAppBtn) installAppBtn.hidden = false;
 });
@@ -2297,11 +2320,16 @@ window.addEventListener('beforeinstallprompt', event => {
 if (installAppBtn) {
     installAppBtn.addEventListener('click', async () => {
         if (!deferredInstallPrompt) return;
+        // Say what installing does before the browser's own dialog appears.
+        // Declining here keeps the event, so the button stays for a second try.
+        if (!window.confirm(INSTALL_CONFIRM_MESSAGE)) return;
         installAppBtn.hidden = true;
         const prompt = deferredInstallPrompt;
         deferredInstallPrompt = null;
         await prompt.prompt();
     });
+
+    if (isRunningInstalled()) installAppBtn.hidden = true;
 }
 
 window.addEventListener('appinstalled', () => {
