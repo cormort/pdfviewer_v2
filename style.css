@@ -2843,7 +2843,13 @@ button:focus-visible {
 
 /* Version line: only in the mobile drawer, so users can report what they see */
 /* 安裝按鈕：只在瀏覽器回報「這個站可以安裝」時由 script.js 取消 hidden，
-   靠右站在工具列尾端。手機上工具列是抽屜，改由 DOM 順序排在最下方。 */
+   靠右站在工具列尾端。手機上工具列是抽屜，改由 DOM 順序排在最下方。
+   同 #clear-search-btn：generic `button { display: inline-flex }` 蓋過 UA 的
+   [hidden]，少了下面這條，按鈕永遠顯示。 */
+#install-app-btn[hidden] {
+    display: none;
+}
+
 #install-app-btn {
     margin-left: auto;
     flex-shrink: 0;
