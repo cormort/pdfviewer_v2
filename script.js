@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=60';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=62';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -125,7 +125,12 @@ const toolbarToggleTab = document.getElementById('toolbar-toggle-tab');
 
 // === Mode Status ===
 let localMagnifierEnabled = false;
-const LOCAL_MAGNIFIER_SIZE = 120;
+// A reading strip rather than a round glass: a line of text stays whole
+// across the width, instead of being clipped by a circle. The strip takes as
+// much width as the window allows so it shows several lines at once, and is
+// re-measured on resize.
+let LOCAL_MAGNIFIER_WIDTH = 560;
+let LOCAL_MAGNIFIER_HEIGHT = 200;
 let LOCAL_MAGNIFIER_ZOOM_LEVEL = 2.5;
 
 let showSearchResultsHighlights = true;
@@ -750,13 +755,19 @@ importNotesInput?.addEventListener('change', async (e) => {
 });
 
 // === Magnifier Function ===
-function initLocalMagnifier() {
+function sizeLocalMagnifier() {
+    LOCAL_MAGNIFIER_WIDTH = Math.min(560, Math.max(240, window.innerWidth - 24));
+    LOCAL_MAGNIFIER_HEIGHT = Math.round(LOCAL_MAGNIFIER_WIDTH * 0.36);
     if (magnifierCanvas && magnifierGlass) {
-        magnifierGlass.style.width = `${LOCAL_MAGNIFIER_SIZE}px`;
-        magnifierGlass.style.height = `${LOCAL_MAGNIFIER_SIZE}px`;
-        magnifierCanvas.width = LOCAL_MAGNIFIER_SIZE;
-        magnifierCanvas.height = LOCAL_MAGNIFIER_SIZE;
+        magnifierGlass.style.width = `${LOCAL_MAGNIFIER_WIDTH}px`;
+        magnifierGlass.style.height = `${LOCAL_MAGNIFIER_HEIGHT}px`;
+        magnifierCanvas.width = LOCAL_MAGNIFIER_WIDTH;
+        magnifierCanvas.height = LOCAL_MAGNIFIER_HEIGHT;
     }
+}
+
+function initLocalMagnifier() {
+    sizeLocalMagnifier();
     if (localMagnifierZoomSelector) {
         LOCAL_MAGNIFIER_ZOOM_LEVEL = parseFloat(localMagnifierZoomSelector.value);
     }
@@ -791,16 +802,16 @@ function updateLocalMagnifier(clientX, clientY) {
     const srcX = pointXInWrapper * scaleX;
     const srcY = pointYInWrapper * scaleY;
 
-    const srcRectCSSWidth = LOCAL_MAGNIFIER_SIZE / LOCAL_MAGNIFIER_ZOOM_LEVEL;
-    const srcRectCSSHeight = LOCAL_MAGNIFIER_SIZE / LOCAL_MAGNIFIER_ZOOM_LEVEL;
+    const srcRectCSSWidth = LOCAL_MAGNIFIER_WIDTH / LOCAL_MAGNIFIER_ZOOM_LEVEL;
+    const srcRectCSSHeight = LOCAL_MAGNIFIER_HEIGHT / LOCAL_MAGNIFIER_ZOOM_LEVEL;
     const srcRectPixelWidth = srcRectCSSWidth * scaleX;
     const srcRectPixelHeight = srcRectCSSHeight * scaleY;
     const srcRectX = srcX - (srcRectPixelWidth / 2);
     const srcRectY = srcY - (srcRectPixelHeight / 2);
 
-    localMagnifierCtx.clearRect(0, 0, LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE);
+    localMagnifierCtx.clearRect(0, 0, LOCAL_MAGNIFIER_WIDTH, LOCAL_MAGNIFIER_HEIGHT);
     localMagnifierCtx.fillStyle = 'white';
-    localMagnifierCtx.fillRect(0, 0, LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE);
+    localMagnifierCtx.fillRect(0, 0, LOCAL_MAGNIFIER_WIDTH, LOCAL_MAGNIFIER_HEIGHT);
 
     // Use canvas directly as source
     localMagnifierCtx.drawImage(
@@ -808,7 +819,7 @@ function updateLocalMagnifier(clientX, clientY) {
         srcRectX, srcRectY,
         srcRectPixelWidth, srcRectPixelHeight,
         0, 0,
-        LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE
+        LOCAL_MAGNIFIER_WIDTH, LOCAL_MAGNIFIER_HEIGHT
     );
 
     if (drawingCanvas?.width > 0 && drawingCanvas?.height > 0) {
@@ -819,13 +830,13 @@ function updateLocalMagnifier(clientX, clientY) {
             srcDrawRectX, srcDrawRectY,
             srcRectCSSWidth, srcRectCSSHeight,
             0, 0,
-            LOCAL_MAGNIFIER_SIZE, LOCAL_MAGNIFIER_SIZE
+            LOCAL_MAGNIFIER_WIDTH, LOCAL_MAGNIFIER_HEIGHT
         );
     }
 
     // Position glass relative to its parent (canvas-wrapper)
-    const magnifierTop = pointYInWrapper - (LOCAL_MAGNIFIER_SIZE / 2);
-    const magnifierLeft = pointXInWrapper - (LOCAL_MAGNIFIER_SIZE / 2);
+    const magnifierTop = pointYInWrapper - (LOCAL_MAGNIFIER_HEIGHT / 2);
+    const magnifierLeft = pointXInWrapper - (LOCAL_MAGNIFIER_WIDTH / 2);
 
     // Offset the glass slightly to be above the cursor or following it
     // Here we'll center it on the cursor for direct feedback
@@ -2530,6 +2541,7 @@ let resizeTimeout;
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
+        sizeLocalMagnifier();
         if (pdfDocs.length > 0) {
             renderPage(currentPage, getPatternFromSearchInput());
         }
