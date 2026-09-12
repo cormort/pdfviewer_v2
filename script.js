@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=63';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=64';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -2291,7 +2291,22 @@ const installAppBtn = document.getElementById('install-app-btn');
 // Launched from the home screen or the Windows/macOS app list, not a browser
 // tab. Chrome fires beforeinstallprompt in an installed window too, so without
 // this the button would offer to install what is already installed.
+//
+// display-mode alone is not enough: some Android browsers run an installed app
+// without ever reporting standalone. The manifest's start_url carries ?app=1,
+// which only an app launch can bring, so that is the first thing checked. It
+// is remembered for the session because the token is gone once the user
+// navigates or the page reloads without it.
 function isRunningInstalled() {
+    try {
+        if (new URLSearchParams(window.location.search).has('app')) {
+            sessionStorage.setItem('launched-as-app', '1');
+            return true;
+        }
+        if (sessionStorage.getItem('launched-as-app') === '1') return true;
+    } catch {
+        // Private mode can refuse sessionStorage; fall through to display-mode.
+    }
     return window.matchMedia('(display-mode: standalone)').matches ||
         window.matchMedia('(display-mode: fullscreen)').matches ||
         window.matchMedia('(display-mode: minimal-ui)').matches ||

@@ -4,7 +4,7 @@
   "description": "PDF 關鍵字搜尋、分頁筆記與標記工具，完全在裝置上執行。",
   "lang": "zh-TW",
   "dir": "ltr",
-  "start_url": "./",
+  "start_url": "./?app=1",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
