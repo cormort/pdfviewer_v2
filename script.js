@@ -3166,6 +3166,85 @@ if (appVersionEl && window.pdfjsLib?.version) {
     appVersionEl.textContent += ` · pdf.js ${window.pdfjsLib.version}`;
 }
 
+// === Updates: what's new, new-version notice, changelog ===
+// changelog.json is the one record of releases, newest first. The version at
+// its top when the page loaded is the version running; the same file fetched
+// later saying otherwise means a newer deploy is out.
+const changelogModal = document.getElementById('changelog-modal');
+const changelogTitle = document.getElementById('changelog-title');
+const changelogBody = document.getElementById('changelog-body');
+const updateBanner = document.getElementById('update-banner');
+let runningVersion = null;
+
+async function fetchChangelog() {
+    const res = await fetch('./changelog.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`changelog ${res.status}`);
+    return res.json();
+}
+
+function showChangelog(entries, title) {
+    changelogTitle.textContent = title;
+    changelogBody.replaceChildren(...entries.map(entry => {
+        const section = document.createElement('section');
+        const heading = document.createElement('h4');
+        heading.textContent = entry.version;
+        const list = document.createElement('ul');
+        list.append(...entry.notes.map(note => {
+            const li = document.createElement('li');
+            li.textContent = note;
+            return li;
+        }));
+        section.append(heading, list);
+        return section;
+    }));
+    changelogModal?.classList.add('active');
+}
+
+document.getElementById('changelog-btn')?.addEventListener('click', () => {
+    fetchChangelog()
+        .then(log => showChangelog(log, '更新紀錄'))
+        .catch(() => showNotification('無法載入更新紀錄', 'error'));
+});
+document.getElementById('close-changelog')?.addEventListener('click', () => changelogModal.classList.remove('active'));
+changelogModal?.addEventListener('click', e => {
+    if (e.target === changelogModal) changelogModal.classList.remove('active');
+});
+
+// Once per version: what changed since the version this browser last ran.
+// A first visit has nothing to compare with and gets no popup, but someone
+// who used the app before this notice existed has a saved session to show it.
+fetchChangelog().then(async log => {
+    runningVersion = log[0]?.version;
+    if (!runningVersion) return;
+    let seen = null;
+    try { seen = localStorage.getItem('seenVersion'); } catch { /* storage blocked */ }
+    if (seen === runningVersion) return;
+    const returning = seen !== null || (await getFiles().catch(() => [])).length > 0;
+    if (returning) {
+        const since = log.findIndex(entry => entry.version === seen);
+        showChangelog(since === -1 ? log.slice(0, 1) : log.slice(0, since), `已更新到 ${runningVersion}`);
+    }
+    try { localStorage.setItem('seenVersion', runningVersion); } catch { /* storage blocked */ }
+}).catch(() => { /* offline on first launch: nothing to announce */ });
+
+async function checkForUpdate() {
+    if (!runningVersion || document.hidden || !updateBanner?.hidden) return;
+    try {
+        const latest = (await fetchChangelog())[0]?.version;
+        if (latest && latest !== runningVersion) updateBanner.hidden = false;
+    } catch { /* offline */ }
+}
+document.addEventListener('visibilitychange', checkForUpdate);
+setInterval(checkForUpdate, 30 * 60 * 1000);
+
+document.getElementById('update-reload-btn')?.addEventListener('click', async () => {
+    // The app files are network-first, so a reload picks up the new deploy;
+    // updating the worker as well refreshes its precached copy.
+    try { await (await navigator.serviceWorker?.getRegistration())?.update(); } catch { /* offline */ }
+    window.location.reload();
+});
+document.getElementById('update-dismiss-btn')?.addEventListener('click', () => { updateBanner.hidden = true; });
+
 // === Start Application ===
 initLocalMagnifier();
 updatePageControls();
