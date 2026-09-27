@@ -58,15 +58,18 @@ function splitOverflow(section) {
 
 const hex4 = n => n.toString(16).padStart(4, '0').toUpperCase();
 
-// One positioned glyph per character. The widths go to the font's /W array so
-// pdf.js sizes its text-layer spans, and so the search highlights, to match.
+// Each line of text goes out as one TJ run: the first glyph placed with Tm,
+// every later one nudged by a TJ adjustment to exactly where the browser put
+// it. pdf.js then keeps the line as a single text item, which its search
+// underline needs (it marks whole items: glyph-by-glyph Tm split 預算 into
+// two one-character items and nothing matched). The widths go to the font's
+// /W array so the text-layer spans, and so the highlights, line up.
 function textOps(page, widths) {
     const base = page.getBoundingClientRect();
     const height = page.offsetHeight;
     const range = document.createRange();
     const walker = document.createTreeWalker(page, NodeFilter.SHOW_TEXT);
-    const ops = ['BT 3 Tr'];
-    let lastSize = 0;
+    const glyphs = [];
     let node;
     while ((node = walker.nextNode())) {
         const size = parseFloat(getComputedStyle(node.parentElement).fontSize) || 16;
@@ -80,15 +83,37 @@ function textOps(page, widths) {
             const r = range.getClientRects()[0];
             if (!r || !r.width) continue; // whitespace collapsed away
             if (!(code in widths)) widths[code] = Math.round(r.width / size * 1000);
-            if (size !== lastSize) {
-                ops.push(`/${FONT} ${(size * PT).toFixed(2)} Tf`);
-                lastSize = size;
-            }
-            const x = (r.left - base.left) * PT;
-            const y = (height - (r.bottom - base.top) + size * 0.22) * PT;
-            ops.push(`1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm <${hex4(code)}> Tj`);
+            glyphs.push({
+                code,
+                size: size * PT,
+                x: (r.left - base.left) * PT,
+                y: (height - (r.bottom - base.top) + size * 0.22) * PT
+            });
         }
     }
+
+    const ops = ['BT 3 Tr'];
+    let run = null;
+    const flush = () => {
+        if (run) ops.push(`[${run.parts.join(' ')}] TJ`);
+        run = null;
+    };
+    for (const g of glyphs) {
+        const sameLine = run && g.size === run.size &&
+            Math.abs(g.y - run.y) < g.size * 0.5 && g.x >= run.penX - g.size;
+        if (!sameLine) {
+            flush();
+            ops.push(`/${FONT} ${g.size.toFixed(2)} Tf 1 0 0 1 ${g.x.toFixed(2)} ${g.y.toFixed(2)} Tm`);
+            run = { size: g.size, y: g.y, penX: g.x, parts: [] };
+        } else {
+            // TJ numbers are thousandths of the font size, subtracted from the pen.
+            const adjust = Math.round((run.penX - g.x) * 1000 / g.size);
+            if (adjust) run.parts.push(adjust);
+        }
+        run.parts.push(`<${hex4(g.code)}>`);
+        run.penX = g.x + widths[g.code] * g.size / 1000;
+    }
+    flush();
     ops.push('ET');
     return ops.join('\n');
 }
@@ -140,13 +165,49 @@ function registerFont(ctx, fontRef, widths, PDFString) {
     }));
 }
 
-export async function docxToPdf(file, isMobile) {
+// The browser paints the page itself: the page and docx-preview's styles go
+// into an SVG <foreignObject>, drawn onto a canvas. html2canvas re-implements
+// all of CSS in script and spent ~90% of a conversion there; this is the same
+// picture from the real layout engine. It stays as the fallback for a browser
+// that refuses (a tainted canvas, a failed decode).
+async function paintPage(page, styles, scale) {
+    const w = page.offsetWidth;
+    const h = page.offsetHeight;
+    const xml = new XMLSerializer();
+    const body = styles.map(s => xml.serializeToString(s)).join('') + xml.serializeToString(page);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">` +
+        `<foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">${body}</div></foreignObject></svg>`;
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(w * scale);
+    canvas.height = Math.round(h * scale);
+    const g = canvas.getContext('2d');
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, canvas.width, canvas.height);
+    g.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas;
+}
+
+async function html2canvasPage(page, scale) {
+    await loadScript('./lib/html2canvas/html2canvas.min.js', 'html2canvas');
+    return window.html2canvas(page, { scale, backgroundColor: '#fff', logging: false });
+}
+
+// toBlob encodes off the main thread; toDataURL blocked it and then made a
+// base64 string pdf-lib had to decode again.
+function jpegBytes(canvas) {
+    return new Promise((resolve, reject) => canvas.toBlob(blob => {
+        if (!blob) return reject(new Error('canvas export failed'));
+        blob.arrayBuffer().then(buf => resolve(new Uint8Array(buf)), reject);
+    }, 'image/jpeg', 0.85));
+}
+
+export async function docxToPdf(file, isMobile, onProgress = () => {}) {
     // docx-preview picks up JSZip as it loads, so JSZip goes first.
     await loadScript('./lib/jszip/jszip.min.js', 'JSZip');
-    await Promise.all([
-        loadScript('./lib/docx-preview/docx-preview.min.js', 'docx'),
-        loadScript('./lib/html2canvas/html2canvas.min.js', 'html2canvas')
-    ]);
+    await loadScript('./lib/docx-preview/docx-preview.min.js', 'docx');
 
     const host = document.createElement('div');
     host.style.cssText = 'position:fixed;left:-20000px;top:0;pointer-events:none';
@@ -171,11 +232,27 @@ export async function docxToPdf(file, isMobile) {
         // A phone runs out of canvas memory long before a desktop does.
         const scale = isMobile ? 1.5 : 2;
 
-        for (const page of pages) {
+        const styles = [...host.querySelectorAll('style')];
+        let native = true;
+        for (const [i, page] of pages.entries()) {
+            onProgress(i + 1, pages.length);
             const w = page.offsetWidth * PT;
             const h = page.offsetHeight * PT;
-            const canvas = await window.html2canvas(page, { scale, backgroundColor: '#fff', logging: false });
-            const jpg = await pdf.embedJpg(canvas.toDataURL('image/jpeg', 0.85));
+            let canvas, bytes;
+            if (native) {
+                try {
+                    canvas = await paintPage(page, styles, scale);
+                    bytes = await jpegBytes(canvas); // throws on a tainted canvas
+                } catch (err) {
+                    console.warn('Native page paint unavailable, using html2canvas:', err);
+                    native = false;
+                }
+            }
+            if (!native) {
+                canvas = await html2canvasPage(page, scale);
+                bytes = await jpegBytes(canvas);
+            }
+            const jpg = await pdf.embedJpg(bytes);
             canvas.width = canvas.height = 0;
             const out = pdf.addPage([w, h]);
             out.drawImage(jpg, { x: 0, y: 0, width: w, height: h });

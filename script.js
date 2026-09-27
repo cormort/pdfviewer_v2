@@ -244,7 +244,8 @@ async function loadAndProcessFiles(files) {
         return new Promise((resolve) => {
             if (isDocx(file)) {
                 import('./docx.js?v=65')
-                    .then(({ docxToPdf }) => docxToPdf(file, isMobileView()))
+                    .then(({ docxToPdf }) => docxToPdf(file, isMobileView(), (n, total) =>
+                        showLoadingOverlay(`轉換 Word 文件中... ${n} / ${total} 頁`)))
                     .then(data => window.pdfjsLib.getDocument({ data, isEvalSupported: false, enableXfa: false }).promise)
                     .then(pdf => resolve({ pdf, name: file.name }))
                     .catch(reason => {
