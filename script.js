@@ -210,7 +210,9 @@ function resetApp() {
 
 // === Core Function: Load and Process Files ===
 // Word files are converted to PDF on the way in (docx.js), then treated as PDFs.
-const isDocx = file => /\.docx$/i.test(file?.name || '');
+// A Word file already converted keeps its .docx name (notes are keyed by it)
+// but is stored as the PDF, so 開啟上次檔案 skips the conversion.
+const isDocx = file => /\.docx$/i.test(file?.name || '') && file.type !== 'application/pdf';
 
 async function loadAndProcessFiles(files) {
     if (!files?.length) return;
@@ -240,13 +242,18 @@ async function loadAndProcessFiles(files) {
 
     deactivateAllModes();
 
+    const converted = new Map();
     const loadingPromises = Array.from(files).map(file => {
         return new Promise((resolve) => {
             if (isDocx(file)) {
                 import('./docx.js?v=65')
                     .then(({ docxToPdf }) => docxToPdf(file, isMobileView(), (n, total) =>
                         showLoadingOverlay(`轉換 Word 文件中... ${n} / ${total} 頁`)))
-                    .then(data => window.pdfjsLib.getDocument({ data, isEvalSupported: false, enableXfa: false }).promise)
+                    .then(data => {
+                        // Copied before pdf.js takes (and detaches) the buffer.
+                        converted.set(file, new File([data], file.name, { type: 'application/pdf' }));
+                        return window.pdfjsLib.getDocument({ data, isEvalSupported: false, enableXfa: false }).promise;
+                    })
                     .then(pdf => resolve({ pdf, name: file.name }))
                     .catch(reason => {
                         console.error(`Error converting ${file.name}:`, reason);
@@ -315,7 +322,7 @@ async function loadAndProcessFiles(files) {
         // Cache the session only now: saving first meant one unreadable PDF
         // replaced a good cached set, so "開啟上次檔案" just failed again.
         try {
-            await saveFiles(files);
+            await saveFiles(Array.from(files, f => converted.get(f) || f));
         } catch (dbError) {
             console.warn('Could not save session to IndexedDB', dbError);
         }
