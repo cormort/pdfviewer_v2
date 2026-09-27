@@ -309,6 +309,7 @@ async function loadAndProcessFiles(files) {
 
         hideLoadingOverlay();
         showNotification(`成功載入 ${loadedPdfs.length} 個檔案，共 ${globalTotalPages} 頁。`, 'success');
+        if (converted.size) showNotification('Word 文件經轉換顯示，版面可能與原檔不同（跑版），請以原檔為準。', 'warning');
 
         // Show Canvas UI
         if (emptyStateWrap) emptyStateWrap.style.display = 'none';
