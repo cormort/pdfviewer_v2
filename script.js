@@ -3034,8 +3034,31 @@ toolbarToggleTab?.addEventListener('click', () => {
     appContainer?.classList.toggle('menu-active');
 });
 
+// === Reading mode ===
+const readingModeBtn = document.getElementById('reading-mode-btn');
+const readingExitBtn = document.getElementById('reading-exit-btn');
+
+function setReadingMode(on) {
+    document.body.classList.toggle('reading-mode', on);
+    document.body.classList.remove('reading-ui');
+    if (on) {
+        closeFabPanel();
+        deactivateAllModes();
+        appContainer?.classList.remove('menu-active');
+        showNotification('閱讀模式：輕點畫面顯示控制列', 'info');
+    }
+    // The page gets the room the controls gave up.
+    if (pdfDocs.length) renderPage(currentPage, getPatternFromSearchInput());
+}
+
+readingModeBtn?.addEventListener('click', () => setReadingMode(true));
+readingExitBtn?.addEventListener('click', () => setReadingMode(false));
+
 // Close menu when clicking outside on mobile
 pdfContainer?.addEventListener('click', () => {
+    if (document.body.classList.contains('reading-mode')) {
+        document.body.classList.toggle('reading-ui');
+    }
     if (isMobileView() && appContainer?.classList.contains('menu-active')) {
         appContainer.classList.remove('menu-active');
     }
