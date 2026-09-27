@@ -2003,6 +2003,12 @@ document.getElementById('export-results-pdf-btn')?.addEventListener('click', exp
 
 // === Search Event Listeners ===
 searchActionButton?.addEventListener('click', searchKeyword);
+// In reading mode, go straight back to the page with the results showing.
+searchActionButton?.addEventListener('click', () => {
+    if (!document.body.classList.contains('reading-mode')) return;
+    appContainer?.classList.remove('menu-active');
+    document.body.classList.add('reading-ui');
+});
 searchInputElem?.addEventListener('keypress', e => {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -3037,6 +3043,7 @@ toolbarToggleTab?.addEventListener('click', () => {
 // === Reading mode ===
 const readingModeBtn = document.getElementById('reading-mode-btn');
 const readingExitBtn = document.getElementById('reading-exit-btn');
+const readingSearchBtn = document.getElementById('reading-search-btn');
 
 function setReadingMode(on) {
     document.body.classList.toggle('reading-mode', on);
@@ -3054,9 +3061,18 @@ function setReadingMode(on) {
 readingModeBtn?.addEventListener('click', () => setReadingMode(true));
 readingExitBtn?.addEventListener('click', () => setReadingMode(false));
 
+// The search box lives in the drawer; open it without leaving reading mode.
+readingSearchBtn?.addEventListener('click', e => {
+    e.stopPropagation(); // the document-level handler would close the drawer again
+    appContainer?.classList.add('menu-active');
+    searchInputElem?.focus();
+    searchInputElem?.select();
+});
+
 // Close menu when clicking outside on mobile
 pdfContainer?.addEventListener('click', () => {
-    if (document.body.classList.contains('reading-mode')) {
+    // A tap that only closes the drawer should not also toggle the controls.
+    if (document.body.classList.contains('reading-mode') && !appContainer?.classList.contains('menu-active')) {
         document.body.classList.toggle('reading-ui');
     }
     if (isMobileView() && appContainer?.classList.contains('menu-active')) {
