@@ -2885,7 +2885,7 @@ button:focus-visible {
 
 /* Reading mode: the page alone. A tap on it brings the controls back, with a
    way out; swipes still turn pages or step through search results. */
-#reading-exit-btn { display: none; }
+#reading-bar { display: none; }
 body.reading-mode:not(.reading-ui) #toolbar-toggle-tab,
 body.reading-mode:not(.reading-ui) #floating-action-buttons,
 body.reading-mode:not(.reading-ui) .page-nav-overlay,
@@ -2893,8 +2893,9 @@ body.reading-mode:not(.reading-ui) .page-arrow,
 body.reading-mode:not(.reading-ui) #search-results-panel {
     display: none !important;
 }
-body.reading-mode.reading-ui #reading-exit-btn {
-    display: block;
+body.reading-mode.reading-ui #reading-bar {
+    display: flex;
+    gap: 8px;
     position: fixed;
     top: calc(env(safe-area-inset-top, 0px) + 12px);
     right: 12px;
