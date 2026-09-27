@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=67';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=68';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -243,10 +243,14 @@ async function loadAndProcessFiles(files) {
     deactivateAllModes();
 
     const converted = new Map();
+    // Word files convert one at a time: each holds a full page layout and
+    // canvases in memory, and the progress overlay can only show one.
+    let docxQueue = Promise.resolve();
     const loadingPromises = Array.from(files).map(file => {
         return new Promise((resolve) => {
             if (isDocx(file)) {
-                import('./docx.js?v=67')
+                docxQueue = docxQueue
+                    .then(() => import('./docx.js?v=68'))
                     .then(({ docxToPdf }) => docxToPdf(file, isMobileView(), (n, total) =>
                         showLoadingOverlay(`轉換 Word 文件中... ${n} / ${total} 頁`)))
                     .then(data => {
