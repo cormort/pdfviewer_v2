@@ -2751,6 +2751,61 @@ if (pdfContainer) {
     });
 }
 
+// === Pinch Zoom (reading mode) ===
+// The page follows the fingers as a CSS transform, then re-renders sharp at
+// the new scale on release, keeping the point between the fingers in place.
+const PINCH_MIN_SCALE = 0.3;
+const PINCH_MAX_SCALE = 5;
+let pinch = null;
+const touchDistance = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+
+if (pdfContainer && canvasWrapper) {
+    pdfContainer.addEventListener('touchstart', e => {
+        if (!document.body.classList.contains('reading-mode') || e.touches.length !== 2 || !pdfDocs.length) return;
+        const box = canvasWrapper.getBoundingClientRect();
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        pinch = {
+            dist: touchDistance(e.touches), scale: currentScale, ratio: 1,
+            originX: midX - box.left, originY: midY - box.top, midX, midY
+        };
+        canvasWrapper.style.transformOrigin = `${pinch.originX}px ${pinch.originY}px`;
+    }, { passive: true });
+
+    pdfContainer.addEventListener('touchmove', e => {
+        if (!pinch || e.touches.length !== 2) return;
+        e.preventDefault(); // no page zoom or scroll underneath
+        const ratio = touchDistance(e.touches) / pinch.dist;
+        pinch.ratio = Math.min(PINCH_MAX_SCALE / pinch.scale, Math.max(PINCH_MIN_SCALE / pinch.scale, ratio));
+        canvasWrapper.style.transform = `scale(${pinch.ratio})`;
+    }, { passive: false });
+
+    const endPinch = e => {
+        if (!pinch || e.touches.length) return; // wait for the last finger
+        const { ratio, scale, originX, originY, midX, midY } = pinch;
+        pinch = null;
+        canvasWrapper.style.transform = '';
+        if (Math.abs(ratio - 1) < 0.02) return;
+        currentZoomMode = 'custom';
+        currentScale = scale * ratio;
+        renderPage(currentPage, getPatternFromSearchInput());
+        const anchor = () => {
+            if (pageRendering) return requestAnimationFrame(anchor);
+            const box = canvasWrapper.getBoundingClientRect();
+            pdfContainer.scrollLeft += box.left + originX * ratio - midX;
+            pdfContainer.scrollTop += box.top + originY * ratio - midY;
+        };
+        requestAnimationFrame(anchor);
+    };
+    pdfContainer.addEventListener('touchend', endPinch);
+    pdfContainer.addEventListener('touchcancel', endPinch);
+}
+
+// iOS Safari zooms the whole page on its own gesture events.
+document.addEventListener('gesturestart', e => {
+    if (document.body.classList.contains('reading-mode')) e.preventDefault();
+});
+
 // === Paragraph Selection Function ===
 function clearParagraphHighlights() {
     document.querySelectorAll('.paragraph-highlight, #copy-paragraph-btn').forEach(el => el.remove());

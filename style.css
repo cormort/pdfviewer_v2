@@ -101,6 +101,10 @@ body {
     min-width: 200px;
     display: flex;
     justify-content: center;
+    /* A page zoomed wider than the container would otherwise overflow past
+       the left edge, where no scrolling reaches it. Older browsers keep the
+       line above. */
+    justify-content: safe center;
     align-items: flex-start;
 }
 
