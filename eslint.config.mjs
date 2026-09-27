@@ -18,7 +18,7 @@ const browser = {
     alert: 'readonly', confirm: 'readonly', prompt: 'readonly',
     fetch: 'readonly', atob: 'readonly', btoa: 'readonly',
     performance: 'readonly', structuredClone: 'readonly',
-    NodeFilter: 'readonly', pdfjsLib: 'readonly'
+    NodeFilter: 'readonly', XMLSerializer: 'readonly', pdfjsLib: 'readonly'
 };
 
 const rules = {
