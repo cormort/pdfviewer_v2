@@ -2511,6 +2511,14 @@ button:focus-visible {
     }
 }
 
+/* A short landscape screen puts the 選單 and 工具 buttons at mid-height too;
+   vertically centred arrows landed right behind them. */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .page-arrow {
+        top: 30%;
+    }
+}
+
 /* =================== TOUCH TARGETS =================== */
 /* 44x44 is the practical floor for a finger. These controls were 24-42px,
    which is fine for a cursor and a coin-toss for a thumb. Growing the hit area
