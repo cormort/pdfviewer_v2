@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=66';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=67';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -246,7 +246,7 @@ async function loadAndProcessFiles(files) {
     const loadingPromises = Array.from(files).map(file => {
         return new Promise((resolve) => {
             if (isDocx(file)) {
-                import('./docx.js?v=66')
+                import('./docx.js?v=67')
                     .then(({ docxToPdf }) => docxToPdf(file, isMobileView(), (n, total) =>
                         showLoadingOverlay(`轉換 Word 文件中... ${n} / ${total} 頁`)))
                     .then(data => {
@@ -257,6 +257,7 @@ async function loadAndProcessFiles(files) {
                     .then(pdf => resolve({ pdf, name: file.name }))
                     .catch(reason => {
                         console.error(`Error converting ${file.name}:`, reason);
+                        showNotification(`「${file.name}」轉換失敗，已略過。`, 'error');
                         resolve(null);
                     });
                 return;
