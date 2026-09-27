@@ -221,7 +221,15 @@ export async function docxToPdf(file, isMobile, onProgress = () => {}) {
             useBase64URL: true
         });
         await Promise.all([...host.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
-        const pages = [...host.querySelectorAll('section.docx')].flatMap(splitOverflow);
+        // Word records where it last broke each page as well as the explicit
+        // breaks; where the two coincide docx-preview emits an empty page. A
+        // 500-page file came out with scores of them, each one more page to
+        // turn through.
+        const hasContent = page => {
+            const body = page.querySelector(':scope > article') || page;
+            return body.textContent.trim() !== '' || body.querySelector('img, svg, canvas, table, hr');
+        };
+        const pages = [...host.querySelectorAll('section.docx')].flatMap(splitOverflow).filter(hasContent);
         if (!pages.length) throw new Error('文件沒有可顯示的內容');
 
         const { PDFDocument, PDFName, PDFString } = await import('./lib/pdf-lib/pdf-lib.esm.min.js');
