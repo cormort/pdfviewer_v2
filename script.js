@@ -1150,6 +1150,21 @@ notesLayer?.addEventListener('click', (e) => {
 });
 
 // === Page Rendering ===
+// Warm the pages either side of the one on screen. pdf.js keeps a page's
+// operator list, decoded images included, once fetched, so turning to it only
+// has to paint. Converted Word files gain the most: every page is a full-page
+// image whose decode used to happen on the turn itself.
+function prefetchNeighbours(globalPageNum) {
+    for (const n of [globalPageNum + 1, globalPageNum - 1]) {
+        const info = pageMap[n - 1];
+        if (!info) continue;
+        pdfDocs[info.docIndex]?.getPage(info.localPage)
+            .then(page => page.getOperatorList())
+            .catch(() => {});
+        getCachedTextContent(info.docIndex, info.localPage).catch(() => {});
+    }
+}
+
 function renderPage(globalPageNum, highlightPattern = null) {
     if (!pdfDocs.length || !pdfContainer || !canvas || !ctx) return;
 
@@ -1283,7 +1298,8 @@ function renderPage(globalPageNum, highlightPattern = null) {
                 redrawHighlighterStrokes();
             }
 
-            return renderTextLayer(page, viewportCss, highlightPattern, docIndex, localPage, isStale);
+            return renderTextLayer(page, viewportCss, highlightPattern, docIndex, localPage, isStale)
+                .then(() => { if (!isStale()) prefetchNeighbours(globalPageNum); });
         }).catch(reason => {
             if (isStale()) return;
             currentRenderTask = null;
