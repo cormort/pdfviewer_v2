@@ -23,6 +23,38 @@ function loadScript(src, global) {
     });
 }
 
+// Word's "repeat header row" (tblHeader) is read by docx-preview but not
+// rendered, so take it from the parsed document and move those rows into a
+// <thead>, which splitTable copies onto every page the table reaches. The
+// body's tables render in document order, so they pair up by position; if
+// the counts disagree, nothing is marked.
+function markHeaderRows(host, doc) {
+    const tables = [];
+    (function walk(node) {
+        if (node?.type === 'table') tables.push(node);
+        node?.children?.forEach(walk);
+    })(doc.documentPart?.body);
+    const rendered = host.querySelectorAll('section.docx > article table');
+    if (tables.length !== rendered.length) return;
+    tables.forEach((model, i) => {
+        const table = rendered[i];
+        const rows = [...table.querySelectorAll(':scope > tr, :scope > tbody > tr')];
+        const modelRows = model.children.filter(row => row.type === 'row');
+        if (rows.length !== modelRows.length) return;
+        // Only leading rows repeat, and at least one row stays in the body.
+        // A bare <w:tblHeader/> means on, but docx-preview reads it as null;
+        // a row without one has no value at all.
+        const repeats = row => row.isHeader === true || row.isHeader === null;
+        let count = 0;
+        while (count < rows.length - 1 && repeats(modelRows[count])) count++;
+        if (!count) return;
+        const thead = document.createElement('thead');
+        const first = rows[0].parentNode === table ? rows[0] : rows[0].parentNode;
+        table.insertBefore(thead, first);
+        thead.append(...rows.slice(0, count));
+    });
+}
+
 // Move a table's rows out from the end until the page fits again; the rows
 // that moved go into a copy of the table (same columns, and any header rows
 // in <thead>) for the next page. Returns that copy, or null if not even one
@@ -251,13 +283,16 @@ export async function docxToPdf(file, isMobile, onProgress = () => {}) {
     host.style.cssText = 'position:fixed;left:-20000px;top:0;pointer-events:none';
     document.body.appendChild(host);
     try {
-        await window.docx.renderAsync(await file.arrayBuffer(), host, host, {
+        const data = await file.arrayBuffer();
+        const options = {
             inWrapper: false,
             breakPages: true,
             ignoreLastRenderedPageBreak: false,
             experimental: true,
             useBase64URL: true
-        });
+        };
+        await window.docx.renderAsync(data, host, host, options);
+        markHeaderRows(host, await window.docx.parseAsync(data, options));
         await Promise.all([...host.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
         // Word records where it last broke each page as well as the explicit
         // breaks; where the two coincide docx-preview emits an empty page. A
