@@ -18,7 +18,7 @@ const browser = {
     alert: 'readonly', confirm: 'readonly', prompt: 'readonly',
     fetch: 'readonly', atob: 'readonly', btoa: 'readonly',
     performance: 'readonly', structuredClone: 'readonly',
-    pdfjsLib: 'readonly'
+    NodeFilter: 'readonly', pdfjsLib: 'readonly'
 };
 
 const rules = {
@@ -33,7 +33,7 @@ const rules = {
 
 export default [
     {
-        files: ['script.js', 'db.js'],
+        files: ['script.js', 'db.js', 'docx.js'],
         languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: browser },
         rules
     },
