@@ -1,27 +1,16 @@
 // DOCX → PDF, entirely in the browser, so a Word file goes through the same
 // pdf.js pipeline as a PDF: search, result list, thumbnails, export, notes.
 //
-// Each page is an html2canvas screenshot of mammoth's HTML, with the text laid
-// over it again in render mode 3 (invisible), the way an OCR'd scan is built.
-// The text font is a CID font with Identity-H encoding, a ToUnicode map and
-// no embedded font file: invisible text draws no glyphs, so no CJK font has to
-// be downloaded, and pdf.js still reads every character back for search.
+// docx-preview lays each page out from the file's own page size, margins,
+// fonts, alignment, headers and footers, and splits pages where Word last
+// broke them. Each page is an html2canvas screenshot of that, with the text
+// laid over it again in render mode 3 (invisible), the way an OCR'd scan is
+// built. The text font is a CID font with Identity-H encoding, a ToUnicode map
+// and no embedded font file: invisible text draws no glyphs, so no CJK font
+// has to be downloaded, and pdf.js still reads every character back for search.
 
-const PAGE_W = 794;   // A4 at 96 dpi
-const PAGE_H = 1123;
-const MARGIN = 72;
 const PT = 0.75;      // px → pt
 const FONT = 'DocxText';
-
-const PAGE_CSS = `
-  box-sizing:border-box;width:${PAGE_W}px;min-height:${PAGE_H}px;padding:${MARGIN}px;
-  background:#fff;color:#111;font:16px/1.6 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
-  overflow-wrap:anywhere`;
-const CONTENT_CSS = `
-  .docx-page h1{font-size:26px;margin:.6em 0}.docx-page h2{font-size:21px;margin:.6em 0}
-  .docx-page p{margin:0 0 .6em}.docx-page img{max-width:100%;height:auto}
-  .docx-page table{border-collapse:collapse;width:100%;margin:0 0 .6em}
-  .docx-page td,.docx-page th{border:1px solid #999;padding:4px 6px;vertical-align:top}`;
 
 function loadScript(src, global) {
     if (window[global]) return Promise.resolve();
@@ -34,26 +23,34 @@ function loadScript(src, global) {
     });
 }
 
-function newPage(host) {
-    const el = document.createElement('div');
-    el.className = 'docx-page';
-    el.style.cssText = PAGE_CSS;
-    host.appendChild(el);
-    return el;
-}
+// A file not saved by Word (generated, or from another editor) carries no
+// page-break markers, so one section can run far past its page. Move the
+// overflow into copies of that section, header and footer included, whole
+// blocks at a time; a block taller than a page keeps a taller page.
+function splitOverflow(section) {
+    const pageHeight = parseFloat(getComputedStyle(section).minHeight);
+    const article = section.querySelector(':scope > article');
+    if (!pageHeight || !article || section.offsetHeight <= pageHeight + 1) return [section];
 
-// Whole blocks per page; a block taller than a page gets a taller page rather
-// than being cut through a line.
-function paginate(source, host) {
-    const pages = [newPage(host)];
-    for (const block of [...source.childNodes]) {
-        let page = pages[pages.length - 1];
-        page.appendChild(block);
-        if (page.offsetHeight > PAGE_H && page.childNodes.length > 1) {
-            page.removeChild(block);
-            page = newPage(host);
-            pages.push(page);
-            page.appendChild(block);
+    const header = section.querySelector(':scope > header');
+    const footer = section.querySelector(':scope > footer');
+    const blocks = [...article.childNodes];
+    article.replaceChildren();
+    const pages = [section];
+    let body = article;
+    for (const block of blocks) {
+        body.appendChild(block);
+        const page = pages[pages.length - 1];
+        if (page.offsetHeight > pageHeight + 1 && body.childNodes.length > 1) {
+            body.removeChild(block);
+            const next = section.cloneNode(false);
+            body = article.cloneNode(false);
+            if (header) next.appendChild(header.cloneNode(true));
+            next.appendChild(body);
+            if (footer) next.appendChild(footer.cloneNode(true));
+            page.after(next);
+            pages.push(next);
+            body.appendChild(block);
         }
     }
     return pages;
@@ -144,21 +141,27 @@ function registerFont(ctx, fontRef, widths, PDFString) {
 }
 
 export async function docxToPdf(file, isMobile) {
+    // docx-preview picks up JSZip as it loads, so JSZip goes first.
+    await loadScript('./lib/jszip/jszip.min.js', 'JSZip');
     await Promise.all([
-        loadScript('./lib/mammoth/mammoth.browser.min.js', 'mammoth'),
+        loadScript('./lib/docx-preview/docx-preview.min.js', 'docx'),
         loadScript('./lib/html2canvas/html2canvas.min.js', 'html2canvas')
     ]);
-    const { value: html } = await window.mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() });
 
     const host = document.createElement('div');
     host.style.cssText = 'position:fixed;left:-20000px;top:0;pointer-events:none';
-    host.innerHTML = `<style>${CONTENT_CSS}</style>`;
     document.body.appendChild(host);
     try {
-        const source = document.createElement('div');
-        source.innerHTML = html || '<p></p>';
-        await Promise.all([...source.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
-        const pages = paginate(source, host);
+        await window.docx.renderAsync(await file.arrayBuffer(), host, host, {
+            inWrapper: false,
+            breakPages: true,
+            ignoreLastRenderedPageBreak: false,
+            experimental: true,
+            useBase64URL: true
+        });
+        await Promise.all([...host.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
+        const pages = [...host.querySelectorAll('section.docx')].flatMap(splitOverflow);
+        if (!pages.length) throw new Error('文件沒有可顯示的內容');
 
         const { PDFDocument, PDFName, PDFString } = await import('./lib/pdf-lib/pdf-lib.esm.min.js');
         const pdf = await PDFDocument.create();
@@ -169,7 +172,7 @@ export async function docxToPdf(file, isMobile) {
         const scale = isMobile ? 1.5 : 2;
 
         for (const page of pages) {
-            const w = PAGE_W * PT;
+            const w = page.offsetWidth * PT;
             const h = page.offsetHeight * PT;
             const canvas = await window.html2canvas(page, { scale, backgroundColor: '#fff', logging: false });
             const jpg = await pdf.embedJpg(canvas.toDataURL('image/jpeg', 0.85));
