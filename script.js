@@ -209,11 +209,14 @@ function resetApp() {
 }
 
 // === Core Function: Load and Process Files ===
+// Word files are converted to PDF on the way in (docx.js), then treated as PDFs.
+const isDocx = file => /\.docx$/i.test(file?.name || '');
+
 async function loadAndProcessFiles(files) {
     if (!files?.length) return;
 
     // Show loading animation
-    showLoadingOverlay('載入 PDF 中...');
+    showLoadingOverlay(Array.from(files).some(isDocx) ? '轉換 Word 文件中...' : '載入 PDF 中...');
     console.log('Starting loadAndProcessFiles...');
 
     resetApp();
@@ -239,6 +242,17 @@ async function loadAndProcessFiles(files) {
 
     const loadingPromises = Array.from(files).map(file => {
         return new Promise((resolve) => {
+            if (isDocx(file)) {
+                import('./docx.js?v=65')
+                    .then(({ docxToPdf }) => docxToPdf(file, isMobileView()))
+                    .then(data => window.pdfjsLib.getDocument({ data, isEvalSupported: false, enableXfa: false }).promise)
+                    .then(pdf => resolve({ pdf, name: file.name }))
+                    .catch(reason => {
+                        console.error(`Error converting ${file.name}:`, reason);
+                        resolve(null);
+                    });
+                return;
+            }
             if (!file || file.type !== 'application/pdf') {
                 resolve(null);
                 return;
@@ -286,7 +300,7 @@ async function loadAndProcessFiles(files) {
         globalTotalPages = pageMap.length;
 
         hideLoadingOverlay();
-        showNotification(`成功載入 ${loadedPdfs.length} 個 PDF 檔案，共 ${globalTotalPages} 頁。`, 'success');
+        showNotification(`成功載入 ${loadedPdfs.length} 個檔案，共 ${globalTotalPages} 頁。`, 'success');
 
         // Show Canvas UI
         if (emptyStateWrap) emptyStateWrap.style.display = 'none';
@@ -893,7 +907,7 @@ function updateFileSwitchDropdown() {
         const option = document.createElement('option');
         option.value = file.startPage;
         // Truncate long names
-        let displayName = file.docName.replace(/\.pdf$/i, '');
+        let displayName = file.docName.replace(/\.(pdf|docx)$/i, '');
         if (displayName.length > 30) {
             displayName = displayName.substring(0, 27) + '...';
         }
@@ -1024,7 +1038,7 @@ function updatePageControls() {
     const fullDocNameForTitle = docInfo?.docName || 'N/A';
 
     if (docInfo?.docName) {
-        const cleanName = docInfo.docName.replace(/\.pdf$/i, '');
+        const cleanName = docInfo.docName.replace(/\.(pdf|docx)$/i, '');
         const START_CHARS = 10;
         const END_CHARS = 10;
         let displayDocName = cleanName;
@@ -2505,7 +2519,7 @@ sharePageBtn?.addEventListener('click', async () => {
         const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/png'));
         if (!blob) throw new Error('無法從畫布產生圖片資料');
 
-        const docNamePart = pageInfo.docName.replace(/\.pdf$/i, '');
+        const docNamePart = pageInfo.docName.replace(/\.(pdf|docx)$/i, '');
         const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated_HD.png`;
         const f = new File([blob], fn, { type: 'image/png' });
         const sd = {
