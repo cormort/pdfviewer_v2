@@ -23,10 +23,33 @@ function loadScript(src, global) {
     });
 }
 
+// Move a table's rows out from the end until the page fits again; the rows
+// that moved go into a copy of the table (same columns, and any header rows
+// in <thead>) for the next page. Returns that copy, or null if not even one
+// row fits.
+function splitTable(table, fits) {
+    const rows = [...table.querySelectorAll(':scope > tr, :scope > tbody > tr')];
+    if (rows.length < 2) return null;
+    let kept = rows.length;
+    while (kept > 0 && !fits()) rows[--kept].remove();
+    if (kept === 0) {
+        for (const row of rows) (row.parentNode || table).appendChild(row);
+        return null;
+    }
+    const rest = table.cloneNode(false);
+    for (const child of table.children) {
+        if (child.tagName !== 'TR') rest.appendChild(child.cloneNode(child.tagName !== 'TBODY'));
+    }
+    const body = rest.querySelector(':scope > tbody') || rest;
+    for (const row of rows.slice(kept)) body.appendChild(row);
+    return rest;
+}
+
 // A file not saved by Word (generated, or from another editor) carries no
 // page-break markers, so one section can run far past its page. Move the
 // overflow into copies of that section, header and footer included, whole
-// blocks at a time; a block taller than a page keeps a taller page.
+// blocks at a time; a table is split between its rows, and any other block
+// taller than a page keeps a taller page.
 function splitOverflow(section) {
     const pageHeight = parseFloat(getComputedStyle(section).minHeight);
     const article = section.querySelector(':scope > article');
@@ -38,19 +61,34 @@ function splitOverflow(section) {
     article.replaceChildren();
     const pages = [section];
     let body = article;
-    for (const block of blocks) {
+    const fits = () => pages[pages.length - 1].offsetHeight <= pageHeight + 1;
+    const newPage = () => {
+        const next = section.cloneNode(false);
+        body = article.cloneNode(false);
+        if (header) next.appendChild(header.cloneNode(true));
+        next.appendChild(body);
+        if (footer) next.appendChild(footer.cloneNode(true));
+        pages[pages.length - 1].after(next);
+        pages.push(next);
+    };
+    for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
         body.appendChild(block);
-        const page = pages[pages.length - 1];
-        if (page.offsetHeight > pageHeight + 1 && body.childNodes.length > 1) {
+        if (fits()) continue;
+        if (block.tagName === 'TABLE') {
+            // The rest of the table goes on the next page, and is checked
+            // there in turn.
+            const rest = splitTable(block, fits);
+            if (rest) {
+                blocks.splice(i + 1, 0, rest);
+                newPage();
+                continue;
+            }
+        }
+        if (body.childNodes.length > 1) {
             body.removeChild(block);
-            const next = section.cloneNode(false);
-            body = article.cloneNode(false);
-            if (header) next.appendChild(header.cloneNode(true));
-            next.appendChild(body);
-            if (footer) next.appendChild(footer.cloneNode(true));
-            page.after(next);
-            pages.push(next);
-            body.appendChild(block);
+            newPage();
+            i--; // place it again, on the new page
         }
     }
     return pages;
