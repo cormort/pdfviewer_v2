@@ -68,6 +68,29 @@ function splitTable(table, fits) {
         for (const row of rows) (row.parentNode || table).appendChild(row);
         return null;
     }
+    // A vertically merged cell that runs past the break ends on this page and
+    // carries on down the next, as Word does. docx-preview renders the rest
+    // of a merge as hidden cells, so the one in the first moved row takes it.
+    const columnOf = cell => {
+        let col = 0;
+        for (const c of cell.parentNode.cells) {
+            if (c === cell) return col;
+            col += c.colSpan;
+        }
+    };
+    rows.slice(0, kept).forEach((row, i) => {
+        for (const cell of row.cells) {
+            const over = i + cell.rowSpan - kept;
+            if (cell.rowSpan < 2 || over <= 0) continue;
+            cell.rowSpan -= over;
+            const col = columnOf(cell);
+            const next = [...rows[kept].cells].find(c => columnOf(c) === col);
+            if (next) {
+                next.style.display = '';
+                next.rowSpan = over;
+            }
+        }
+    });
     const rest = table.cloneNode(false);
     for (const child of table.children) {
         if (child.tagName !== 'TR') rest.appendChild(child.cloneNode(child.tagName !== 'TBODY'));
