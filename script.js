@@ -2543,6 +2543,9 @@ sharePageBtn?.addEventListener('click', async () => {
         tc.height = Math.floor(shareViewport.height);
         const tctx_share = tc.getContext('2d');
         if (!tctx_share) throw new Error('無法獲取分享畫布的渲染上下文');
+        // JPEG has no alpha; paint white so transparent areas don't turn black.
+        tctx_share.fillStyle = '#fff';
+        tctx_share.fillRect(0, 0, tc.width, tc.height);
 
         const renderContext = {
             canvasContext: tctx_share,
@@ -2558,12 +2561,12 @@ sharePageBtn?.addEventListener('click', async () => {
             );
         }
 
-        const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/png'));
+        const blob = await new Promise(resolve => tc.toBlob(resolve, 'image/jpeg', 0.9));
         if (!blob) throw new Error('無法從畫布產生圖片資料');
 
         const docNamePart = pageInfo.docName.replace(/\.(pdf|docx)$/i, '');
-        const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated_HD.png`;
-        const f = new File([blob], fn, { type: 'image/png' });
+        const fn = `page_${currentPage}_(${docNamePart}-p${pageInfo.localPage})_annotated_HD.jpg`;
+        const f = new File([blob], fn, { type: 'image/jpeg' });
         const sd = {
             title: `PDF 全域第 ${currentPage} 頁`,
             text: `來自 ${docNamePart} 的第 ${pageInfo.localPage} 頁 (PDF 工具)`,
