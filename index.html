@@ -110,7 +110,489 @@
 
       <div class="search-section">
         <div class="search-input-wrap">
-          <input type="text" id="searchInput" placeholder="搜尋關鍵字..." autocomplete="off">
+          <input type="text" id="searchInput" placeholder="搜尋關鍵字..." autocomplete="off" list="fund-name-list">
+        <!-- 基金名稱與別名（來源：cormort/excel_merge fund-config.json） -->
+        <datalist id="fund-name-list">
+          <option value="中央銀行"></option>
+          <option value="台灣糖業股份有限公司"></option>
+          <option value="台灣中油股份有限公司"></option>
+          <option value="台灣電力股份有限公司"></option>
+          <option value="台灣自來水股份有限公司"></option>
+          <option value="中國輸出入銀行"></option>
+          <option value="臺灣金融控股股份有限公司"></option>
+          <option value="臺灣土地銀行股份有限公司"></option>
+          <option value="財政部印刷廠"></option>
+          <option value="臺灣菸酒股份有限公司"></option>
+          <option value="中華郵政股份有限公司"></option>
+          <option value="國營臺灣鐵路股份有限公司"></option>
+          <option value="臺灣港務股份有限公司"></option>
+          <option value="桃園國際機場股份有限公司"></option>
+          <option value="中央存款保險股份有限公司"></option>
+          <option value="行政院國家發展基金"></option>
+          <option value="營建建設基金"></option>
+          <option value="住宅基金"></option>
+          <option value="新市鎮開發基金"></option>
+          <option value="中央都市更新基金"></option>
+          <option value="實施平均地權基金"></option>
+          <option value="國軍生產及服務作業基金"></option>
+          <option value="國軍老舊眷村改建基金"></option>
+          <option value="國防醫學大學軍事教育基金"></option>
+          <option value="國立大學校院校務基金"></option>
+          <option value="國立臺灣大學校務基金"></option>
+          <option value="國立臺灣大學重點科技研究學院校務基金"></option>
+          <option value="國立臺灣大學國際政經學院校務基金"></option>
+          <option value="國立政治大學校務基金"></option>
+          <option value="國立政治大學附設實驗國民小學校務基金"></option>
+          <option value="國立政治大學國際金融學院校務基金"></option>
+          <option value="國立清華大學校務基金"></option>
+          <option value="國立清華大學附設實驗國民小學校務基金"></option>
+          <option value="國立清華大學半導體研究學院校務基金"></option>
+          <option value="國立中興大學校務基金"></option>
+          <option value="國立中興大學循環經濟研究學院校務基金"></option>
+          <option value="國立成功大學校務基金"></option>
+          <option value="國立成功大學智慧半導體及永續製造學院校務基金"></option>
+          <option value="國立交通大學校務基金"></option>
+          <option value="國立中央大學校務基金"></option>
+          <option value="國立中央大學永續與綠能科技研究學院校務基金"></option>
+          <option value="國立中山大學校務基金"></option>
+          <option value="國立中山大學半導體及重點科技研究學院校務基金"></option>
+          <option value="國立中山大學國際金融研究學院校務基金"></option>
+          <option value="國立中正大學校務基金"></option>
+          <option value="國立臺灣海洋大學校務基金"></option>
+          <option value="國立陽明大學校務基金"></option>
+          <option value="國立東華大學校務基金"></option>
+          <option value="國立東華大學附設實驗國民小學校務基金"></option>
+          <option value="國立暨南國際大學校務基金"></option>
+          <option value="國立臺北大學校務基金"></option>
+          <option value="國立嘉義大學校務基金"></option>
+          <option value="國立嘉義大學附設實驗國民小學校務基金"></option>
+          <option value="國立高雄大學校務基金"></option>
+          <option value="國立臺東大學校務基金"></option>
+          <option value="國立臺東大學附設實驗國民小學校務基金"></option>
+          <option value="國立宜蘭大學校務基金"></option>
+          <option value="國立聯合大學校務基金"></option>
+          <option value="國立臺南大學校務基金"></option>
+          <option value="國立臺南大學附設實驗國民小學校務基金"></option>
+          <option value="國立金門大學校務基金"></option>
+          <option value="國立屏東大學校務基金"></option>
+          <option value="國立屏東大學附設實驗國民小學校務基金"></option>
+          <option value="國立陽明交通大學校務基金"></option>
+          <option value="國立陽明交通大學產學創新研究學院校務基金"></option>
+          <option value="國立臺灣師範大學校務基金"></option>
+          <option value="國立臺灣師範大學跨域科技產業創新研究學院校務基金"></option>
+          <option value="國立彰化師範大學校務基金"></option>
+          <option value="國立高雄師範大學校務基金"></option>
+          <option value="國立臺北教育大學校務基金"></option>
+          <option value="國立臺北教育大學附設實驗國民小學校務基金"></option>
+          <option value="國立新竹教育大學校務基金"></option>
+          <option value="國立新竹教育大學附設實驗國民小學校務基金"></option>
+          <option value="國立臺中教育大學校務基金"></option>
+          <option value="國立臺中教育大學附設實驗國民小學校務基金"></option>
+          <option value="國立屏東教育大學校務基金"></option>
+          <option value="國立屏東教育大學附設實驗國民小學校務基金"></option>
+          <option value="國立臺北藝術大學校務基金"></option>
+          <option value="國立臺灣藝術大學校務基金"></option>
+          <option value="國立臺南藝術大學校務基金"></option>
+          <option value="國立空中大學校務基金"></option>
+          <option value="國立臺灣科技大學校務基金"></option>
+          <option value="國立臺灣科技大學產學創新學院校務基金"></option>
+          <option value="國立臺北科技大學校務基金"></option>
+          <option value="國立臺北科技大學創新前瞻科技研究學院校務基金"></option>
+          <option value="國立雲林科技大學校務基金"></option>
+          <option value="國立虎尾科技大學校務基金"></option>
+          <option value="國立高雄第一科技大學校務基金"></option>
+          <option value="國立高雄應用科技大學校務基金"></option>
+          <option value="國立高雄海洋科技大學校務基金"></option>
+          <option value="國立屏東科技大學校務基金"></option>
+          <option value="國立澎湖科技大學校務基金"></option>
+          <option value="國立勤益科技大學校務基金"></option>
+          <option value="國立臺北護理健康大學校務基金"></option>
+          <option value="國立高雄餐旅大學校務基金"></option>
+          <option value="國立臺中科技大學校務基金"></option>
+          <option value="國立臺北商業大學校務基金"></option>
+          <option value="國立高雄科技大學校務基金"></option>
+          <option value="國立體育大學校務基金"></option>
+          <option value="國立臺灣體育運動大學校務基金"></option>
+          <option value="國立臺北護理學院校務基金"></option>
+          <option value="國立臺灣體育學院校務基金"></option>
+          <option value="國立臺北商業技術學院校務基金"></option>
+          <option value="國立臺中技術學院校務基金"></option>
+          <option value="國立高雄餐旅學院校務基金"></option>
+          <option value="國立屏東商業技術學院校務基金"></option>
+          <option value="國立金門技術學院校務基金"></option>
+          <option value="國立臺灣戲曲學院校務基金"></option>
+          <option value="國立臺中護理專科學校校務基金"></option>
+          <option value="國立臺南護理專科學校校務基金"></option>
+          <option value="國立臺東專科學校校務基金"></option>
+          <option value="國立臺灣大學附設醫院作業基金"></option>
+          <option value="國立臺灣大學附設醫院北護分院作業基金"></option>
+          <option value="國立臺灣大學附設醫院雲林分院作業基金"></option>
+          <option value="國立臺灣大學附設醫院金山分院作業基金"></option>
+          <option value="國立臺灣大學附設醫院新竹分院作業基金"></option>
+          <option value="國立臺灣大學附設醫院竹東分院作業基金"></option>
+          <option value="國立臺灣大學附設醫院新竹生醫園區分院作業基金"></option>
+          <option value="國立臺灣大學附設醫院新竹臺大分院作業基金"></option>
+          <option value="國立臺灣大學附設醫院癌醫中心分院作業基金"></option>
+          <option value="國立成功大學附設醫院作業基金"></option>
+          <option value="國立陽明交通大學附設醫院作業基金"></option>
+          <option value="教育部所屬機構作業基金"></option>
+          <option value="國立自然科學博物館作業基金"></option>
+          <option value="國立科學工藝博物館作業基金"></option>
+          <option value="國立海洋生物博物館作業基金"></option>
+          <option value="國立歷史博物館作業基金"></option>
+          <option value="國立臺灣科學教育館作業基金"></option>
+          <option value="國立臺灣圖書館作業基金"></option>
+          <option value="國立海洋科技博物館作業基金"></option>
+          <option value="國立高級中等學校校務基金"></option>
+          <option value="法務部矯正機關作業基金"></option>
+          <option value="經濟作業基金"></option>
+          <option value="科技產業園區作業基金"></option>
+          <option value="產業園區開發管理基金"></option>
+          <option value="水資源作業基金"></option>
+          <option value="溫泉事業發展基金"></option>
+          <option value="交通作業基金"></option>
+          <option value="民航事業作業基金"></option>
+          <option value="國道公路建設管理基金"></option>
+          <option value="鐵道發展基金"></option>
+          <option value="觀光發展基金"></option>
+          <option value="臺鐵局撥入資產及債務管理基金"></option>
+          <option value="國軍退除役官兵安置基金"></option>
+          <option value="森林保育事業管理處"></option>
+          <option value="清境農場"></option>
+          <option value="福壽山農場"></option>
+          <option value="武陵農場"></option>
+          <option value="彰化農場"></option>
+          <option value="臺東農場"></option>
+          <option value="榮民醫療作業基金"></option>
+          <option value="臺北榮民總醫院作業基金"></option>
+          <option value="臺中榮民總醫院作業基金"></option>
+          <option value="高雄榮民總醫院作業基金"></option>
+          <option value="屏東榮民總醫院作業基金"></option>
+          <option value="科學園區管理局作業基金"></option>
+          <option value="農業作業基金"></option>
+          <option value="種苗改良繁殖作業基金"></option>
+          <option value="畜產改良作業基金"></option>
+          <option value="農業科技園區作業基金"></option>
+          <option value="農田水利事業作業基金"></option>
+          <option value="宜蘭農田水利事業作業基金"></option>
+          <option value="北基農田水利事業作業基金"></option>
+          <option value="桃園農田水利事業作業基金"></option>
+          <option value="石門農田水利事業作業基金"></option>
+          <option value="新竹農田水利事業作業基金"></option>
+          <option value="苗栗農田水利事業作業基金"></option>
+          <option value="臺中農田水利事業作業基金"></option>
+          <option value="南投農田水利事業作業基金"></option>
+          <option value="彰化農田水利事業作業基金"></option>
+          <option value="雲林農田水利事業作業基金"></option>
+          <option value="嘉南農田水利事業作業基金"></option>
+          <option value="高雄農田水利事業作業基金"></option>
+          <option value="屏東農田水利事業作業基金"></option>
+          <option value="臺東農田水利事業作業基金"></option>
+          <option value="花蓮農田水利事業作業基金"></option>
+          <option value="七星農田水利事業作業基金"></option>
+          <option value="瑠公農田水利事業作業基金"></option>
+          <option value="勞工保險局作業基金"></option>
+          <option value="醫療藥品基金"></option>
+          <option value="基隆醫院作業基金"></option>
+          <option value="臺北醫院作業基金"></option>
+          <option value="桃園醫院作業基金"></option>
+          <option value="苗栗醫院作業基金"></option>
+          <option value="豐原醫院作業基金"></option>
+          <option value="臺中醫院作業基金"></option>
+          <option value="彰化醫院作業基金"></option>
+          <option value="南投醫院作業基金"></option>
+          <option value="嘉義醫院作業基金"></option>
+          <option value="朴子醫院作業基金"></option>
+          <option value="新營醫院作業基金"></option>
+          <option value="臺南醫院作業基金"></option>
+          <option value="旗山醫院作業基金"></option>
+          <option value="澎湖醫院作業基金"></option>
+          <option value="屏東醫院作業基金"></option>
+          <option value="恆春旅遊醫院作業基金"></option>
+          <option value="臺東醫院作業基金"></option>
+          <option value="花蓮醫院作業基金"></option>
+          <option value="玉里醫院作業基金"></option>
+          <option value="桃園療養院作業基金"></option>
+          <option value="八里療養院作業基金"></option>
+          <option value="草屯療養院作業基金"></option>
+          <option value="嘉南療養院作業基金"></option>
+          <option value="樂生療養院作業基金"></option>
+          <option value="胸腔病院作業基金"></option>
+          <option value="金門醫院作業基金"></option>
+          <option value="管制藥品製藥工廠作業基金"></option>
+          <option value="全民健康保險基金"></option>
+          <option value="國民年金保險基金"></option>
+          <option value="國立文化機構作業基金"></option>
+          <option value="國立歷史博物館作業基金"></option>
+          <option value="國立中正紀念堂管理處作業基金"></option>
+          <option value="國立國父紀念館作業基金"></option>
+          <option value="故宮文物藝術發展基金"></option>
+          <option value="原住民族綜合發展基金"></option>
+          <option value="原住民族就業基金"></option>
+          <option value="考選業務基金"></option>
+          <option value="中央政府債務基金"></option>
+          <option value="中央研究院科學研究基金"></option>
+          <option value="行政院國家科學技術發展基金"></option>
+          <option value="離島建設基金"></option>
+          <option value="行政院公營事業民營化基金"></option>
+          <option value="花東地區永續發展基金"></option>
+          <option value="促進轉型正義基金"></option>
+          <option value="新住民發展基金"></option>
+          <option value="研發及產業訓儲替代役基金"></option>
+          <option value="警察消防海巡移民空勤人員及協勤民力安全基金"></option>
+          <option value="國土永續發展基金"></option>
+          <option value="學產基金"></option>
+          <option value="私立高級中等以上學校退場基金"></option>
+          <option value="毒品防制基金"></option>
+          <option value="經濟特別收入基金"></option>
+          <option value="推廣貿易基金"></option>
+          <option value="能源研究發展基金"></option>
+          <option value="石油基金"></option>
+          <option value="再生能源發展基金"></option>
+          <option value="中小企業發展基金"></option>
+          <option value="核能發電後端營運基金"></option>
+          <option value="航港建設基金"></option>
+          <option value="核子事故緊急應變基金"></option>
+          <option value="農業特別收入基金"></option>
+          <option value="農業發展基金"></option>
+          <option value="漁業發展基金"></option>
+          <option value="林務發展及造林基金"></option>
+          <option value="農業天然災害救助基金"></option>
+          <option value="農產品受進口損害救助基金"></option>
+          <option value="農村再生基金"></option>
+          <option value="就業安定基金"></option>
+          <option value="勞工權益基金"></option>
+          <option value="衛生福利特別收入基金"></option>
+          <option value="醫療發展基金"></option>
+          <option value="全民健康保險紓困基金"></option>
+          <option value="藥害救濟基金"></option>
+          <option value="菸害防制及衛生保健基金"></option>
+          <option value="預防接種受害救濟基金"></option>
+          <option value="疫苗基金"></option>
+          <option value="食品安全保護基金"></option>
+          <option value="社會福利基金"></option>
+          <option value="家庭暴力及性侵害防治基金"></option>
+          <option value="長照服務發展基金"></option>
+          <option value="社會福利基金"></option>
+          <option value="家庭暴力及性侵害防治基金"></option>
+          <option value="生產事故救濟基金"></option>
+          <option value="環境保護基金"></option>
+          <option value="空氣污染防制基金"></option>
+          <option value="資源回收管理基金"></option>
+          <option value="土壤及地下水污染整治基金"></option>
+          <option value="水污染防治基金"></option>
+          <option value="環境教育基金"></option>
+          <option value="溫室氣體管理基金"></option>
+          <option value="文化發展基金"></option>
+          <option value="運動發展基金"></option>
+          <option value="金融監督管理基金"></option>
+          <option value="海洋污染防治基金"></option>
+          <option value="通訊傳播監督管理基金"></option>
+          <option value="有線廣播電視事業發展基金"></option>
+          <option value="反托拉斯基金"></option>
+          <option value="運動發展基金"></option>
+          <option value="國軍營舍及設施改建基金"></option>
+          <option value="中央銀行" label="央行"></option>
+          <option value="台灣糖業股份有限公司" label="台糖"></option>
+          <option value="台灣中油股份有限公司" label="中油"></option>
+          <option value="台灣電力股份有限公司" label="台電"></option>
+          <option value="台灣自來水股份有限公司" label="台水"></option>
+          <option value="中國輸出入銀行" label="輸銀"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺銀"></option>
+          <option value="臺灣金融控股股份有限公司" label="金控"></option>
+          <option value="臺灣土地銀行股份有限公司" label="土銀"></option>
+          <option value="行政院國家發展基金" label="國發"></option>
+          <option value="營建建設基金" label="營建"></option>
+          <option value="住宅基金" label="住宅"></option>
+          <option value="新市鎮開發基金" label="新市鎮"></option>
+          <option value="中央都市更新基金" label="都更"></option>
+          <option value="實施平均地權基金" label="平權"></option>
+          <option value="實施平均地權基金" label="平均地權"></option>
+          <option value="國軍生產及服務作業基金" label="生服"></option>
+          <option value="國軍老舊眷村改建基金" label="眷改"></option>
+          <option value="國防醫學大學軍事教育基金" label="軍教"></option>
+          <option value="國防醫學大學軍事教育基金" label="國防醫"></option>
+          <option value="國立大學校院校務基金" label="大學"></option>
+          <option value="國立臺灣大學附設醫院作業基金" label="臺大醫"></option>
+          <option value="國立臺灣大學附設醫院作業基金" label="台大醫"></option>
+          <option value="國立臺灣大學附設醫院作業基金" label="臺大E"></option>
+          <option value="國立臺灣大學附設醫院作業基金" label="台大E"></option>
+          <option value="國立臺灣大學附設醫院北護分院作業基金" label="北護"></option>
+          <option value="國立臺灣大學附設醫院癌醫中心分院作業基金" label="癌醫"></option>
+          <option value="國立成功大學附設醫院作業基金" label="成大醫"></option>
+          <option value="國立成功大學附設醫院作業基金" label="成大E"></option>
+          <option value="國立陽明交通大學附設醫院作業基金" label="陽交大醫"></option>
+          <option value="國立陽明交通大學附設醫院作業基金" label="陽交大E"></option>
+          <option value="國立陽明交通大學附設醫院作業基金" label="陽明交大醫"></option>
+          <option value="國立陽明交通大學附設醫院作業基金" label="陽明交大E"></option>
+          <option value="國立陽明交通大學附設醫院作業基金" label="陽明交通大學附設醫院"></option>
+          <option value="教育部所屬機構作業基金" label="社教"></option>
+          <option value="教育部所屬機構作業基金" label="教育部所屬機構"></option>
+          <option value="國立自然科學博物館作業基金" label="科博"></option>
+          <option value="國立科學工藝博物館作業基金" label="科工"></option>
+          <option value="國立海洋生物博物館作業基金" label="海生"></option>
+          <option value="國立歷史博物館作業基金" label="史博"></option>
+          <option value="國立臺灣科學教育館作業基金" label="科教"></option>
+          <option value="國立臺灣圖書館作業基金" label="臺圖"></option>
+          <option value="國立臺灣圖書館作業基金" label="台圖"></option>
+          <option value="國立海洋科技博物館作業基金" label="海科"></option>
+          <option value="國立高級中等學校校務基金" label="高中"></option>
+          <option value="法務部矯正機關作業基金" label="矯正"></option>
+          <option value="法務部矯正機關作業基金" label="監所"></option>
+          <option value="經濟作業基金" label="經作"></option>
+          <option value="科技產業園區作業基金" label="科產"></option>
+          <option value="產業園區開發管理基金" label="產業園區"></option>
+          <option value="水資源作業基金" label="水資"></option>
+          <option value="水資源作業基金" label="水基金"></option>
+          <option value="溫泉事業發展基金" label="溫泉"></option>
+          <option value="交通作業基金" label="交作"></option>
+          <option value="民航事業作業基金" label="民航"></option>
+          <option value="國道公路建設管理基金" label="國道"></option>
+          <option value="鐵道發展基金" label="鐵道"></option>
+          <option value="觀光發展基金" label="觀光"></option>
+          <option value="國營臺灣鐵路股份有限公司" label="臺鐵"></option>
+          <option value="國軍退除役官兵安置基金" label="安置"></option>
+          <option value="森林保育事業管理處" label="森保處"></option>
+          <option value="清境農場" label="清境"></option>
+          <option value="福壽山農場" label="福壽山"></option>
+          <option value="武陵農場" label="武陵"></option>
+          <option value="榮民醫療作業基金" label="榮醫"></option>
+          <option value="臺北榮民總醫院作業基金" label="北榮"></option>
+          <option value="臺中榮民總醫院作業基金" label="中榮"></option>
+          <option value="高雄榮民總醫院作業基金" label="高榮"></option>
+          <option value="屏東榮民總醫院作業基金" label="屏榮"></option>
+          <option value="科學園區管理局作業基金" label="園區"></option>
+          <option value="科學園區管理局作業基金" label="科學園區"></option>
+          <option value="農業作業基金" label="農作"></option>
+          <option value="種苗改良繁殖作業基金" label="種苗"></option>
+          <option value="畜產改良作業基金" label="畜產"></option>
+          <option value="農業科技園區作業基金" label="農科"></option>
+          <option value="農田水利事業作業基金" label="農水"></option>
+          <option value="宜蘭農田水利事業作業基金" label="宜蘭農"></option>
+          <option value="北基農田水利事業作業基金" label="北基農"></option>
+          <option value="桃園農田水利事業作業基金" label="桃園農"></option>
+          <option value="石門農田水利事業作業基金" label="石門農"></option>
+          <option value="新竹農田水利事業作業基金" label="新竹農"></option>
+          <option value="苗栗農田水利事業作業基金" label="苗栗農"></option>
+          <option value="臺中農田水利事業作業基金" label="臺中農"></option>
+          <option value="南投農田水利事業作業基金" label="南投農"></option>
+          <option value="彰化農田水利事業作業基金" label="彰化農"></option>
+          <option value="雲林農田水利事業作業基金" label="雲林農"></option>
+          <option value="嘉南農田水利事業作業基金" label="嘉南農"></option>
+          <option value="高雄農田水利事業作業基金" label="高雄農"></option>
+          <option value="屏東農田水利事業作業基金" label="屏東農"></option>
+          <option value="臺東農田水利事業作業基金" label="臺東農"></option>
+          <option value="花蓮農田水利事業作業基金" label="花蓮農"></option>
+          <option value="七星農田水利事業作業基金" label="七星"></option>
+          <option value="瑠公農田水利事業作業基金" label="瑠公"></option>
+          <option value="勞工保險局作業基金" label="勞保"></option>
+          <option value="醫療藥品基金" label="醫療藥品"></option>
+          <option value="醫療藥品基金" label="醫藥"></option>
+          <option value="管制藥品製藥工廠作業基金" label="製藥"></option>
+          <option value="全民健康保險基金" label="健保"></option>
+          <option value="國民年金保險基金" label="國保"></option>
+          <option value="國立文化機構作業基金" label="文化"></option>
+          <option value="國立中正紀念堂管理處作業基金" label="中正紀"></option>
+          <option value="國立國父紀念館作業基金" label="國父紀"></option>
+          <option value="故宮文物藝術發展基金" label="故宮"></option>
+          <option value="原住民族綜合發展基金" label="原民"></option>
+          <option value="原住民族綜合發展基金" label="綜發"></option>
+          <option value="考選業務基金" label="考選"></option>
+          <option value="中央政府債務基金" label="債務"></option>
+          <option value="中央研究院科學研究基金" label="科研"></option>
+          <option value="中央研究院科學研究基金" label="中研院"></option>
+          <option value="行政院國家科學技術發展基金" label="科發"></option>
+          <option value="離島建設基金" label="離島"></option>
+          <option value="行政院公營事業民營化基金" label="民營化"></option>
+          <option value="花東地區永續發展基金" label="花東"></option>
+          <option value="促進轉型正義基金" label="促轉"></option>
+          <option value="新住民發展基金" label="新住民"></option>
+          <option value="研發及產業訓儲替代役基金" label="替代役"></option>
+          <option value="警察消防海巡移民空勤人員及協勤民力安全基金" label="警民"></option>
+          <option value="國土永續發展基金" label="國土"></option>
+          <option value="學產基金" label="學產"></option>
+          <option value="私立高級中等以上學校退場基金" label="私校"></option>
+          <option value="私立高級中等以上學校退場基金" label="退場"></option>
+          <option value="毒品防制基金" label="毒品"></option>
+          <option value="毒品防制基金" label="毒防"></option>
+          <option value="經濟特別收入基金" label="經特"></option>
+          <option value="推廣貿易基金" label="推貿"></option>
+          <option value="推廣貿易基金" label="貿易"></option>
+          <option value="能源研究發展基金" label="能源"></option>
+          <option value="石油基金" label="石油"></option>
+          <option value="再生能源發展基金" label="再生"></option>
+          <option value="中小企業發展基金" label="中小"></option>
+          <option value="核能發電後端營運基金" label="後端"></option>
+          <option value="航港建設基金" label="航港"></option>
+          <option value="核子事故緊急應變基金" label="核子"></option>
+          <option value="核子事故緊急應變基金" label="事故"></option>
+          <option value="農業特別收入基金" label="農特"></option>
+          <option value="農業發展基金" label="農發"></option>
+          <option value="漁業發展基金" label="漁發"></option>
+          <option value="林務發展及造林基金" label="林務"></option>
+          <option value="農業天然災害救助基金" label="天災"></option>
+          <option value="農產品受進口損害救助基金" label="農損"></option>
+          <option value="農村再生基金" label="農再"></option>
+          <option value="就業安定基金" label="就安"></option>
+          <option value="衛生福利特別收入基金" label="衛特"></option>
+          <option value="醫療發展基金" label="醫發"></option>
+          <option value="全民健康保險紓困基金" label="紓困"></option>
+          <option value="藥害救濟基金" label="藥害"></option>
+          <option value="菸害防制及衛生保健基金" label="菸害"></option>
+          <option value="預防接種受害救濟基金" label="接種"></option>
+          <option value="疫苗基金" label="疫苗"></option>
+          <option value="食品安全保護基金" label="食安"></option>
+          <option value="社會福利基金" label="社福"></option>
+          <option value="家庭暴力及性侵害防治基金" label="家防"></option>
+          <option value="長照服務發展基金" label="長照"></option>
+          <option value="生產事故救濟基金" label="生產"></option>
+          <option value="環境保護基金" label="環保"></option>
+          <option value="空氣污染防制基金" label="空污"></option>
+          <option value="土壤及地下水污染整治基金" label="土污"></option>
+          <option value="水污染防治基金" label="水污"></option>
+          <option value="環境教育基金" label="環教"></option>
+          <option value="溫室氣體管理基金" label="溫管"></option>
+          <option value="文化發展基金" label="文發"></option>
+          <option value="運動發展基金" label="運發"></option>
+          <option value="金融監督管理基金" label="金管"></option>
+          <option value="海洋污染防治基金" label="海污"></option>
+          <option value="通訊傳播監督管理基金" label="通傳"></option>
+          <option value="有線廣播電視事業發展基金" label="有線"></option>
+          <option value="反托拉斯基金" label="反托拉斯"></option>
+          <option value="國軍營舍及設施改建基金" label="營改"></option>
+          <option value="財政部印刷廠" label="印刷廠"></option>
+          <option value="臺灣菸酒股份有限公司" label="菸酒"></option>
+          <option value="中華郵政股份有限公司" label="郵政"></option>
+          <option value="國營臺灣鐵路股份有限公司" label="台鐵"></option>
+          <option value="臺灣港務股份有限公司" label="港務"></option>
+          <option value="桃園國際機場股份有限公司" label="桃機"></option>
+          <option value="桃園國際機場股份有限公司" label="機場"></option>
+          <option value="中央存款保險股份有限公司" label="存保"></option>
+          <option value="中央銀行" label="中央銀行(合併)"></option>
+          <option value="中央銀行" label="中央銀行(個別)"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺灣金融控股公司"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺灣金融控股公司(合併)"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺灣金控公司"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺灣金控(個別)"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺灣金控"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺灣銀行公司"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺灣銀行"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺銀人壽保險公司"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺銀人壽公司"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺銀人壽"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺銀綜合證券公司"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺銀證券公司"></option>
+          <option value="臺灣金融控股股份有限公司" label="臺銀證券"></option>
+          <option value="臺灣土地銀行股份有限公司" label="臺灣土地銀行公司"></option>
+          <option value="臺灣港務股份有限公司" label="臺灣港務公司(合併)"></option>
+          <option value="臺灣港務股份有限公司" label="臺灣港務公司"></option>
+          <option value="臺灣港務股份有限公司" label="臺灣港務(個別)"></option>
+          <option value="臺灣港務股份有限公司" label="臺灣港務港勤公司"></option>
+          <option value="臺灣港務股份有限公司" label="臺灣港務港勤"></option>
+          <option value="臺灣港務股份有限公司" label="高雄港區土地開發公司"></option>
+          <option value="臺灣港務股份有限公司" label="高雄港區土地開發"></option>
+          <option value="桃園國際機場股份有限公司" label="桃園國際機場公司"></option>
+        </datalist>
           <button id="clear-search-btn" type="button" title="清除搜尋" hidden aria-label="清除搜尋"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
         </div>
         <button id="search-action-button" class="btn-primary">搜尋</button>
