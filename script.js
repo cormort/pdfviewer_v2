@@ -2518,7 +2518,10 @@ sharePageBtn?.addEventListener('click', async () => {
         return;
     }
 
-    const SHARE_RESOLUTION_MULTIPLIER = 2.0;
+    // Print quality: 300 DPI (PDF units are 72 per inch), independent of on-screen zoom.
+    const SHARE_DPI = 300;
+    // Stay under iOS Safari's ~16.7M-pixel canvas limit.
+    const SHARE_MAX_PIXELS = 16000000;
     const originalBtnText = sharePageBtn.innerHTML;
     sharePageBtn.disabled = true;
     sharePageBtn.innerHTML = '<span class="loading-spinner"></span> 準備中...';
@@ -2528,13 +2531,16 @@ sharePageBtn?.addEventListener('click', async () => {
         if (!pageInfo) throw new Error('無法取得目前頁面資訊');
 
         const page = await pageInfo.doc.getPage(pageInfo.localPage);
-        const shareViewport = page.getViewport({
-            scale: currentScale * SHARE_RESOLUTION_MULTIPLIER
-        });
+        const baseViewport = page.getViewport({ scale: 1 });
+        const shareScale = Math.min(
+            SHARE_DPI / 72,
+            Math.sqrt(SHARE_MAX_PIXELS / (baseViewport.width * baseViewport.height))
+        );
+        const shareViewport = page.getViewport({ scale: shareScale });
 
         const tc = document.createElement('canvas');
-        tc.width = shareViewport.width;
-        tc.height = shareViewport.height;
+        tc.width = Math.floor(shareViewport.width);
+        tc.height = Math.floor(shareViewport.height);
         const tctx_share = tc.getContext('2d');
         if (!tctx_share) throw new Error('無法獲取分享畫布的渲染上下文');
 
