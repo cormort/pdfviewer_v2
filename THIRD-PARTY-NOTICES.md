@@ -12,7 +12,7 @@ written for this project.
 - **Version:** 5.3.31 (legacy dist build)
 - **Copyright:** Copyright 2024 Mozilla Foundation
 - **License:** Apache License, Version 2.0
-- **Files in this repository:** `lib/pdfjs/pdf.js`, `lib/pdfjs/pdf.worker.js`
+- **Files in this repository:** `lib/pdfjs/pdf.js`, `lib/pdfjs/pdfw-a.js` … `pdfw-d.js` (pdf.worker split into pieces)
 
 Both files are byte-for-byte identical to the official `pdfjs-5.3.31-legacy-dist`
 release archive published by the PDF.js project. No modifications were made.
@@ -205,7 +205,7 @@ PDF.js distribution.
 ## core-js
 
 The PDF.js legacy build bundles core-js polyfills inside `lib/pdfjs/pdf.js`
-and `lib/pdfjs/pdf.worker.js`. That code is redistributed here as part of
+and `lib/pdfjs/pdfw-a.js` … `pdfw-d.js` (pdf.worker split into pieces). That code is redistributed here as part of
 those files.
 
 - **Upstream:** https://github.com/zloirock/core-js

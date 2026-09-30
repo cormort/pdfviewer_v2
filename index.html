@@ -16,12 +16,23 @@
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <!-- One ?v= token for every local asset (style.css, script.js, db.js) —
        they used to drift apart. Bump all three with: npm run bump-cache -->
-  <link rel="stylesheet" href="style.css?v=2026-09-30b">
+  <link rel="stylesheet" href="style.css?v=2026-09-30c">
   <script type="module">
     // Load PDF.js from local files (ES Module)
     import * as pdfjsLib from './lib/pdfjs/pdf.js';
     window.pdfjsLib = pdfjsLib;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('./lib/pdfjs/pdf.worker.js', document.baseURI).href;
+    // Some office networks refuse pdf.worker.js (2 MB, "worker" in the name),
+    // so the worker ships as ~500 KB pieces and is rebuilt here. Regenerate with:
+    //   split -b 520000 -a 1 pdf.worker.js pdfw- && for f in pdfw-?; do mv $f $f.js; done
+    window.pdfWorkerReady = Promise.all(['a', 'b', 'c', 'd'].map(n =>
+      fetch(`./lib/pdfjs/pdfw-${n}.js`).then(r => {
+        if (!r.ok) throw new Error(`pdfw-${n}.js: HTTP ${r.status}`);
+        return r.blob();
+      })
+    )).then(parts => {
+      const url = URL.createObjectURL(new Blob(parts, { type: 'text/javascript' }));
+      pdfjsLib.GlobalWorkerOptions.workerPort = new Worker(url, { type: 'module' });
+    });
   </script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GHGBM401HN"></script>
@@ -914,7 +925,7 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="./script.js?v=2026-09-30b"></script>
+  <script type="module" src="./script.js?v=2026-09-30c"></script>
 </body>
 
 </html>

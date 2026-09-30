@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026-09-30b';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026-09-30c';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -250,13 +250,14 @@ async function loadAndProcessFiles(files) {
         return new Promise((resolve) => {
             if (isDocx(file)) {
                 docxQueue = docxQueue
-                    .then(() => import('./docx.js?v=2026-09-30b'))
+                    .then(() => import('./docx.js?v=2026-09-30c'))
                     .then(({ docxToPdf }) => docxToPdf(file, isMobileView(), (n, total) =>
                         showLoadingOverlay(`轉換 Word 文件中... ${n} / ${total} 頁`)))
                     .then(data => {
                         // Copied before pdf.js takes (and detaches) the buffer.
                         converted.set(file, new File([data], file.name, { type: 'application/pdf' }));
-                        return window.pdfjsLib.getDocument({ data, isEvalSupported: false, enableXfa: false }).promise;
+                        return window.pdfWorkerReady.then(() =>
+                            window.pdfjsLib.getDocument({ data, isEvalSupported: false, enableXfa: false }).promise);
                     })
                     .then(pdf => resolve({ pdf, name: file.name }))
                     .catch(reason => {
@@ -275,11 +276,11 @@ async function loadAndProcessFiles(files) {
             const reader = new FileReader();
             reader.onload = function () {
                 const typedarray = new Uint8Array(this.result);
-                window.pdfjsLib.getDocument({
+                window.pdfWorkerReady.then(() => window.pdfjsLib.getDocument({
                     data: typedarray,
                     isEvalSupported: false,
                     enableXfa: false
-                }).promise.then(pdf => {
+                }).promise).then(pdf => {
                     resolve({ pdf, name: file.name });
                 }).catch(reason => {
                     console.error(`Error loading ${file.name}:`, reason);
@@ -3264,7 +3265,7 @@ document.getElementById('update-reload-btn')?.addEventListener('click', async ()
     window.location.reload();
 });
 // A broken offline cache (e.g. an update interrupted mid-way) can leave
-// pdf.worker.js unreadable. Drop the worker and its caches, keep IndexedDB.
+// the pdf.js worker unreadable. Drop the worker and its caches, keep IndexedDB.
 document.getElementById('force-update-btn')?.addEventListener('click', async () => {
     try {
         const regs = await navigator.serviceWorker?.getRegistrations() || [];
