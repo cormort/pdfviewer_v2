@@ -387,14 +387,6 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-.app-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.025em;
-    white-space: nowrap;
-}
-
 .file-section,
 .search-section,
 .nav-section,
@@ -927,6 +919,27 @@ body.results-bar-visible #floating-action-buttons {
    NOT (max-width:768px OR short landscape). */
 @media screen and (min-width: 769px) and (min-height: 501px),
        screen and (min-width: 769px) and (orientation: portrait) {
+    /* Wrap to a second row rather than squeeze the search box to nothing and
+       let the file switcher paint over its button */
+    #toolbar {
+        flex-wrap: wrap;
+    }
+
+    .search-section {
+        min-width: auto;
+    }
+
+    /* Size the page label by what's left, not by the file name, so a long
+       name doesn't push the row into wrapping */
+    .nav-section {
+        flex-grow: 1;
+    }
+
+    #page-num-display {
+        width: 60px;
+        flex-grow: 1;
+    }
+
     /* FAB Menu Buttons with Tooltip */
     .fab-menu button {
         position: relative;
@@ -1569,12 +1582,8 @@ button:focus-visible {
 /* =================== PERFORMANCE UTILITIES =================== */
 /* =================== MEDIA QUERIES (MOBILE OPTIMIZATION) =================== */
 
-/* 窄桌面（769-920px）：隱藏標題文字與「前往」按鈕，避免工具列溢位 */
+/* 窄桌面（769-920px）：隱藏「前往」按鈕，避免工具列溢位 */
 @media screen and (min-width: 769px) and (max-width: 920px) {
-    .app-title {
-        display: none;
-    }
-
     #go-to-page-btn {
         display: none;
     }
@@ -1865,11 +1874,6 @@ button:focus-visible {
         height: 44px;
         font-size: 1rem;
         flex-shrink: 0;
-    }
-
-    .app-title {
-        display: block;
-        font-size: 1.25rem;
     }
 
     .file-section {

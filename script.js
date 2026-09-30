@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026-09-30';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026-09-30b';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -250,7 +250,7 @@ async function loadAndProcessFiles(files) {
         return new Promise((resolve) => {
             if (isDocx(file)) {
                 docxQueue = docxQueue
-                    .then(() => import('./docx.js?v=2026-09-30'))
+                    .then(() => import('./docx.js?v=2026-09-30b'))
                     .then(({ docxToPdf }) => docxToPdf(file, isMobileView(), (n, total) =>
                         showLoadingOverlay(`轉換 Word 文件中... ${n} / ${total} 頁`)))
                     .then(data => {
@@ -892,6 +892,9 @@ function updateZoomControls() {
 function updateFileSwitchDropdown() {
     if (!fileSwitchDropdown) return;
 
+    // One file has nothing to switch to
+    fileSwitchDropdown.parentElement.style.display = pdfDocs.length > 1 ? '' : 'none';
+
     // Clear existing options
     fileSwitchDropdown.innerHTML = '';
 
@@ -1053,7 +1056,7 @@ function updatePageControls() {
     let fullDisplayText = pageInfoText;
     const fullDocNameForTitle = docInfo?.docName || 'N/A';
 
-    if (docInfo?.docName) {
+    if (docInfo?.docName && pdfDocs.length > 1) {
         const cleanName = docInfo.docName.replace(/\.(pdf|docx)$/i, '');
         const START_CHARS = 10;
         const END_CHARS = 10;
