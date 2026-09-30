@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=71';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026-09-30';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -250,7 +250,7 @@ async function loadAndProcessFiles(files) {
         return new Promise((resolve) => {
             if (isDocx(file)) {
                 docxQueue = docxQueue
-                    .then(() => import('./docx.js?v=71'))
+                    .then(() => import('./docx.js?v=2026-09-30'))
                     .then(({ docxToPdf }) => docxToPdf(file, isMobileView(), (n, total) =>
                         showLoadingOverlay(`轉換 Word 文件中... ${n} / ${total} 頁`)))
                     .then(data => {
@@ -266,7 +266,9 @@ async function loadAndProcessFiles(files) {
                     });
                 return;
             }
-            if (!file || file.type !== 'application/pdf') {
+            // Windows browsers may report a PDF's type as '' or
+            // 'application/x-pdf' depending on the installed reader.
+            if (!file || (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name))) {
                 resolve(null);
                 return;
             }
