@@ -3260,6 +3260,16 @@ document.getElementById('update-reload-btn')?.addEventListener('click', async ()
     try { await (await navigator.serviceWorker?.getRegistration())?.update(); } catch { /* offline */ }
     window.location.reload();
 });
+// A broken offline cache (e.g. an update interrupted mid-way) can leave
+// pdf.worker.mjs unreadable. Drop the worker and its caches, keep IndexedDB.
+document.getElementById('force-update-btn')?.addEventListener('click', async () => {
+    try {
+        const regs = await navigator.serviceWorker?.getRegistrations() || [];
+        await Promise.all(regs.map(r => r.unregister()));
+        await Promise.all((await caches.keys()).map(key => caches.delete(key)));
+    } catch (e) { console.warn('Force update cleanup failed', e); }
+    window.location.reload();
+});
 document.getElementById('update-dismiss-btn')?.addEventListener('click', () => { updateBanner.hidden = true; });
 
 // === Start Application ===
