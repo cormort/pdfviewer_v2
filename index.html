@@ -19,9 +19,9 @@
   <link rel="stylesheet" href="style.css?v=2026-09-30">
   <script type="module">
     // Load PDF.js from local files (ES Module)
-    import * as pdfjsLib from './lib/pdfjs/pdf.mjs';
+    import * as pdfjsLib from './lib/pdfjs/pdf.js';
     window.pdfjsLib = pdfjsLib;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('./lib/pdfjs/pdf.worker.mjs', document.baseURI).href;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('./lib/pdfjs/pdf.worker.js', document.baseURI).href;
   </script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GHGBM401HN"></script>

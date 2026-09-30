@@ -9,7 +9,7 @@
 //
 // Bump CACHE_VERSION when a precached library changes, or to force every
 // installed copy to discard what it has.
-const CACHE_VERSION = 'pdf-studio-v33';
+const CACHE_VERSION = 'pdf-studio-v34';
 
 const PRECACHE = [
   './',
@@ -20,8 +20,8 @@ const PRECACHE = [
   './db.js',
   './manifest.json',
   './changelog.json',
-  './lib/pdfjs/pdf.mjs',
-  './lib/pdfjs/pdf.worker.mjs',
+  './lib/pdfjs/pdf.js',
+  './lib/pdfjs/pdf.worker.js',
   './lib/pdf-lib/pdf-lib.esm.min.js',
   './docx.js',
   './lib/jszip/jszip.min.js',

@@ -3261,7 +3261,7 @@ document.getElementById('update-reload-btn')?.addEventListener('click', async ()
     window.location.reload();
 });
 // A broken offline cache (e.g. an update interrupted mid-way) can leave
-// pdf.worker.mjs unreadable. Drop the worker and its caches, keep IndexedDB.
+// pdf.worker.js unreadable. Drop the worker and its caches, keep IndexedDB.
 document.getElementById('force-update-btn')?.addEventListener('click', async () => {
     try {
         const regs = await navigator.serviceWorker?.getRegistrations() || [];
