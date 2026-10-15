@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026-09-30c';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026-10-15';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -25,6 +25,10 @@ let currentViewport = null;
 let thumbnailObserver = null;
 let currentRenderTask = null; // Item 4: render task cancellation
 const textContentCache = new Map(); // Item 3: search text cache (key: "docIndex:localPage")
+// Each page's text as one string, filled right after loading, so a search is
+// only a regex over strings. It holds the promise, so a search started while
+// the warm-up is still running doesn't extract a page twice.
+const pageTextCache = new Map(); // key: "docIndex:localPage"
 
 // === Mobile Detection Helper (Item 2: unify CSS/JS breakpoints) ===
 // This string is the single source of truth for "mobile" and must stay
@@ -176,6 +180,7 @@ function resetApp() {
     notesModeActive = false;
     currentEditingNote = null;
     textContentCache.clear(); // Item 3: clear search cache
+    pageTextCache.clear();
     highlighterStrokes.clear();
     currentRenderEpoch++; // orphan any in-flight render before tearing state down
     if (currentRenderTask) { currentRenderTask.cancel(); currentRenderTask = null; } // Item 4
@@ -250,7 +255,7 @@ async function loadAndProcessFiles(files) {
         return new Promise((resolve) => {
             if (isDocx(file)) {
                 docxQueue = docxQueue
-                    .then(() => import('./docx.js?v=2026-09-30c'))
+                    .then(() => import('./docx.js?v=2026-10-15'))
                     .then(({ docxToPdf }) => docxToPdf(file, isMobileView(), (n, total) =>
                         showLoadingOverlay(`轉換 Word 文件中... ${n} / ${total} 頁`)))
                     .then(data => {
@@ -324,6 +329,7 @@ async function loadAndProcessFiles(files) {
         if (canvasWrapper) canvasWrapper.style.display = 'block';
 
         renderPage(1);
+        warmPageTextCache();
 
         // Update file switch dropdown
         updateFileSwitchDropdown();
@@ -1628,6 +1634,33 @@ function runPool(jobs, limit) {
     ).then(() => results);
 }
 
+function getPageText(docIndex, localPage) {
+    const key = `${docIndex}:${localPage}`;
+    let text = pageTextCache.get(key);
+    if (!text) {
+        text = pdfDocs[docIndex].getPage(localPage)
+            .then(page => page.getTextContent())
+            .then(tc => tc.items.map(item => item.str).join(''));
+        // A failed page is tried again by the next search, not cached as failed.
+        text.catch(() => { if (pageTextCache.get(key) === text) pageTextCache.delete(key); });
+        pageTextCache.set(key, text);
+    }
+    return text;
+}
+
+// Two at a time, in the background, so it doesn't hold up rendering the page
+// being read. Stops once other files are loaded.
+function warmPageTextCache() {
+    const docs = pdfDocs;
+    const jobs = [];
+    docs.forEach((doc, docIndex) => {
+        for (let i = 1; i <= doc.numPages; i++) {
+            jobs.push(() => pdfDocs === docs ? getPageText(docIndex, i).catch(() => {}) : null);
+        }
+    });
+    runPool(jobs, 2);
+}
+
 function searchKeyword() {
     const input = searchInputElem?.value.trim();
     // A search still in flight must not overwrite the results of a newer one.
@@ -1678,10 +1711,9 @@ function searchKeyword() {
             const pageInfo = pageMap[currentGlobalPageForSearch - 1];
 
             jobs.push(() =>
-                getCachedTextContent(docIndex, i)
-                    .then(textContent => {
+                getPageText(docIndex, i)
+                    .then(pageText => {
                         if (searchToken !== currentSearchToken) return null;
-                        const pageText = textContent.items.map(item => item.str).join('');
                         pattern.lastIndex = 0;
                         if (pattern.test(pageText)) {
                             pattern.lastIndex = 0;
