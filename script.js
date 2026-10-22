@@ -1,4 +1,4 @@
-import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026-10-15';
+import { initDB, saveFiles, getFiles, saveNote, getNotes, updateNote, deleteNote, exportAllNotes, importAllNotes, getNotesForFile, clearAllFiles } from './db.js?v=2026.10.22';
 
 // PDF.js is configured in index.html via ES module import
 // The global pdfjsLib is set there, we just verify it's available
@@ -255,7 +255,7 @@ async function loadAndProcessFiles(files) {
         return new Promise((resolve) => {
             if (isDocx(file)) {
                 docxQueue = docxQueue
-                    .then(() => import('./docx.js?v=2026-10-15'))
+                    .then(() => import('./docx.js?v=2026.10.22'))
                     .then(({ docxToPdf }) => docxToPdf(file, isMobileView(), (n, total) =>
                         showLoadingOverlay(`轉換 Word 文件中... ${n} / ${total} 頁`)))
                     .then(data => {
@@ -1634,13 +1634,26 @@ function runPool(jobs, limit) {
     ).then(() => results);
 }
 
+// Some PDFs (Word exports with certain fonts) store common characters as
+// look-alike radicals: ⼀ U+2F00 for 一, ⾨ U+2FA8 for 門, ⺠ U+2EA0 for 民.
+// A typed search never matches them. NFKC maps the Kangxi radicals back;
+// the radicals-supplement forms it leaves alone are mapped here.
+const RADICAL_SUPPLEMENT = {
+    '⺠': '民', '⻑': '長', '⻘': '青', '⻝': '食', '⻄': '西', '⻆': '角', '⻤': '鬼',
+    '⻩': '黃', '⻯': '竜', '⺟': '母', '⺩': '王', '⻍': '辶', '⻊': '足', '⻈': '言',
+    '⻢': '馬', '⻨': '麦', '⻬': '斉', '⻮': '歯', '⻰': '龍', '⻳': '亀'
+};
+function normalizeText(text) {
+    return text.normalize('NFKC').replace(/[\u2E80-\u2EFF]/g, ch => RADICAL_SUPPLEMENT[ch] || ch);
+}
+
 function getPageText(docIndex, localPage) {
     const key = `${docIndex}:${localPage}`;
     let text = pageTextCache.get(key);
     if (!text) {
         text = pdfDocs[docIndex].getPage(localPage)
             .then(page => page.getTextContent())
-            .then(tc => tc.items.map(item => item.str).join(''));
+            .then(tc => normalizeText(tc.items.map(item => item.str).join('')));
         // A failed page is tried again by the next search, not cached as failed.
         text.catch(() => { if (pageTextCache.get(key) === text) pageTextCache.delete(key); });
         pageTextCache.set(key, text);
@@ -2151,6 +2164,7 @@ function getPatternFromSearchInput() {
 const REGEX_FLAGS = /^[dgimsuvy]*$/;
 
 function createSearchPattern(input) {
+    input = normalizeText(input);
     const lastSlashIndex = input.lastIndexOf('/');
     // > 1, not > 0: "//" would otherwise compile to an empty regex that
     // matches every page.
@@ -2159,8 +2173,11 @@ function createSearchPattern(input) {
         return new RegExp(input.slice(1, lastSlashIndex), input.slice(lastSlashIndex + 1));
     }
 
-    const escapedInput = input.replace(/[/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const keywords = escapedInput.split(/\s+/).filter(keyword => keyword.length > 0);
+    // Text layers often put a space between characters (「(一) 門診」, letter-
+    // spaced titles), so allow whitespace between every character.
+    const escapeChar = ch => ch.replace(/[/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const keywords = input.split(/\s+/).filter(keyword => keyword.length > 0)
+        .map(keyword => Array.from(keyword, escapeChar).join('\\s*'));
     return keywords.length > 0 ? new RegExp(keywords.join('.*?'), 'gi') : null;
 }
 
